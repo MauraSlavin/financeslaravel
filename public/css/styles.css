@@ -1,0 +1,81 @@
+body {
+    background-color: lightblue;
+    /* background-color: lightblue; */
+}
+
+table {
+    background-color: skyblue;
+    width: 100%;
+    border-color: darkblue;
+
+}
+
+table tr:nth-child(even) {
+    background-color: lightblue;
+}
+
+table td, table th {
+    border: 1px solid darkgray;
+    padding: 4px;
+}
+
+table th {
+    background-color: mediumblue;
+    color: skyblue;
+}
+
+#dateErrorMsg {
+    color: red;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#beginDate, #endDate {
+    width: 115px;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+#accountName {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+#assets {
+    margin: 20px;
+}
+
+/* make transactions just uploaded more visible */
+.newtransaction {
+    color: red;
+    font-weight: bold;
+}
+
+/* margin for form-row */
+.form-row {
+    margin: 20px;
+}
+
+/* background color when adding a new transaction */
+#addTransaction {
+    background-color: rgb(206, 145, 239);
+}
+
+.newtransinput {
+    background-color: rgb(232, 200, 241);
+    width: 100%;
+}
+
+.newtranslabel {
+    width: 100px;
+    font-weight: bold;
+}
+
+/* transactions that may be duplicates have a yellow background color */
+.dupMaybe {
+    background-color: yellow !important;
+}
+
+#backToAccount, #uploadTransactions, #addTransaction {
+    margin-left: 10px;
+}
