@@ -1,16 +1,15 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on</h2>
+<h2>Working on branch:</h2>
     <ul>
-      <li></li>
+      <li>Special processing for Checking.</li>
+      <li>Done, but not tested.</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Put this in GitHub!!</li>
       <li>Set up matches for all accounts.</li>
-      <li>Special processing for Checking.</li>
       <li>Manually ad some common aliases.</li>
       <li>Order transactions so splits are together.</li>
       <li>Order columns in a more helpful way.</li>
@@ -84,6 +83,21 @@
     <li>411 - No first header record in csv file being uploaded.</li>
     <li>412 - in http://localhost:8000/accounts/{accountName}/upload, account isn't a defined account.</li>
   </ul>
+
+<h2>Cloning</h2>
+  <ul>
+    <li>git clone {copied url from github}</li>
+    <li>composer install</li>
+    <li>copy in .env</li>
+    <li>php artisan key:generate</li>
+  </ul>
+
+  <p>Need to have installed:</p>
+    <ul>
+      <li>git</li>
+      <li>composer</li>
+      <li>artisan</li>
+    </ul>
 
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
