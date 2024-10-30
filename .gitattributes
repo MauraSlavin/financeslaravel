@@ -1,0 +1,3 @@
+storage/logs/laravel.log merge=ours
+bootstrap/cache/packages.php merge=ours
+bootstrap/cache/services.php merge=ours

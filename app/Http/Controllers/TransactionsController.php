@@ -76,6 +76,33 @@ class TransactionsController extends Controller
         return $newCsvData;
     }
 
+    
+    // tweak records for Checking to make import more helpful
+    public function modifyCsvForChecking($newCsvData) {
+
+        foreach($newCsvData as $idx=>$record) {
+        
+            // Amount is "Amount Debit" or "Amount Credit" (won't be a number in both)
+            if($record["Amount Debit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Debit"];
+            else if ($record["Amount Credit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Credit"];
+            else $newCsvData[$idx]["Amount"] = "0"; // to prevent an error
+
+            // Amount Credit and Amount Debit are no longer needed
+            unset($newCsvData[$idx]["Amount Credit"], $newCsvData[$idx]["Amount Debit"]);
+            
+            // remove extraneous strings from Description
+            $extraneousStrings = [
+                "External Deposit ",
+                "Deposit ",
+                "External Withdrawal ",
+                "Withdrawal "
+            ];
+            $newCsvData[$idx]["Description"] = str_replace($extraneousStrings, "", $record["Description"]);
+
+        }
+        return $newCsvData;
+    }
+
 
     // Convert csv data to transaction records
     public function convertCsv($newCsvData, $accounts, $accountName) {
@@ -640,6 +667,9 @@ class TransactionsController extends Controller
 
         // READ transactions from csv file
         $newCsvData = $this->readUploadCsv($accountName);
+
+        // If Checking, modify csv for upload
+        if($accountName == "Checking") $newCsvData = $this->modifyCsvForChecking($newCsvData);
 
         // Convert csv data to transaction records
         $newRecords = $this->convertCsv($newCsvData, $accounts, $accountName);
