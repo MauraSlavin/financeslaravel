@@ -1,16 +1,17 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch:</h2>
+<h2>Working on branch: n/a</h2>
     <ul>
-      <li>Special processing for Checking.</li>
-      <li>Done, but not tested.</li>
+      <li></li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Set up matches for all accounts.</li>
-      <li>Manually ad some common aliases.</li>
+      <li>Fix error saving a new single transaction.</li>
+      <li>Fix // temp ... where error checking commented out (asking way too many times)</li>
+      <li>Set up matches for all accounts (DiscCC and Checking done).</li>
+      <li>Manually ad some common aliases. (DiscCC and Checking done)</li>
       <li>Order transactions so splits are together.</li>
       <li>Order columns in a more helpful way.</li>
       <li>"IGNORE" parts of aliases (see toFromAliases table)</li>

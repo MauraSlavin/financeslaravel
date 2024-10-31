@@ -330,6 +330,7 @@
                     
                     // break date into parts
                     var newDate = date.split(delimiter);
+
                     // if only month and day, add year to newDate variable
                     if(newDate.length == 2) {
                         year = new Date().getFullYear();
@@ -599,7 +600,8 @@
                     if(!isGood) {
                         newValue = newValue.substr(0, 100);
                         $(this).val(newValue);
-                        isGood = confirm("toFrom truncated to:\n" + newValue + "\n\nIs this OK?");
+                        // isGood = confirm("toFrom truncated to:\n" + newValue + "\n\nIs this OK?");
+                        isGood = true;  // temp 
                         if(!isGood) return false;
                         else isGood = true;
                     } else {
@@ -610,7 +612,8 @@
                     if(!(toFroms).includes(newValue)) {     // new toFrom value
                         // If a new toFrom is entered, make sure it's not a mistake;
                         var question = "This is a new toFrom value (" + newValue + ").  Is it correct?";
-                        var isCorrectNewValue = confirm(question);
+                        // var isCorrectNewValue = confirm(question);
+                        var isCorrectNewValue = true;  // temp 
                         // if not correct, return and let user try again
                         if(!isCorrectNewValue) return false;
                     }
@@ -620,7 +623,8 @@
                     if( typeof foundToFrom === 'undefined') {
                         var question = "Should this toFrom automatically be changed to " + newValue + " when the first " + numberOfAliasCharsToMatch + " characters match?" +
                             '\n\n"' + origToFrom.substr(0, numberOfAliasCharsToMatch) + '..." \n     to\n"' + newValue + '"';
-                        var saveAlias = confirm(question);
+                        // var saveAlias = confirm(question);
+                        var saveAlias = false;  // temp 
 
                         origToFrom = origToFrom.substr(0, numberOfAliasCharsToMatch);
                         origToFrom = encodeURIComponent(origToFrom);
@@ -845,7 +849,8 @@
                                         $(this).css("background-color", "white");
                                         isGood = verifyEnums(newValue, trackings);
                                         if(!isGood) {
-                                            isGood = confirm('"' + newValue + '" is a new tracking value.  Is this correct?');
+                                            // isGood = confirm('"' + newValue + '" is a new tracking value.  Is this correct?');
+                                            isGood = true;  // temp 
                                             if(!isGood) {
                                                 $(this).val('Enter a tracking value (was "' + newValue + '").');
                                             }
@@ -958,7 +963,6 @@
                     var newDate = beginDate.split(beginDelimiter);
                     if(beginHasDelimiterSlash) beginDate = newDate[2] + "-" + newDate[0] + "-" + newDate[1];
                     else beginDate = newDate.join('-');
-
 
                     var newDate = endDate.split(endDelimiter);
                     if(endHasDelimiterSlash) endDate = newDate[2] + "-" + newDate[0] + "-" + newDate[1];
@@ -1122,7 +1126,8 @@
                         // all total_amts should be the same for all total_keys
                         var total_amt_done = false;  // false if no total_key, so it's not checked
                         if(total_key != '') {
-                            total_amt_done = confirm("Are all the split transactions for total_key: " + total_key + " entered?");
+                            // total_amt_done = confirm("Are all the split transactions for total_key: " + total_key + " entered?");
+                            total_amt_done = false;     // temp
                         }
 
                         if(total_amt_done) {

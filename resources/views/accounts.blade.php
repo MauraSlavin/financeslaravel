@@ -31,7 +31,7 @@
                         <td>{{ $account->register }}</td>
                         <td>{{ $account->max_last_balanced }}</td>
                         <td>
-                            <a href="{{ route('transactions',['accountName' => $account->account, 'clearedBalance' => $account->cleared, 'registerBalance' => $account->register, 'lastBalanced' => $account->max_last_balanced]) }}" class="btn btn-primary btn-sm">Transactions</a>
+                            <a href="{{ route('transactions',['accountName' => $account->account, 'beginDate' => 'null', 'endDate' => 'null', 'clearedBalance' => $account->cleared, 'registerBalance' => $account->register, 'lastBalanced' => $account->max_last_balanced]) }}" class="btn btn-primary btn-sm">Transactions</a>
                         </td>
                         <td>
                             <a href="{{ route('balances',['accountName' => $account->account]) }}" class="btn btn-primary btn-sm">Balances</a>
