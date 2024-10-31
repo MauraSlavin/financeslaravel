@@ -30,7 +30,7 @@ Route::get('/accounts/{accountName}/balances', 'App\Http\Controllers\Transaction
 Route::get('/accounts/{accountName}/upload', 'App\Http\Controllers\TransactionsController@upload');
 Route::get('/accounts/{accountName}/{beginDate}/{endDate}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');
 // All this year's transactions (looking at trans_date) for account accountName
-Route::get('/accounts/{accountName}/{clearedBalance?}/{registerBalance?}/{lastBalanced?}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');
+Route::get('/accounts/{accountName}/{beginDate}/{endDate}/{clearedBalance}/{registerBalance}/{lastBalanced}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');
 // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
 //      includes line "all" for all transactions
 Route::get('/accounts', 'App\Http\Controllers\TransactionsController@index')->name('accounts');

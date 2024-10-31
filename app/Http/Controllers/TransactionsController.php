@@ -187,7 +187,6 @@ class TransactionsController extends Controller
                     $search = $map->csvField;   // string to look for
                     $replace = "\$transaction['".($map->csvField)."']"; // new string to replace
                     $formula = str_replace($map->csvField, $replace, $formula);
-                    // error_log("formula: " . $formula);
 
                     // evaluate the formula to get the data needed
                     $newRecord[$map->transField] = eval( "return $formula;");
@@ -397,9 +396,13 @@ class TransactionsController extends Controller
 
 
     // for route /accounts/{accountName}/{beginDate}/{endDate}
-    public function transactions($accountName, $clearedBalance = NULL, $registerBalance = NULL, $lastBalanced = NULL, $beginDate = NULL, $endDate = NULL) {
+    public function transactions($accountName, $beginDate = 'null', $endDate = 'null',  $clearedBalance = NULL, $registerBalance = NULL, $lastBalanced = NULL) {
 
-        // set beginDate and endDate if not passed in
+        // begin & end date default to a string null to keep the place in the url
+        if($beginDate == 'null') $beginDate = null;
+        if($endDate == 'null') $endDate = null;
+
+        // set beginDate and endDate if not passed in (or null)
         if($beginDate == null || $endDate == null) {
             [$beginDate, $endDate] = $this->setDefaultBeginEndDates($beginDate, $endDate);
         }
