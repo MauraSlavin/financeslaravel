@@ -691,234 +691,267 @@
                 }
 
 
-                function changeCellsToInputs($cell) {
-                    // change all the cells to inputs, except the "Edit" button
-                    $cell.parent().parent().find('td').each(function(index, td) {
-                    
-                        // assume true until see otherwise
-                        var isGood = true;
+                // called for each cell changed to an input cell
+                function changeCellToInput($tdcell, $cell, thisElt, typeElt) {
 
-                        // What's the tag of the first child (undefined for all but the last, which is "BUTTON")
-                        // console.log( "index: " + index + ": " + $cell.children(':first-child').prop('tagName'));
+                    // assume true until see otherwise
+                    var isGood = true;
+                    console.log("---- class: " + $tdcell.prop("class") + "\ntype of tagname: " + typeof $(thisElt).children(':first-child').prop('tagName'));
+                    // for each cell that has no children (all the tdcells except the last "Edit" button)
+                    // NOTE: The id (class newtransactionor transId), lastBalanced, or historical (spent, ytmBudget, yearBudget) are not editable
+                    if( typeof $(thisElt).children(':first-child').prop('tagName') == 'undefined' 
+                        && !$tdcell.prop("class").includes("newtransaction") 
+                        && !$tdcell.prop("class").includes("transId")
+                        && !$tdcell.prop("class").includes("lastBalanced")
+                        && !$tdcell.prop("class").includes("spent")
+                        && !$tdcell.prop("class").includes("ytmBudget")
+                        && !$tdcell.prop("class").includes("yearBudget")
+                        && !$tdcell.prop("class") == ''
+                    ) 
+                    {
+
+                        // get type of input field
+                        $class = "editable-cell " + $tdcell.prop("class");
+
+                        // make it an input tdcell
+                        var $input = $('<input>')
+                            .attr('type', 'text')
+                            .val($tdcell.text())
+                            .addClass($class);
+                            // .addClass('editable-cell');
+                            $tdcell.empty().append($input);
+
+                        // drop class from td
+                        // $(thisElt).closest("td").removeClass();
+                        if(typeElt == "BUTTON") $cell.closest("td").removeClass();
+                        // else tr passed in with td children
+                        // else $cell.find("td").removeClass();
                         
-                        // get the current cell
-                        var $tdcell = $(this);
-                        
-                        // for each cell that has no children (all the tdcells except the last "Edit" button)
-                        // NOTE: The id (class newtransactionor transId), lastBalanced, or historical (spent, ytmBudget, yearBudget) are not editable
-                        if( typeof $(this).children(':first-child').prop('tagName') == 'undefined' 
-                            && !$tdcell.prop("class").includes("newtransaction") 
-                            && !$tdcell.prop("class").includes("transId")
-                            && !$tdcell.prop("class").includes("lastBalanced")
-                            && !$tdcell.prop("class").includes("spent")
-                            && !$tdcell.prop("class").includes("ytmBudget")
-                            && !$tdcell.prop("class").includes("yearBudget")
-                        ) 
-                        {
-
+                        // listen for changes to the input
+                        // $input.on('change', function() {
+                        $(document).on('change', 'input', function() {
                             
-                            // get type of input field
-                            $class = "editable-cell " + $tdcell.prop("class");
+                            var newValue = $(thisElt).val();
+                            var fieldClass = $(thisElt).prop("class");
+                            // drop editable-cell from fieldClass
+                            fieldClass = fieldClass.replace("editable-cell ", "");
 
-                            // make it an input tdcell
-                            var $input = $('<input>')
-                                .attr('type', 'text')
-                                .val($tdcell.text())
-                                .addClass($class);
-                                // .addClass('editable-cell');
-                                $tdcell.empty().append($input);
+                            // check trans_date and clear_date
+                            // verifyDate returns a valid date,
+                            //  or an empty string if the date is '' or null and that's allowed.
+                            if(fieldClass.includes('Date') && !fieldClass.includes('stmtDate')) {
+                                // clear date can have a null or '' date
+                                var nullOK;
+                                if("clearDate" == fieldClass) nullOK = true;
+                                else nullOK = false;
 
-                            // drop class from td
-                            // $(this).closest("td").removeClass();
-                            $cell.closest("td").removeClass();
-                            
-                            // listen for changes to the input
-                            // $input.on('change', function() {
-                            $(document).on('change', 'input', function() {
-                                
-                                var newValue = $(this).val();
-                                var fieldClass = $(this).prop("class");
-                                // drop editable-cell from fieldClass
-                                fieldClass = fieldClass.replace("editable-cell ", "");
+                                isGood = verifyDate(newValue, nullOK);
+                                $(thisElt).val(isGood);
 
-                                // check trans_date and clear_date
-                                // verifyDate returns a valid date,
-                                //  or an empty string if the date is '' or null and that's allowed.
-                                if(fieldClass.includes('Date') && !fieldClass.includes('stmtDate')) {
-                                    // clear date can have a null or '' date
-                                    var nullOK;
-                                    if("clearDate" == fieldClass) nullOK = true;
-                                    else nullOK = false;
+                            // check account (in list of defined accounts)
+                            } else if(fieldClass.includes('account')) {
+                                // is account entered (newValue) in list of defined values (accountNames)
+                                isGood = verifyEnums(newValue, accountNames);
 
-                                    isGood = verifyDate(newValue, nullOK);
-                                    $(this).val(isGood);
+                                if(!isGood) {
+                                    $(thisElt).val("enter defined account name (orig: " + origAccount + ")");
+                                } else {
+                                    // reset origAccount (since last entered is good)
+                                    origAccount = newValue;
 
-                                // check account (in list of defined accounts)
-                                } else if(fieldClass.includes('account')) {
-                                    // is account entered (newValue) in list of defined values (accountNames)
-                                    isGood = verifyEnums(newValue, accountNames);
+                                    // if not DiscSavings, erase Bucket and alert user
+                                    // var $accountcell = $(thisElt);  // don't lose "this"
 
-                                    if(!isGood) {
-                                        $(this).val("enter defined account name (orig: " + origAccount + ")");
-                                    } else {
-                                        // reset origAccount (since last entered is good)
-                                        origAccount = newValue;
-
-                                        // if not DiscSavings, erase Bucket and alert user
-                                        // var $accountcell = $(this);  // don't lose "this"
-
-                                        // if(newValue != 'DiscSavings' && $accountcell.closest("tr").find('.bucket').val()) {
+                                    // if(newValue != 'DiscSavings' && $accountcell.closest("tr").find('.bucket').val()) {
+                                    if(typeElt == "BUTTON") {
                                         if(newValue != 'DiscSavings' && $cell.closest("tr").find('.bucket').val()) {
                                             // $accountcell.closest("tr").find('.bucket').val("");        // erase bucket value
                                             $cell.closest("tr").find('.bucket').val("");        // erase bucket value
                                             alert("Bucket value removed since only DiscSavings uses buckets");  // tell user
                                         }
-                                    }
-
-                                // check toFrom (make automatic?)
-                                } else if(fieldClass.includes('toFrom')) {
-                                    isGood = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
-                                    if(!isGood) {
-                                        $(this).val("enter correct toFrom (orig: "  + origToFrom + ")");
-                                    }
-                                
-
-                                // check amount values  - number; question if more than 2 decimal places
-                                // checks amount, amtMike, amtMaura, total_amt  
-                                } else if(fieldClass.includes('amount') || fieldClass.includes('amt')) {
-                                    isGood = verifyAmount(newValue);
-                                    if(!isGood) {
-                                        $(this).val("enter integer or decimal dollar amount (no $)");
-                                    }
-
-                                    // handle splitTotal if amount is changed
-                                    if(isGood && fieldClass.includes('amount')) {
-
-                                        // recalc splitTotal - add all amount input fields
-                                        splitTotal = 0;
-                                        var $theseTransactions = $(this).parent().parent().parent();
-                                        $theseTransactions.find('td').each(function(index, td) {
-                                            if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
-                                                splitTotal += Number($(td).children(':first-child').val());
-                                            };
-                                        });
-
-                                        // if the total is off, turn it red and note the difference to put on the page
-                                        var thisTotalAmt = $(this).parent().parent().find(".total_amt").children(":first-child").val();
-                                        var totalDiffText = ""; // assume no difference
-
-                                        if(splitTotal != thisTotalAmt) {
-                                            var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
-                                            $("#splitTotal").css("color","red");
-
-                                        // otherwise, change the color back to skyblue
-                                        } else {
-                                            $("#splitTotal").css("color","skyblue");
+                                    // else tr passed in with td children
+                                    } else {
+                                        if(newValue != 'DiscSavings' && $cell.find("tr").find('.bucket').val()) {
+                                            // $accountcell.closest("tr").find('.bucket').val("");        // erase bucket value
+                                            $cell.find("tr").find('.bucket').val("");        // erase bucket value
+                                            alert("Bucket value removed since only DiscSavings uses buckets");  // tell user
                                         }
-
-                                        // put the splitTotal in the amount header (span id = splitTotal)
-                                        $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
-                                    }
-
-                                // is method <= 10 chars (size of database column)
-                                } else if(fieldClass.includes('method')) {
-                                    isGood = verifyVarCharLength(newValue, 10);
-                                    if(!isGood) {
-                                        $(this).val(newValue.substr(0, 10) + " - truncated" );
-                                        $(this).css("background-color", "yellow");
-                                    } else {
-                                        $(this).css("background-color", "white");
-                                    }
-
-                                // check category (in list of defined categories)
-                                } else if(fieldClass.includes('category')) {
-                                    // is category entered (newValue) in list of defined values (categories)
-                                    isGood = verifyEnums(newValue, categories);
-                                    if(!isGood) {
-                                        $(this).val('"' + newValue + '" is not a defined category name.');
-                                    }
-
-                                // is tracking <= 10 chars (size of database column)
-                                //  verify if it's a new value
-                                } else if(fieldClass.includes('tracking')) {
-                                    isGood = verifyVarCharLength(newValue, 10);
-                                    if(!isGood) {
-                                        $(this).val(newValue.substr(0, 10) + " - truncated" );
-                                        $(this).css("background-color", "yellow");
-                                    } else {
-                                        $(this).css("background-color", "white");
-                                        isGood = verifyEnums(newValue, trackings);
-                                        if(!isGood) {
-                                            // isGood = confirm('"' + newValue + '" is a new tracking value.  Is this correct?');
-                                            isGood = true;  // temp 
-                                            if(!isGood) {
-                                                $(this).val('Enter a tracking value (was "' + newValue + '").');
-                                            }
-                                        }
-                                    }
-
-                                // is stmtDate valid (i.e. 24-Oct)
-                                } else if(fieldClass.includes('stmtDate')) {
-                                    isGood = verifyStmtDate(newValue);
-                                    if(!isGood) {
-                                        $(this).val('stmtDate needs to be in the format yy-Mon (' + newValue + ' entered)');
-                                    }
-
-
-                                // is total_key <= 5 chars (size of database column)
-                                } else if(fieldClass.includes('total_key')) {
-                                    isGood = verifyVarCharLength(newValue, 5);
-                                    if(!isGood) {
-                                        $(this).val(newValue.substr(0, 5) + " - truncated" );
-                                        $(this).css("background-color", "yellow");
-                                    } else {
-                                        $(this).css("background-color", "white");
-                                    }
-                                
-                                // check bucket (in list of defined buckets);
-                                // required for DiscSavings account, should be blank for all others
-                                } else if(fieldClass.includes('bucket')) {
-                                    var $cell = $(this);
-
-                                    // only enter bucket for DiscSavings account
-                                    if(origAccount == 'DiscSavings') {
-                                        // is bucket entered (newValue) in list of defined values (buckets)
-                                        isGood = verifyEnums(newValue, buckets);
-                                        if(!isGood) {
-                                            $cell.val('"' + newValue + '" is not a defined bucket.');
-                                        }
-                                    } else {
-                                        alert("Only DiscSavings accounts use buckets");
-                                        $cell.val("");
-                                    }
-
-
-                                // is notes <= 100 chars (size of database column)
-                                } else if(fieldClass.includes('notes')) {
-                                    isGood = verifyVarCharLength(newValue, 100);
-                                    if(!isGood) {
-                                        $(this).val(newValue.substr(0, 100) + " - truncated" );
-                                        $(this).css("background-color", "yellow");
-                                    } else {
-                                        $(this).css("background-color", "white");
                                     }
                                 }
-                                
-                            });
 
-                        } else {
-                            // change the "Edit" button to a "Save" button
-                            if( $(this).children(":first-child").text() == "Edit") {
-                                
-                                $(this).children(':first-child')
-                                    .text('Save')
-                                    .removeClass("btn-primary")     // blue to green
-                                    .addClass("btn-success")
-                                    .attr("id", "saveTransaction"); // change the id
+                            // check toFrom (make automatic?)
+                            } else if(fieldClass.includes('toFrom')) {
+                                isGood = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
+                                if(!isGood) {
+                                    $(thisElt).val("enter correct toFrom (orig: "  + origToFrom + ")");
+                                }
+                            
+
+                            // check amount values  - number; question if more than 2 decimal places
+                            // checks amount, amtMike, amtMaura, total_amt  
+                            } else if(fieldClass.includes('amount') || fieldClass.includes('amt')) {
+                                isGood = verifyAmount(newValue);
+                                if(!isGood) {
+                                    $(thisElt).val("enter integer or decimal dollar amount (no $)");
+                                }
+
+                                // handle splitTotal if amount is changed
+                                if(isGood && fieldClass.includes('amount')) {
+
+                                    // recalc splitTotal - add all amount input fields
+                                    splitTotal = 0;
+                                    var $theseTransactions = $(thisElt).parent().parent().parent();
+                                    $theseTransactions.find('td').each(function(index, td) {
+                                        if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
+                                            splitTotal += Number($(td).children(':first-child').val());
+                                        };
+                                    });
+
+                                    // if the total is off, turn it red and note the difference to put on the page
+                                    var thisTotalAmt = $(thisElt).parent().parent().find(".total_amt").children(":first-child").val();
+                                    var totalDiffText = ""; // assume no difference
+
+                                    if(splitTotal != thisTotalAmt) {
+                                        var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
+                                        $("#splitTotal").css("color","red");
+
+                                    // otherwise, change the color back to skyblue
+                                    } else {
+                                        $("#splitTotal").css("color","skyblue");
+                                    }
+
+                                    // put the splitTotal in the amount header (span id = splitTotal)
+                                    $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
+                                }
+
+                            // is method <= 10 chars (size of database column)
+                            } else if(fieldClass.includes('method')) {
+                                isGood = verifyVarCharLength(newValue, 10);
+                                if(!isGood) {
+                                    $(thisElt).val(newValue.substr(0, 10) + " - truncated" );
+                                    $(thisElt).css("background-color", "yellow");
+                                } else {
+                                    $(thisElt).css("background-color", "white");
+                                }
+
+                            // check category (in list of defined categories)
+                            } else if(fieldClass.includes('category')) {
+                                // is category entered (newValue) in list of defined values (categories)
+                                isGood = verifyEnums(newValue, categories);
+                                if(!isGood) {
+                                    $(thisElt).val('"' + newValue + '" is not a defined category name.');
+                                }
+
+                            // is tracking <= 10 chars (size of database column)
+                            //  verify if it's a new value
+                            } else if(fieldClass.includes('tracking')) {
+                                isGood = verifyVarCharLength(newValue, 10);
+                                if(!isGood) {
+                                    $(thisElt).val(newValue.substr(0, 10) + " - truncated" );
+                                    $(thisElt).css("background-color", "yellow");
+                                } else {
+                                    $(thisElt).css("background-color", "white");
+                                    isGood = verifyEnums(newValue, trackings);
+                                    if(!isGood) {
+                                        // isGood = confirm('"' + newValue + '" is a new tracking value.  Is this correct?');
+                                        isGood = true;  // temp 
+                                        if(!isGood) {
+                                            $(thisElt).val('Enter a tracking value (was "' + newValue + '").');
+                                        }
+                                    }
+                                }
+
+                            // is stmtDate valid (i.e. 24-Oct)
+                            } else if(fieldClass.includes('stmtDate')) {
+                                isGood = verifyStmtDate(newValue);
+                                if(!isGood) {
+                                    $(thisElt).val('stmtDate needs to be in the format yy-Mon (' + newValue + ' entered)');
+                                }
+
+
+                            // is total_key <= 5 chars (size of database column)
+                            } else if(fieldClass.includes('total_key')) {
+                                isGood = verifyVarCharLength(newValue, 5);
+                                if(!isGood) {
+                                    $(thisElt).val(newValue.substr(0, 5) + " - truncated" );
+                                    $(thisElt).css("background-color", "yellow");
+                                } else {
+                                    $(thisElt).css("background-color", "white");
+                                }
+                            
+                            // check bucket (in list of defined buckets);
+                            // required for DiscSavings account, should be blank for all others
+                            } else if(fieldClass.includes('bucket')) {
+                                var $cell = $(thisElt);
+
+                                // only enter bucket for DiscSavings account
+                                if(origAccount == 'DiscSavings') {
+                                    // is bucket entered (newValue) in list of defined values (buckets)
+                                    isGood = verifyEnums(newValue, buckets);
+                                    if(!isGood) {
+                                        $cell.val('"' + newValue + '" is not a defined bucket.');
+                                    }
+                                } else {
+                                    alert("Only DiscSavings accounts use buckets");
+                                    $cell.val("");
+                                }
+
+
+                            // is notes <= 100 chars (size of database column)
+                            } else if(fieldClass.includes('notes')) {
+                                isGood = verifyVarCharLength(newValue, 100);
+                                if(!isGood) {
+                                    $(thisElt).val(newValue.substr(0, 100) + " - truncated" );
+                                    $(thisElt).css("background-color", "yellow");
+                                } else {
+                                    $(thisElt).css("background-color", "white");
+                                }
                             }
+                            
+                        });
+
+                    } else {
+                        // change the "Edit" button to a "Save" button
+                        if( $(thisElt).children(":first-child").text() == "Edit") {
+                            
+                            $(thisElt).children(':first-child')
+                                .text('Save')
+                                .removeClass("btn-primary")     // blue to green
+                                .addClass("btn-success")
+                                .attr("id", "saveTransaction"); // change the id
                         }
-                    
-                    });
+
+                    }
+                }   // end of function changeCellToInput
+
+
+                function changeCellsToInputs($cell) {
+                    console.log("In changeCellsToInputs for cell with \nTag: " + $cell.prop('tagName') + "\nClass: " + $cell.attr('class') + "\nText: |" + $cell.text() + "|");
+                    // change all the cells to inputs, except the "Edit" button
+                    if($cell.prop('tagName') == "BUTTON") {
+                        console.log("BUTTON");
+                        $cell.parent().parent().find('td').each(function(index, td) {
+                        
+                            // What's the tag of the first child (undefined for all but the last, which is "BUTTON")
+                            // console.log( "index: " + index + ": " + $cell.children(':first-child').prop('tagName'));
+                            
+                            // get the current cell
+                            var $tdcell = $(this);
+                            
+                            changeCellToInput($tdcell, $cell, this, "BUTTON");
+
+                        });
+                    } else {
+                        // tr passed in
+                        console.log("NOT A BUTTON: " + $cell.prop('tagName'));
+                        $cell.find('td').each(function(index, td) {
+                            // get the current cell
+                            var $tdcell = $(this);
+                            
+                            changeCellToInput($tdcell, $cell, this, "TR");
+                            
+                        });
+                    }
                 }   // end function changeCellsToInputs
 
 
@@ -1006,7 +1039,49 @@
                 $('#addTransaction').on('click', function(e) {
                     e.preventDefault();
 
-                    window.location.href = "/transactions/add";
+                    // window.location.href = "/transactions/add";
+                    
+                    // clone the first transaction
+                    $firstTransaction = $("tbody").children(':first-child');
+                    $newTransaction = $firstTransaction.clone();
+
+                    // clear out info for new transaction
+                    $newTransaction.attr('data-id', 'null');
+                    $newTransaction.find('td').each(function(index, td) {
+                        var $cell = $(td);
+                        console.log("text: " + $cell.prop('class'));
+                        switch ($cell.prop('class')) {
+
+                            case 'transId': 
+                                console.log("Class transId");
+                                $cell.text('null');
+                                break;
+
+                            case 'undefined':
+                                console.log("Class undefined");
+                                $cell.children(':first-child').attr('data-id', 'null');
+                                break;
+
+                            case '':
+                                console.log("No class");
+                                $cell.children(':first-child').attr('data-id', 'null');
+                                break;
+                                
+                            default:
+                                console.log("Class " + $cell.prop('class'));
+                                $cell.text('');
+                        }
+                            
+                    });
+                        
+                    // make it edittable
+                    changeCellsToInputs($newTransaction);
+
+                    // prepend it to the list of transactions
+                    $("tbody").prepend($newTransaction);
+
+
+
                 })
 
 

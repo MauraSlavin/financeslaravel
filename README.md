@@ -1,14 +1,13 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: n/a</h2>
+<h2>Working on branch: checking</h2>
     <ul>
-      <li></li>
+      <li>Fix error saving a new single transaction. Works, but a bit wonky. (Pushed)</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Fix error saving a new single transaction.</li>
       <li>Fix // temp ... where error checking commented out (asking way too many times)</li>
       <li>Set up matches for all accounts (DiscCC and Checking done).</li>
       <li>Manually ad some common aliases. (DiscCC and Checking done)</li>
