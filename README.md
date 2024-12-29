@@ -3,15 +3,15 @@
 
 <h2>Working on branch: checking</h2>
     <ul>
-      <li>Fix error saving a new single transaction. Works, but a bit wonky. (Pushed)</li>
+      <li>Default stmtDate in late December - change year to next year.</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Fix // temp ... where error checking commented out (asking way too many times)</li>
-      <li>Set up matches for all accounts (DiscCC and Checking done).</li>
-      <li>Manually ad some common aliases. (DiscCC and Checking done)</li>
       <li>Order transactions so splits are together.</li>
+      <li>Set up matches for all accounts (DiscCC and Checking done).</li>
+      <li>Verify total_amt over several records.</li>
+      <li>Manually add some common aliases. (DiscCC and Checking done)</li>
       <li>Order columns in a more helpful way.</li>
       <li>"IGNORE" parts of aliases (see toFromAliases table)</li>
       <li>Get saving aliases to work.</li>
@@ -26,6 +26,7 @@
       <li>When entering/editting transaction, autofill amtMaura when amtMike entered (or vice versa)</li>
       <li>Look for duplicate transactions when uploading - done except for toFrom aliases</li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
+      <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
     </ul>
 
 <h2>Future Functionality:</h2>

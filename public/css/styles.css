@@ -24,7 +24,7 @@ table th {
     color: skyblue;
 }
 
-#dateErrorMsg {
+#errorMsg {
     color: red;
     font-size: 20px;
     font-weight: bold;

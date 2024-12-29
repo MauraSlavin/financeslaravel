@@ -1,5 +1,5 @@
 
-function verifyDate(newValue) {
+function oldVerifyDate(newValue) {
 
     var isGood = true;
     // is date of the format ####-##-##
@@ -53,6 +53,7 @@ function verifyAmount(newValue) {
     if(isNaN(newValue)) {
         return false;
     }
+    
     // question if more than 2 decimal points
     var countDecimals = function(value) {
         if(Math.floor(value) !== value) {
@@ -63,15 +64,15 @@ function verifyAmount(newValue) {
 
     var numberDecimals = countDecimals(newValue);
     if(numberDecimals > 2) {
-        // isOK = confirm("This value (" + newValue + ") has more than 2 decimal places.  Is that OK?");
-        isOK = true;  // temp
+        isOK = confirm("This value (" + newValue + ") has more than 2 decimal places.  Is that OK?");
+        // isOK = true;  // temp
         if(!isOK) return false;
     }
 
-    // question if over 200 or less than -200
-    if( newValue > 200 || newValue < -200) {
-        // isOK = confirm("This value (" + newValue + ") has is pretty big.  Is that OK?");
-        isOK = true;  // temp
+    // question if over 500 or less than -500
+    if( newValue > 500 || newValue < -500) {
+        isOK = confirm("This value (" + newValue + ") has is pretty big.  Is that OK?");
+        // isOK = true;  // temp
         if(!isOK) return false;
     }
 
@@ -123,16 +124,16 @@ function verifyStmtDate(newValue) {
     var thisYear = new Date().getFullYear();
     thisYear = thisYear % 100;
     if(inputYear != thisYear) {
-        // isGood = confirm("This statement date (" + newValue + ") is not this year.  Is it ok?");
-        isGood = true;  // temp
+        isGood = confirm("This statement date (" + newValue + ") is not this year.  Is it ok?");
+        // isGood = true;  // temp
         if(!isGood) return false;
     }
             
     const formatter = new Intl.DateTimeFormat('en', { month: 'short' });
     var thisMonth = formatter.format(new Date()).slice(0, 3);
     if(thisMonth != parts[1]) {
-        // isGood = confirm("This statement date (" + newValue + ") is not this month.  Is it ok?");
-        isGood = true; // temp
+        isGood = confirm("This statement date (" + newValue + ") is not this month.  Is it ok?");
+        // isGood = true; // temp
         if(!isGood) return false;
     }
 
