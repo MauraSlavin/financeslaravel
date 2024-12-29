@@ -46,7 +46,7 @@
                 </div>
             </div>
         </form>
-        <p id="dateErrorMsg"></p>
+        <p id="errorMsg"></p>
         <!-- table -->
         <table id="editTransactionsTable">
 
@@ -270,18 +270,22 @@
                 var origToFrom = '';    // want it scoped here
 
                 // get the date of the first of the current month in mm/dd/yyyy format
-                function getFirst() {
-                    const now = new Date();
-                    var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                // function getFirst() {
+                //     const now = new Date();
+                //     var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                //     console.log("in GETFIRST...");
+                //     console.log(" - firstDay: " + firstDay);
 
-                    // this month as a 0 left padded 2 char string
-                    var month = ('00' + (firstDay.getMonth() + 1).toString()).slice(-2);
-                    
-                    // put in yyyy-mm-01 format (01 for the first of the month)
-                    firstDay = `${firstDay.getFullYear()}-${month}-01`;
+                //     // this month as a 0 left padded 2 char string
+                //     var month = ('00' + (firstDay.getMonth() + 1).toString()).slice(-2);
+                //     console.log(" - month: " + month);
 
-                    return firstDay;
-                }
+                //     // put in yyyy-mm-01 format (01 for the first of the month)
+                //     firstDay = `${firstDay.getFullYear()}-${month}-01`;
+                //     console.log(" - firstDay: " + firstDay);
+
+                //     return firstDay;
+                // }
 
                 // is the month a valid month? Returns "invalid" if not, the month if it is valid
                 function checkMonth(month) {
@@ -309,17 +313,20 @@
                 // check to see if the date is valid
                 // Note: 2/29 will be ok, even if it is not a leap year.
                 // if nullOK is true, NULL is allowed
-                function verifyDate(date, nullOK = false) {
+                // returns a valid date, or false if date is not valid
+                function verifyDate(date, field, nullOK = false) {
+                    console.log("IN VERIFYDATE");
 
                     // make sure date is valid
                     var month, day, year;
 
                     // clear old error msg
                     var errorMsg = "";
-                    $("#dateErrorMsg").text(errorMsg);
+                    console.log("clear errorMsg text");
+                    // $("#errorMsg").text(errorMsg);
 
                     // if nullOK, then a null or empty string is allowed.
-                    // return an empty string
+                    // return true (existing value ok)
                     if (nullOK && (date == "" || date == null)) return "";
 
                     // determine whether '-' or '/' is used as a delimiter in the date
@@ -327,15 +334,32 @@
                     var delimiter;
                     if(hasDashDelimiter) delimiter = '-';
                     else delimiter = '/';
-                    
+                    console.log("delimiter: ", delimiter);
+
                     // break date into parts
                     var newDate = date.split(delimiter);
+                    console.log("newDate: ", newDate);
+
+                    // needs at least 2 elements in newDate (month & day)
+                    if(newDate.length < 2) {
+                        errorMsg = field + ": Date needs to be yyyy-mm-dd or yy-mm-dd or mm-dd (" + date + " entered).";
+                        $("#errorMsg").text(errorMsg);
+                        return false;
+                    }
 
                     // if only month and day, add year to newDate variable
                     if(newDate.length == 2) {
+                        var lengths = newDate.map(element => element.length);
+                        console.log("Lengths: ", lengths);
+                        
+                        if(Math.max(...lengths) > 2) {
+                            errorMsg = field + ": Month and date should be 2 chars each (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
+                        }
                         year = new Date().getFullYear();
                         newDate.push(year.toString());
                     }
+                    if(errorMsg != '') return false;
 
                     // create array of objects w/length & index
                     const lengthAndIndices = newDate.map((item, index) => ({ length: item.length, index }));
@@ -349,10 +373,11 @@
 
                     // year should be the longest, and should have 2 or 4 digits
                     if(![2,4].includes(maxLength)) {
-                        errorMsg = "Year must have 2 or 4 digits (" + date + " entered).";
-                        $("#dateErrorMsg").text(errorMsg);
+                        errorMsg = field + ": Year must have 2 or 4 digits (" + date + " entered).";
+                        console.log("set errorMsg text to: ", errorMsg);
+                        $("#errorMsg").text(errorMsg);
 
-                        return getFirst();
+                        return false;
                     }
 
                     // Only one part can be 4 chars long
@@ -360,13 +385,31 @@
                     if(maxLength == 4) {
                         const maxIndices = lengthAndIndices.filter(obj => obj.length === maxLength).map(obj => obj.index);
                         if(maxIndices.length != 1) {
-                            errorMsg = "Only one part of the date can have 4 digits (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                            errorMsg = field + ": Only one part of the date can have 4 digits (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
 
-                            return getFirst();
+                            return false;
                         }
 
-                        year = newDate[maxIndices];
+                        var year = newDate[maxIndices];
+                        var numYear = parseInt(year);
+                        
+                        // year must be a number
+                        if((typeof numYear === "number" && isNaN(numYear)) || typeof numYear != "number") {
+                            errorMsg = field + ": Year must be a number (" + year + " entered).";
+                            console.log("set errorMsg text to: ", errorMsg);
+                            $("#errorMsg").text(errorMsg);
+                            
+                            return false;
+                        }
+
+                        // year must be between 2000 and 2050
+                        if(numYear < 2000 || numYear > 2050) {
+                            errorMsg = field + ": Year must be between 2000 and 2050 (" + year + " entered).";
+                            $("#errorMsg").text(errorMsg);
+                            
+                            return false;
+                        }
 
                         // remove year from newDate
                         newDate.splice(maxIndices, 1);
@@ -374,18 +417,18 @@
                         // the remaining parts should be month and day, in that order
                         month = checkMonth(newDate[0]);
                         if(month == 'invalid') {
-                            errorMsg = "The month must be between 1 and 12 (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                            errorMsg = field + ": The month must be between 1 and 12 (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
 
-                            return getFirst();
+                            return false;
                         }
 
                         day = checkDay(newDate[1], newDate[0]);
                         if(day == 'invalid') {
-                            errorMsg = "The day must be between 1 and the end of the month (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                            errorMsg = field + ": The day must be between 1 and the end of the month (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
 
-                            return getFirst();
+                            return false;
                         }
 
                         return year + "-" + month + "-" + day;
@@ -395,18 +438,18 @@
 
                         month = checkMonth(newDate[0]);
                         if(month == 'invalid') {
-                            errorMsg = "The month must be between 1 and 12 (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                            errorMsg = field + ": The month must be between 1 and 12 (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
 
-                            return getFirst();
+                            return false;
                         }
 
                         day = checkDay(newDate[1], newDate[0]);
                         if(day == 'invalid') {
-                            errorMsg = "The month must be between 1 and 12 (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                            errorMsg = field + ": The month must be between 1 and 12 (" + date + " entered).";
+                            $("#errorMsg").text(errorMsg);
 
-                            return getFirst();
+                            return false;
                         }
 
                         // any year is accepted
@@ -417,10 +460,10 @@
 
                     } else {
                         // Throw error message if year does not have 2 or 4 digits
-                        errorMsg = "The year must have 2 or 4 digits (" + date + " entered).";
-                            $("#dateErrorMsg").text(errorMsg);
+                        errorMsg = field + ": The year must have 2 or 4 digits (" + date + " entered).";
+                        $("#errorMsg").text(errorMsg);
 
-                        return getFirst();
+                        return false;
                     }
 
                 }
@@ -567,6 +610,8 @@
                             var cellClass = $cell.children(':first-child').prop("class");
                             // drop editable-cell class
                             cellClass = cellClass.replace("editable-cell", "");
+                            cellClass = cellClass.slice(0, -4);  // drop the "Edit" suffix from the class
+
 
                             // use the input value for the html (text) of the non-input cell (replacing the input)
                             var cellValue = $cell.children(':first-child').val();
@@ -591,48 +636,60 @@
 
                 // If a new toFrom is entered, make sure it's not a mistake;
                 // If the new toFrom isn't a previously used value, ask if it should be changed automatically.
+                // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
                 function handleToFrom(newValue, toFroms, toFromAliases, origToFrom) {
-
-                    var isGood = true; 
+                    console.log("newValue: " + newValue);
+                    var isGood = true;
+                    var errorMsg = ''; 
 
                     // Does toFrom exceed char length in database (100 chars)
-                    isGood = verifyVarCharLength(newValue, 100);
+                    var maxToFromChars = 100;
+                    isGood = verifyVarCharLength(newValue, maxToFromChars);
                     if(!isGood) {
-                        newValue = newValue.substr(0, 100);
-                        $(this).val(newValue);
-                        // isGood = confirm("toFrom truncated to:\n" + newValue + "\n\nIs this OK?");
-                        isGood = true;  // temp 
-                        if(!isGood) return false;
-                        else isGood = true;
-                    } else {
-                        $(this).css("background-color", "white");
+                        okToTruncToFrom = confirm("toFrom truncated to:\n" + newValue + "\n\nIs this OK?");
+                        if(!okToTruncToFrom) {
+                            return [false, "toFrom: Max chars of " + maxToFromChars + " exceeded."];
+                        } else {
+                            newValue = newValue.substr(0, maxToFromChars);
+                            isGood = newValue;
+                        }
                     }
 
-                    // is toFrom a new value?  If so, is it ok?
-                    if(!(toFroms).includes(newValue)) {     // new toFrom value
+                    // Does toFrom have at least one character?
+                    if(newValue.trim().length < 1) {
+                        errorMsg = "toFrom: Enter at least one non-blank char.";
+                        return [false, errorMsg];
+                    }
+
+                    // is toFrom a new value (look at existing toFrom values, and toFroms in aliases)?
+                    // If so, is it ok?
+                    var existingOrigToFroms = toFroms.concat(toFromAliases.map(obj => obj.origToFrom));
+                    existingOrigToFroms = existingOrigToFroms.map(elt => elt.toLowerCase());
+
+                    if(!existingOrigToFroms.includes(newValue.toLowerCase())) {     // new toFrom value
                         // If a new toFrom is entered, make sure it's not a mistake;
-                        var question = "This is a new toFrom value (" + newValue + ").  Is it correct?";
-                        // var isCorrectNewValue = confirm(question);
-                        var isCorrectNewValue = true;  // temp 
+                        var question = "This is a new toFrom value: " + newValue + ".  Is it correct?";
+                        var isCorrectNewValue = confirm(question);
                         // if not correct, return and let user try again
-                        if(!isCorrectNewValue) return false;
+                        if(!isCorrectNewValue) return [false, "toFrom: Incorrect toFrom entered (" + newValue + ")."];
                     }
 
-                    // If the new toFrom doesn't have an alias, ask if it should be changed automatically.
-                    var foundToFrom = toFromAliases.find(alias => alias.origToFrom === origToFrom);
-                    if( typeof foundToFrom === 'undefined') {
-                        var question = "Should this toFrom automatically be changed to " + newValue + " when the first " + numberOfAliasCharsToMatch + " characters match?" +
+                    // If the new toFrom doesn't have an alias, should future examples be auto replaced in the future;
+                    // If it DOES have an alias, if it should this case be changed.
+                    var foundToFrom = toFromAliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase());
+                    // if no alias found...
+                    if( typeof foundToFrom === 'undefined' && newValue.toLowerCase() != origToFrom.toLowerCase()) {
+                        var question = "In the future, should this toFrom automatically be changed to " + newValue + " when the first " + numberOfAliasCharsToMatch + " characters match?" +
                             '\n\n"' + origToFrom.substr(0, numberOfAliasCharsToMatch) + '..." \n     to\n"' + newValue + '"';
-                        // var saveAlias = confirm(question);
-                        var saveAlias = false;  // temp 
-
-                        origToFrom = origToFrom.substr(0, numberOfAliasCharsToMatch);
-                        origToFrom = encodeURIComponent(origToFrom);
-                        newValue = encodeURIComponent(newValue);
+                        var saveAlias = confirm(question);
                         
-                        var url = '/transactions/insertAlias/' + origToFrom + '/' + newValue;
-
                         if(saveAlias) {
+                            origToFrom = origToFrom.substr(0, numberOfAliasCharsToMatch);
+                            origToFrom = encodeURIComponent(origToFrom);
+                            newValue = encodeURIComponent(newValue);
+                            
+                            var url = '/transactions/insertAlias/' + origToFrom + '/' + newValue;
+                           
                             $.ajax({
                                 url: url,
                                 type: 'POST',
@@ -655,13 +712,122 @@
                                 }
                             });
                         }
+
+                    // if alias already exists, replace the toFrom with the alias
+                    } else if(typeof foundToFrom !== 'undefined') {
+                        isGood = foundToFrom['transToFrom'];
                     }
 
-                    return isGood;
+                    return [isGood, null];
                 }
                 
 
-                // If a new toFrom is entered, make sure it's not a mistake;
+                // If a new tracking is entered, make sure it's not a mistake;
+                // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
+                function handleTracking(newValue, trackings, origTracking) {
+                    console.log("newValue: " + newValue);
+                    var isGood = true;
+                    var errorMsg = ''; 
+
+                    // Does tracking exceed char length in database (10 chars)
+                    var maxTrackingChars = 10;
+                    isGood = verifyVarCharLength(newValue, maxTrackingChars);
+
+                    if(!isGood) {
+                        // ask if truncating the input is ok
+                        truncTracking = newValue.slice(0, maxTrackingChars);
+                        okToTruncTracking = confirm("Tracking truncated to:\n" + truncTracking + "\n\nIs this OK?");
+                        if(!okToTruncTracking) {
+                            return [false, "tracking: Max chars of " + maxTrackingChars + " exceeded. Entered: " + newValue];
+                        } else {
+                            newValue = truncTracking;
+                            isGood = newValue;
+                        }
+                    }
+
+                    // is tracking a new value (look at existing tracking values, and toFroms in aliases)?
+                    // If so, is it ok?
+                    if(!trackings.includes(newValue)) {     // new tracking value
+                        // If a new tracking is entered, make sure it's not a mistake;
+                        var question = "This is a new tracking value: " + newValue + ".  Is it correct?";
+                        var isCorrectNewTracking = confirm(question);
+                        // if not correct, return and let user try again
+                        if(!isCorrectNewTracking) return [false, "tracking: Incorrect tracking entered (" + newValue + ")."];
+                    }
+
+                    return [isGood, null];
+                }
+
+
+                function handleStmtDate(newValue) {
+                    var isGood = true;
+                    var errMsg = '';
+
+                    // should be in the format ##-Ull (#: number; -: dash; U: uppercase letter; l: lowercase letter)
+                    var numbers = newValue.slice(0, 2);
+                    var dash = newValue[2];
+                    var upper = newValue[3];
+                    var lowers = newValue.slice(4, 6);
+
+                    // must be 6 characters
+                    if (newValue.length != 6) {
+                        errMsg = "Must of in the format yy-Mmm (i.e. 24-Dec).  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];
+                    }
+
+                    // first 2 characters need to be numbers
+                    if (isNaN(numbers)) {
+                        errMsg = "First two chars should be a 2-digit year.  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];
+                    }
+
+                    // 3rd character must be a dash
+                    if (dash != "-") {
+                        errMsg = "Third char should be a dash.  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];   
+                    }
+
+                    // 4th character must be an uppercase letter
+                    if (!(upper === upper.toUpperCase() && /[A-Z]/.test(upper))) {
+                        errMsg = "Fourth char should be an uppercase letter.  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];
+                    }
+
+                    // 5th and 6th characters must be lower case letters
+                    if (!(lowers === lowers.toLowerCase() && /^[a-z]+$/.test(lowers))) {
+                        errMsg = "Fifth & sixth chars should be lowercase letters.  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];  
+                    }
+
+                    // first two characters must be the last two digits of this year, last year or next year
+                    var thisYear = new Date().getFullYear();
+                    thisYear = thisYear.toString().substr(-2);
+                    const lastYear = (parseInt(thisYear) - 1).toString();
+                    const nextYear = (parseInt(thisYear) + 1).toString();
+                    if (![thisYear, nextYear, lastYear].includes(numbers)) {
+                        errMsg = "First two chars should be a 2-digit year (" + lastYear +", " + thisYear + ", or " + nextYear + ".  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg];   
+                    }
+
+                    // last 3 chars must be a month abbreviation
+                    const month = upper + lowers;
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    if(!months.includes(month)) {
+                        errMsg = "Last three chars should be a 3-digit month abbreviation.  Entered: " + newValue;
+                        isGood = false;
+                        return [isGood, errMsg]; 
+                    }
+
+                    return [isGood, errMsg];
+                }
+
+
                 // If the new toFrom isn't a previously used value, ask if it should be changed automatically.
                 function insertTrans(transaction) {
                       
@@ -691,12 +857,11 @@
                 }
 
 
-                // called for each cell changed to an input cell
+                // called for each cell to change to an input cell (where appropriate)
                 function changeCellToInput($tdcell, $cell, thisElt, typeElt) {
 
                     // assume true until see otherwise
                     var isGood = true;
-                    console.log("---- class: " + $tdcell.prop("class") + "\ntype of tagname: " + typeof $(thisElt).children(':first-child').prop('tagName'));
                     // for each cell that has no children (all the tdcells except the last "Edit" button)
                     // NOTE: The id (class newtransactionor transId), lastBalanced, or historical (spent, ytmBudget, yearBudget) are not editable
                     if( typeof $(thisElt).children(':first-child').prop('tagName') == 'undefined' 
@@ -709,9 +874,9 @@
                         && !$tdcell.prop("class") == ''
                     ) 
                     {
-
                         // get type of input field
                         $class = "editable-cell " + $tdcell.prop("class");
+                        $class = $class + "Edit";
 
                         // make it an input tdcell
                         var $input = $('<input>')
@@ -722,194 +887,8 @@
                             $tdcell.empty().append($input);
 
                         // drop class from td
-                        // $(thisElt).closest("td").removeClass();
                         if(typeElt == "BUTTON") $cell.closest("td").removeClass();
-                        // else tr passed in with td children
-                        // else $cell.find("td").removeClass();
-                        
-                        // listen for changes to the input
-                        // $input.on('change', function() {
-                        $(document).on('change', 'input', function() {
-                            
-                            var newValue = $(thisElt).val();
-                            var fieldClass = $(thisElt).prop("class");
-                            // drop editable-cell from fieldClass
-                            fieldClass = fieldClass.replace("editable-cell ", "");
-
-                            // check trans_date and clear_date
-                            // verifyDate returns a valid date,
-                            //  or an empty string if the date is '' or null and that's allowed.
-                            if(fieldClass.includes('Date') && !fieldClass.includes('stmtDate')) {
-                                // clear date can have a null or '' date
-                                var nullOK;
-                                if("clearDate" == fieldClass) nullOK = true;
-                                else nullOK = false;
-
-                                isGood = verifyDate(newValue, nullOK);
-                                $(thisElt).val(isGood);
-
-                            // check account (in list of defined accounts)
-                            } else if(fieldClass.includes('account')) {
-                                // is account entered (newValue) in list of defined values (accountNames)
-                                isGood = verifyEnums(newValue, accountNames);
-
-                                if(!isGood) {
-                                    $(thisElt).val("enter defined account name (orig: " + origAccount + ")");
-                                } else {
-                                    // reset origAccount (since last entered is good)
-                                    origAccount = newValue;
-
-                                    // if not DiscSavings, erase Bucket and alert user
-                                    // var $accountcell = $(thisElt);  // don't lose "this"
-
-                                    // if(newValue != 'DiscSavings' && $accountcell.closest("tr").find('.bucket').val()) {
-                                    if(typeElt == "BUTTON") {
-                                        if(newValue != 'DiscSavings' && $cell.closest("tr").find('.bucket').val()) {
-                                            // $accountcell.closest("tr").find('.bucket').val("");        // erase bucket value
-                                            $cell.closest("tr").find('.bucket').val("");        // erase bucket value
-                                            alert("Bucket value removed since only DiscSavings uses buckets");  // tell user
-                                        }
-                                    // else tr passed in with td children
-                                    } else {
-                                        if(newValue != 'DiscSavings' && $cell.find("tr").find('.bucket').val()) {
-                                            // $accountcell.closest("tr").find('.bucket').val("");        // erase bucket value
-                                            $cell.find("tr").find('.bucket').val("");        // erase bucket value
-                                            alert("Bucket value removed since only DiscSavings uses buckets");  // tell user
-                                        }
-                                    }
-                                }
-
-                            // check toFrom (make automatic?)
-                            } else if(fieldClass.includes('toFrom')) {
-                                isGood = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
-                                if(!isGood) {
-                                    $(thisElt).val("enter correct toFrom (orig: "  + origToFrom + ")");
-                                }
-                            
-
-                            // check amount values  - number; question if more than 2 decimal places
-                            // checks amount, amtMike, amtMaura, total_amt  
-                            } else if(fieldClass.includes('amount') || fieldClass.includes('amt')) {
-                                isGood = verifyAmount(newValue);
-                                if(!isGood) {
-                                    $(thisElt).val("enter integer or decimal dollar amount (no $)");
-                                }
-
-                                // handle splitTotal if amount is changed
-                                if(isGood && fieldClass.includes('amount')) {
-
-                                    // recalc splitTotal - add all amount input fields
-                                    splitTotal = 0;
-                                    var $theseTransactions = $(thisElt).parent().parent().parent();
-                                    $theseTransactions.find('td').each(function(index, td) {
-                                        if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
-                                            splitTotal += Number($(td).children(':first-child').val());
-                                        };
-                                    });
-
-                                    // if the total is off, turn it red and note the difference to put on the page
-                                    var thisTotalAmt = $(thisElt).parent().parent().find(".total_amt").children(":first-child").val();
-                                    var totalDiffText = ""; // assume no difference
-
-                                    if(splitTotal != thisTotalAmt) {
-                                        var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
-                                        $("#splitTotal").css("color","red");
-
-                                    // otherwise, change the color back to skyblue
-                                    } else {
-                                        $("#splitTotal").css("color","skyblue");
-                                    }
-
-                                    // put the splitTotal in the amount header (span id = splitTotal)
-                                    $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
-                                }
-
-                            // is method <= 10 chars (size of database column)
-                            } else if(fieldClass.includes('method')) {
-                                isGood = verifyVarCharLength(newValue, 10);
-                                if(!isGood) {
-                                    $(thisElt).val(newValue.substr(0, 10) + " - truncated" );
-                                    $(thisElt).css("background-color", "yellow");
-                                } else {
-                                    $(thisElt).css("background-color", "white");
-                                }
-
-                            // check category (in list of defined categories)
-                            } else if(fieldClass.includes('category')) {
-                                // is category entered (newValue) in list of defined values (categories)
-                                isGood = verifyEnums(newValue, categories);
-                                if(!isGood) {
-                                    $(thisElt).val('"' + newValue + '" is not a defined category name.');
-                                }
-
-                            // is tracking <= 10 chars (size of database column)
-                            //  verify if it's a new value
-                            } else if(fieldClass.includes('tracking')) {
-                                isGood = verifyVarCharLength(newValue, 10);
-                                if(!isGood) {
-                                    $(thisElt).val(newValue.substr(0, 10) + " - truncated" );
-                                    $(thisElt).css("background-color", "yellow");
-                                } else {
-                                    $(thisElt).css("background-color", "white");
-                                    isGood = verifyEnums(newValue, trackings);
-                                    if(!isGood) {
-                                        // isGood = confirm('"' + newValue + '" is a new tracking value.  Is this correct?');
-                                        isGood = true;  // temp 
-                                        if(!isGood) {
-                                            $(thisElt).val('Enter a tracking value (was "' + newValue + '").');
-                                        }
-                                    }
-                                }
-
-                            // is stmtDate valid (i.e. 24-Oct)
-                            } else if(fieldClass.includes('stmtDate')) {
-                                isGood = verifyStmtDate(newValue);
-                                if(!isGood) {
-                                    $(thisElt).val('stmtDate needs to be in the format yy-Mon (' + newValue + ' entered)');
-                                }
-
-
-                            // is total_key <= 5 chars (size of database column)
-                            } else if(fieldClass.includes('total_key')) {
-                                isGood = verifyVarCharLength(newValue, 5);
-                                if(!isGood) {
-                                    $(thisElt).val(newValue.substr(0, 5) + " - truncated" );
-                                    $(thisElt).css("background-color", "yellow");
-                                } else {
-                                    $(thisElt).css("background-color", "white");
-                                }
-                            
-                            // check bucket (in list of defined buckets);
-                            // required for DiscSavings account, should be blank for all others
-                            } else if(fieldClass.includes('bucket')) {
-                                var $cell = $(thisElt);
-
-                                // only enter bucket for DiscSavings account
-                                if(origAccount == 'DiscSavings') {
-                                    // is bucket entered (newValue) in list of defined values (buckets)
-                                    isGood = verifyEnums(newValue, buckets);
-                                    if(!isGood) {
-                                        $cell.val('"' + newValue + '" is not a defined bucket.');
-                                    }
-                                } else {
-                                    alert("Only DiscSavings accounts use buckets");
-                                    $cell.val("");
-                                }
-
-
-                            // is notes <= 100 chars (size of database column)
-                            } else if(fieldClass.includes('notes')) {
-                                isGood = verifyVarCharLength(newValue, 100);
-                                if(!isGood) {
-                                    $(thisElt).val(newValue.substr(0, 100) + " - truncated" );
-                                    $(thisElt).css("background-color", "yellow");
-                                } else {
-                                    $(thisElt).css("background-color", "white");
-                                }
-                            }
-                            
-                        });
-
+                       
                     } else {
                         // change the "Edit" button to a "Save" button
                         if( $(thisElt).children(":first-child").text() == "Edit") {
@@ -925,11 +904,9 @@
                 }   // end of function changeCellToInput
 
 
-                function changeCellsToInputs($cell) {
-                    console.log("In changeCellsToInputs for cell with \nTag: " + $cell.prop('tagName') + "\nClass: " + $cell.attr('class') + "\nText: |" + $cell.text() + "|");
+                function changeCellsToInputs($cell, origTransDate = NULL, origClearDate = NULL, origToFrom = NULL, origAmount = NULL, origAmtMike = NULL, origAmtMaura = NULL, origMethod = NULL, origCategory = NULL, origTracking = NULL, origStmtDate = NULL, origTotalAmt = NULL, origTotalKey = NULL, origNotes = NULL) {
                     // change all the cells to inputs, except the "Edit" button
                     if($cell.prop('tagName') == "BUTTON") {
-                        console.log("BUTTON");
                         $cell.parent().parent().find('td').each(function(index, td) {
                         
                             // What's the tag of the first child (undefined for all but the last, which is "BUTTON")
@@ -943,7 +920,6 @@
                         });
                     } else {
                         // tr passed in
-                        console.log("NOT A BUTTON: " + $cell.prop('tagName'));
                         $cell.find('td').each(function(index, td) {
                             // get the current cell
                             var $tdcell = $(this);
@@ -952,6 +928,521 @@
                             
                         });
                     }
+
+                    // listen for changes to each input field
+
+                    // transDate
+                    $(document).on('change', '.transDateEdit', function() {
+                        
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        var fieldClass = $input.prop("class");
+                        $("#errorMsg").text("");
+                        console.log(".transDate changed...\n - newValue:" + newValue + "\n - fieldClass: " + fieldClass);
+
+                        // check trans_date and clear_date
+                        // verifyDate returns a valid date string (could be "") or false if not valid,
+                        if(fieldClass.includes('editable-cell')) {
+                                
+                            var fieldClassClicked = fieldClass;
+                            // trans date can NOT have a null or '' date
+                            var nullOK = false;
+
+                            isGood = verifyDate(newValue, "trans-date", nullOK);
+                            if(isGood === false) {
+                                $input.css("background-color", "yellow").val(origTransDate);
+                            } else {
+                                $input.css("background-color", "white").val(isGood);
+                                $("#errorMsg").text("");
+                            }
+                        }
+                    });
+
+                    // clearDate
+                    $(document).on('change', '.clearDateEdit', function() {
+                        
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        var fieldClass = $input.prop("class");
+                        $("#errorMsg").text("");
+
+                        // check trans_date and clear_date
+                        // verifyDate returns a valid date string (could be "") or false if not valid,
+                        if(fieldClass.includes('editable-cell')) {
+
+                            var fieldClassClicked = fieldClass;
+                            // clear date can have a null or '' date
+                            var nullOK = true;
+
+                            isGood = verifyDate(newValue, "clear-date", nullOK);
+                            if(isGood === false) {
+                                $input.css("background-color", "yellow").val(origClearDate);
+                            } else {
+                                $input.css("background-color", "white").val(isGood);
+                                $("#errorMsg").text("");
+                            }
+                        }
+                    });
+
+                    // toFrom
+                    $("#editTransactionsTable").on('change', '.toFromEdit', function() {
+                                
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        [isGood, errorMsg] = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
+                        if(isGood === false) {
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origToFrom);
+                        } else if(isGood != true) {
+                            $input.css("background-color", "white").val(isGood);
+                        } else {
+                            $("#errorMsg").text("");
+                        }
+                    });
+
+                    // amount
+                    $(document).on('change', '.amountEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        isGood = verifyAmount(newValue);
+                        if(!isGood) {
+                            errorMsg = 'amount: Amount must be a number with no "$". Entered: ' + newValue;
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origAmount);
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                        // handle amtMike/amtMaura if amount is changed
+                        // thisRcdCategory gets the category. MikeSpending, MauraSpending handled diffeently from the rest.
+                        var thisRcdCategory = $input.parent().parent().find(".categoryEdit").val();
+
+                        // if not MikeSpendinng or MauraSpending, split between amtMike & amtMaura
+                        if(!["MikeSpending", "MauraSpending"].includes(thisRcdCategory)) {
+
+                            // recalc Mike & Maura splits
+                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit');
+                            $amtMikeEdit.val($input.val() / 2);
+
+                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit');
+                            $amtMauraEdit.val($input.val() / 2);
+
+                        // if MikeSpending, total is set to amtMike
+                        } else if( thisRcdCategory == "MikeSpending") {
+                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit');
+                            $amtMikeEdit.val($input.val());
+
+                        // if MauraSpending, total is set to amtMaura
+                        } else if( thisRcdCategory == "MauraSpending") {
+                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit');
+                            $amtMauraEdit.val($input.val());
+                        }
+                        
+                            // // if the total is off, turn it red and note the difference to put on the page
+                            // var thisTotalAmt = $input.parent().parent().find(".total_amt").children(":first-child").val();
+                            // var totalDiffText = ""; // assume no difference
+
+                            // if(splitTotal != thisTotalAmt) {
+                            //     var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
+                            //     $("#splitTotal").css("color","red");
+
+                            // // otherwise, change the color back to skyblue
+                            // } else {
+                            //     $("#splitTotal").css("color","skyblue");
+                            // }
+
+                            // // put the splitTotal in the amount header (span id = splitTotal)
+                            // $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
+                        
+                    });
+
+                    // amtMike
+                    $(document).on('change', '.amtMikeEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        isGood = verifyAmount(newValue);
+                        // if the amount entered is not valid,
+                        //      display an error msg
+                        //      and put the original amt back on the page.
+                        if(!isGood) {
+                            errorMsg = 'amtMike: Amount must be a number with no "$". Entered: ' + newValue;
+                            $("#errorMsg").text(errorMsg);
+                            $('.amtMikeEdit').prop('disabled', true);   // turn triggers off
+                            $input.css("background-color", "white").val(origAmount);
+                            $('.amtMikeEdit').prop('disabled', false);   // turn triggers back on
+                            newValue = origAmount
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                        // handle amount if amtMike changed
+
+                        // If category is 
+                        // -- "MauraSpending", don't allow amtMike change (must be 0)
+                        // -- "MikeSpending", change total amount instead of amtMaura (with warning)
+                        // thisRcdCategory gets the category. MikeSpending, MauraSpending handled diffeently from the rest.
+                        var thisRcdCategory = $input.parent().parent().find(".categoryEdit").val();
+                        
+                        if(thisRcdCategory == "MauraSpending") {
+                            alert("Category is MauraSpending, so amtMike must be 0");
+                            $('.amtMikeEdit').prop('disabled', true);   // turn triggers off
+                            $input.val("0");
+
+                        } else if (thisRcdCategory == "MikeSpending") {
+                            // change amount to equal amtMike
+                            var amtChangeOK = confirm("OK to change the total amount to " + newValue + "?");
+                            // get change amount element value to newValue
+                            if(amtChangeOK) $input.parent().parent().find(".amountEdit").val(newValue);
+                            else {
+                                $('.amtMikeEdit').prop('disabled', true);   // turn triggers off
+                                $input.val(origAmtMike);
+                            }
+                            
+                        } else {
+                            // change amtMaura to equal amount - amtMike
+                            // get amtMaura element
+                            var $amtMaura = $input.parent().parent().find(".amtMauraEdit");
+                            
+                            // get total amount value
+                            var amount = $input.parent().parent().find(".amountEdit").val();
+                            
+                            // newValue is Mike's amt
+                            // calc new amtMaura and put on page
+                            var newAmtMauraVal = (Number(amount) - Number(newValue)).toFixed(2);
+                            $('.amtMauraEdit').prop('disabled', true);   // turn triggers off
+                            $amtMaura.val(newAmtMauraVal);
+                            $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
+                        }
+                        $('.amtMikeEdit').prop('disabled', false);   // turn triggers back on
+
+
+                        // handle splitTotal if amount is changed
+                        // if(isGood) {
+
+                        //     // recalc splitTotal - add all amount input fields
+                        //     splitTotal = 0;
+                        //     var $theseTransactions = $input.parent().parent().parent();
+                        //     $theseTransactions.find('td').each(function(index, td) {
+                        //         if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
+                        //             splitTotal += Number($(td).children(':first-child').val());
+                        //         };
+                        //     });
+
+                        //     // if the total is off, turn it red and note the difference to put on the page
+                        //     var thisTotalAmt = $input.parent().parent().find(".total_amt").children(":first-child").val();
+                        //     var totalDiffText = ""; // assume no difference
+
+                        //     if(splitTotal != thisTotalAmt) {
+                        //         var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
+                        //         $("#splitTotal").css("color","red");
+
+                        //     // otherwise, change the color back to skyblue
+                        //     } else {
+                        //         $("#splitTotal").css("color","skyblue");
+                        //     }
+
+                        //     // put the splitTotal in the amount header (span id = splitTotal)
+                        //     $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
+                        // }
+                    });
+
+                    // amtMaura
+                    $(document).on('change', '.amtMauraEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        isGood = verifyAmount(newValue);
+                        // if the amount entered is not valid,
+                        //      display an error msg
+                        //      and put the original amt back on the page.
+                        if(!isGood) {
+                            errorMsg = 'amtMaura: Amount must be a number with no "$". Entered: ' + newValue;
+                            $("#errorMsg").text(errorMsg);
+                            $('.amtMauraEdit').prop('disabled', true);   // turn triggers off
+                            $input.css("background-color", "yellow").val(origAmount);
+                            $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
+                            newValue = origAmount
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                        // handle amount if amtMaura changed
+
+                        // If category is 
+                        // -- "MikeSpending", don't allow amtMaura change (must be 0)
+                        // -- "MauraSpending", change total amount instead of amtMike (with warning)
+                        // thisRcdCategory gets the category. MauraSpending, MikeSpending handled diffeently from the rest.
+                        var thisRcdCategory = $input.parent().parent().find(".categoryEdit").val();
+                        
+                        if(thisRcdCategory == "MikeSpending") {
+                            alert("Category is MikeSpending, so amtMaura must be 0");
+                            $('.amtMauraEdit').prop('disabled', true);   // turn triggers off
+                            $input.val("0");
+                            $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
+
+                        } else if (thisRcdCategory == "MauraSpending") {
+                            // change amount to equal amtMaura
+                            var amtChangeOK = confirm("OK to change the total amount to " + newValue + "?");
+                            // get change amount element value to newValue
+                            if(amtChangeOK) $input.parent().parent().find(".amountEdit").val(newValue);
+                            else {
+                                $('.amtMauraEdit').prop('disabled', true);   // turn triggers off
+                                $input.val(origAmtMaura);
+                                $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
+                            }
+                            
+                        } else {
+                            // change amtMike to qual amount - amtMaura
+                            // get amtMike element
+                            var $amtMike = $input.parent().parent().find(".amtMikeEdit");
+
+                            // get total amount value
+                            var amount = $input.parent().parent().find(".amountEdit").val();
+                            
+                            // newValue is Maura's amt
+                            // calc new amtMike and put on page
+                            var newAmtMikeVal = (Number(amount) - Number(newValue)).toFixed(2);
+                            $('.amtMikeEdit').prop('disabled', true);   // turn triggers off
+                            $amtMike.val(newAmtMikeVal);
+                            $('.amtMikeEdit').prop('disabled', false);   // turn triggers back on
+                        }
+                        $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
+
+                        // handle splitTotal if amount is changed
+                        // if(isGood) {
+
+                        //     // recalc splitTotal - add all amount input fields
+                        //     splitTotal = 0;
+                        //     // var $theseTransactions = $(thisElt).parent().parent().parent();
+                        //     var $theseTransactions = $input.parent().parent().parent();
+                        //     $theseTransactions.find('td').each(function(index, td) {
+                        //         if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
+                        //             splitTotal += Number($(td).children(':first-child').val());
+                        //         };
+                        //     });
+
+                        //     // if the total is off, turn it red and note the difference to put on the page
+                        //     var thisTotalAmt = $input.parent().parent().find(".total_amt").children(":first-child").val();
+                        //     var totalDiffText = ""; // assume no difference
+
+                        //     if(splitTotal != thisTotalAmt) {
+                        //         var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
+                        //         $("#splitTotal").css("color","red");
+
+                        //     // otherwise, change the color back to skyblue
+                        //     } else {
+                        //         $("#splitTotal").css("color","skyblue");
+                        //     }
+
+                        //     // put the splitTotal in the amount header (span id = splitTotal)
+                        //     $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
+                        // }
+                    });
+
+                    // method
+                    $(document).on('change', '.methodEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        const methodMaxLength = 10;
+                        isGood = verifyVarCharLength(newValue, methodMaxLength);
+                        if(!isGood) {
+                            const truncMethod = newValue.slice(0, methodMaxLength);
+                            const question = "Method cannot be more than " + methodMaxLength + " chars long. OK to trunc to " + truncMethod + "?";
+                            const OKtoTrunc = confirm(question);
+                            if(OKtoTrunc) {
+                                $input.css("background-color", "white").val(truncMethod);
+                            } else {
+                                errorMsg = "Method cannot be more than " + methodMaxLength + " chars long. Entered: " + newValue + ".";
+                                $input.css("background-color", "yellow").val(origMethod);
+                                $("#errorMsg").text(errorMsg);
+                            }
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                    });
+
+                    // category
+                    $("#editTransactionsTable").on('change', '.categoryEdit', function() {
+                                
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        isGood = categories.includes(newValue);
+                        if(isGood === false) {
+                            errorMsg = "Not a valid category (entered: "  + newValue + ")";
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origCategory);
+
+                        // amtMike & amtMaura may need to be changed..
+                        // If category changes from
+                        //      any category to MauraSpending
+                        //          - set amtMaura to what amount is, and amtMike to 0
+                        //      any category to MikeSpending
+                        //          - set amtMike to what amount is, and amtMaura to 0
+                        //      MauraSpending or MikeSpending to any category (except MikeSpending or MauraSpending - see above)
+                        //          - split amount between amtMike and amtMaura
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+
+                            if(newValue == "MauraSpending") {
+                                // get amount
+                                var amount = $input.parent().parent().find(".amountEdit").val();
+                                // set amtMaura value to amount
+                                $input.parent().parent().find(".amtMauraEdit").val(amount);
+                                $input.parent().parent().find(".amtMikeEdit").val(0);
+                            } else if (newValue == "MikeSpending") {
+                                // get amount
+                                var amount = $input.parent().parent().find(".amountEdit").val();
+                                // set amtMike value to amount
+                                $input.parent().parent().find(".amtMikeEdit").val(amount);
+                                $input.parent().parent().find(".amtMauraEdit").val(0)
+                            } else if (["MikeSpending", "MauraSpending"].includes(origCategory)) {
+                                // get 1/2 amount
+                                var halfAmount = $input.parent().parent().find(".amountEdit").val() / 2;
+                                // set amtMike and amtMaura each to 1/2 amount
+                                $input.parent().parent().find(".amtMauraEdit").val(halfAmount);
+                                $input.parent().parent().find(".amtMikeEdit").val(halfAmount);
+                            }
+
+                        }
+                        // put else here to implement adding a new category.
+                        // Would need to change column definition to allow the new category.
+
+                    });
+
+                    // tracking
+                    $(document).on('change', '.trackingEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        [isGood, errorMsg] = handleTracking(newValue, trackings, origTracking);
+                        if(isGood === false) {
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origTracking);
+                        } else if (isGood !== true) {
+                            $input.css("background-color", "white").val(isGood);
+                        } else {
+                            $input.css("background-color", "white");
+                        }
+
+                    });
+
+                    // stmtDate
+                    $(document).on('change', '.stmtDateEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        [isGood, errorMsg] = handleStmtDate(newValue);
+                        if(!isGood) {
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origStmtDate);
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                    });
+
+                    // total_amt
+                    $(document).on('change', '.total_amtEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        isGood = verifyAmount(newValue);
+                        if(!isGood) {
+                            errorMsg = 'total_amt: Total amount must be a number with no "$". Entered: ' + newValue;
+                            $("#errorMsg").text(errorMsg);
+                            $input.css("background-color", "yellow").val(origTotalAmt);
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+
+                    });  
+                    
+                    
+                    // total_key
+                    $(document).on('change', '.total_keyEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        const totalKeyMaxLength = 6;
+                        isGood = verifyVarCharLength(newValue, totalKeyMaxLength);
+                        if(!isGood) {
+                            const truncTotalKey = newValue.slice(0, totalKeyMaxLength);
+                            const question = "Total_key cannot be more than " + totalKeyMaxLength + " chars long. OK to trunc to " + truncTotalKey + "?";
+                            const OKtoTrunc = confirm(question);
+                            if(OKtoTrunc) {
+                                $input.css("background-color", "white").val(truncTotalKey);
+                                $("#errorMsg").text("");
+                            } else {
+                                errorMsg = "Total_key cannot be more than " + totalKeyMaxLength + " chars long. Entered: " + newValue + ".";
+                                $("#errorMsg").text(errorMsg);
+                                $input.css("background-color", "yellow").val(origTotalKey);
+                            }
+                        } else {
+                            $input.css("background-color", "white");
+                        }
+
+                    });
+
+
+                    // notes
+                    $(document).on('change', '.notesEdit', function() {
+
+                        var $input = $(this);
+                        var newValue = $input.val();
+                        $("#errorMsg").text("");
+
+                        const notesMaxLength = 100;
+                        isGood = verifyVarCharLength(newValue, notesMaxLength);
+                        if(!isGood) {
+                            const truncNotes = newValue.slice(0, notesMaxLength);
+                            const question = "Notes cannot be more than " + notesMaxLength + " chars long. OK to trunc to " + truncNotes + "?";
+                            const OKtoTrunc = confirm(question);
+                            if(OKtoTrunc) {
+                                $input.css("background-color", "white").val(truncNotes);
+                            } else {
+                                errorMsg = "Notes cannot be more than " + notesMaxLength + " chars long. Entered: " + newValue + ".";
+                                $input.css("background-color", "yellow").val(origNotes);
+                                $("#errorMsg").text(errorMsg);
+                            }
+                        } else {
+                            $("#errorMsg").text("");
+                            $input.css("background-color", "white");
+                        }
+
+                    });
+
                 }   // end function changeCellsToInputs
 
 
@@ -961,13 +1452,15 @@
 
                 // handle changing beginning date
                 $('#beginDate').on('change', function() {
-                    newBeginDate = verifyDate($(this).val());
+                    newBeginDate = verifyDate($(this).val(), "begin date");
+                    console.log("newBeginDate: ", newBeginDate);
                     $(this).val(newBeginDate);
                 });
                 
                 // handle changing end date
                 $('#endDate').on('change', function() {
-                    newEndDate = verifyDate($(this).val());
+                    newEndDate = verifyDate($(this).val(), "end date");
+                    console.log("newEndDate: ", newEndDate);
                     $(this).val(newEndDate);
                 });
             
@@ -1049,26 +1542,21 @@
                     $newTransaction.attr('data-id', 'null');
                     $newTransaction.find('td').each(function(index, td) {
                         var $cell = $(td);
-                        console.log("text: " + $cell.prop('class'));
                         switch ($cell.prop('class')) {
 
                             case 'transId': 
-                                console.log("Class transId");
                                 $cell.text('null');
                                 break;
 
                             case 'undefined':
-                                console.log("Class undefined");
                                 $cell.children(':first-child').attr('data-id', 'null');
                                 break;
 
                             case '':
-                                console.log("No class");
                                 $cell.children(':first-child').attr('data-id', 'null');
                                 break;
                                 
                             default:
-                                console.log("Class " + $cell.prop('class'));
                                 $cell.text('');
                         }
                             
@@ -1097,15 +1585,27 @@
                     // console.log("cell id: " + $cell.data('id'));
 
                     // get the original account, toFrom, amount
-                    var origAccount = $cell.closest("tr").find('.account').text();
-                    if (origAccount == '') origAccount = "{{$accountName}}";
+                    // var origAccount = $cell.closest("tr").find('.account').text();
+                    // if (origAccount == '') origAccount = "{{$accountName}}";
 
+                    var origTransDate = $cell.closest("tr").find('.transDate').text();
+                    var origClearDate = $cell.closest("tr").find('.clearDate').text();
                     var origToFrom = $cell.closest("tr").find('.toFrom').text();
                     var origAmount = $cell.closest("tr").find('.amount').text();
+                    var origAmtMike = $cell.closest("tr").find('.amtMike').text();
+                    var origAmtMaura = $cell.closest("tr").find('.amtMaura').text();
+                    var origMethod = $cell.closest("tr").find('.method').text();
+                    var origCategory = $cell.closest("tr").find('.category').text();
+                    var origTracking = $cell.closest("tr").find('.tracking').text();
+                    var origStmtDate = $cell.closest("tr").find('.stmtDate').text();
+                    var origTotalAmt = $cell.closest("tr").find('.total_amt').text();
+                    var origTotalKey = $cell.closest("tr").find('.total_key').text();
+                    var origNotes = $cell.closest("tr").find('.notes').text();
+
                     // console.log("origAccount: ", origAccount, "\norigToFrom: ", origToFrom, "\norigAmount: ", origAmount);
 
                     // change all the cells to inputs, except the "Edit" button
-                    changeCellsToInputs($cell);
+                    changeCellsToInputs($cell, origTransDate, origClearDate, origToFrom, origAmount, origAmtMike, origAmtMaura, origMethod, origCategory, origTracking, origStmtDate, origTotalAmt, origTotalKey, origNotes);
                    
                 });
                 
@@ -1123,7 +1623,7 @@
                     // are the values in the record good
                     try {
 
-                        $record = $(this).parent().parent();
+                        $record = $(thisElement).parent().parent();
                         // Individual values should be good, since they are all checked as they are entered.
                         
                         // Check to make sure they "add up"...
@@ -1135,8 +1635,11 @@
                         // get needed data from record
                         var category = $record.find('.category').children(':first-child').val();
                         var amount = Number($record.find('.amount').children(':first-child').val());
+                        console.log("amount: ", amount);
                         var amtMike = Number($record.find('.amtMike').children(':first-child').val());
+                        console.log("amtMike: ", amtMike);
                         var amtMaura = Number($record.find('.amtMaura').children(':first-child').val());
+                        console.log("amtMaura: ", amtMaura);
                         var total_key = $record.find('.total_key').children(':first-child').val();
                         var total_amt = Number($record.find('.total_amt').children(':first-child').val());
                         var bucket = $record.find('.bucket').children(':first-child').val();
@@ -1201,8 +1704,8 @@
                         // all total_amts should be the same for all total_keys
                         var total_amt_done = false;  // false if no total_key, so it's not checked
                         if(total_key != '') {
-                            // total_amt_done = confirm("Are all the split transactions for total_key: " + total_key + " entered?");
-                            total_amt_done = false;     // temp
+                            total_amt_done = confirm("Are all the split transactions for total_key: " + total_key + " entered?");
+                            // total_amt_done = false;     // temp
                         }
 
                         if(total_amt_done) {
@@ -1385,6 +1888,19 @@
                     }
             
                 });
+
+                // when amount entered, fill in 1/2 amtMike, 1/2 amtMaura
+                $("body").on('change', '.amount', function(e) {
+                    e.preventDefault();
+
+                    // get amount entered
+                    var amount = $(this).val();
+                    // fill in amtMike
+                    $(this).parent().next().find("input").val(1/2*Number(amount));
+                    // fill in amtMaura
+                    $(this).parent().next().next().find("input").val(1/2*Number(amount));
+
+                })
         
             });
         </script>
