@@ -206,8 +206,15 @@ class TransactionsController extends Controller
             if($newRecord['clear_date'] <= ($year . "-" . $month . "-" . $lastStmtDay)) {
                 $newRecord['stmtDate'] = date("y") . "-" . date("M");
             } else {
-                $newRecord['stmtDate'] = date("y") . "-" . date("M", mktime(0,0,0,$month+1,$dayOfMonth,$year));
+                // if Dec, add 1 to year when adding one to the month
+                if($month == 12) {
+                    $stmtDateYear = date("y") + 1;
+                } else {
+                    $stmtDateYear = date("y");
+                }
+                $newRecord['stmtDate'] = $stmtDateYear . "-" . date("M", mktime(0,0,0,$month+1,$dayOfMonth,$year));
             }        
+
             // stmtDate is done, remove from fieldsLeft
             removeElementByValue($fieldsLeft, "stmtDate");
 
