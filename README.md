@@ -1,8 +1,8 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: checking</h2>
-    <ul>
+<h2>Working on branch: 2024-12-28-stmtDate-late-Dec</h2>
+    <ul>  
       <li>Default stmtDate in late December - change year to next year.</li>
     </ul>
     
@@ -43,6 +43,21 @@
     <li>Spending?</li>
     <li>Loans?</li>
     <li>App for Marina's Miles??</li>
+  </ul>
+
+<h2>GIT notes:</h2>
+  <ul>
+    <li>git branch <branchname>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // create a new branch</li>
+    <li>git checkout <branchname>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  // work in new branch</li>
+    <li>when ready to push changes...</li>
+    <li>git add * &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // includes all changes</li>
+    <li>git commit -m <notes> &nbsp;&nbsp;&nbsp; // ready to push</li>
+    <li>git push</li>
+    <li>log into github & create a merge request, and merge the code</li>
+    <li>Back in VS Code...</li>
+    <li>git checkout main</li>
+    <li>git pull</li>
+    <li>should now have all changes in the main branch, and ready to start again with a new branch</li>
   </ul>
 
 <h2>Database notes:</h2>
