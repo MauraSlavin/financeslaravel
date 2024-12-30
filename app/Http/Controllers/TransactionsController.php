@@ -468,6 +468,7 @@ class TransactionsController extends Controller
             })
             ->whereNull('clear_date')
             ->orderBy('trans_date', 'desc')
+            ->orderBy('total_key', 'desc')
             ->get()
             ->toArray();
 
@@ -480,7 +481,7 @@ class TransactionsController extends Controller
             ->where('trans_date', '<=', $endDate)
             ->whereNotNull('clear_date')
             ->orderBy('trans_date', 'desc')
-            ->get()
+            ->orderBy('total_key', 'desc')            ->get()
             ->toArray();
 
         // combine transactions
@@ -630,7 +631,8 @@ class TransactionsController extends Controller
             ->where("account", $accountName)
             ->where("trans_date", ">=", $beginDate)
             ->where("trans_date", "<=", $endDate)
-            ->orderBy("trans_date", "desc")
+            ->orderBy('trans_date', 'desc')
+            ->orderBy('total_key', 'desc')
             ->orderBy("toFrom")
             ->get()
             ->toArray();
