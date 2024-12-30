@@ -1,14 +1,15 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2024-12-28-stmtDate-late-Dec</h2>
+<h2>Working on branch: 2024-12-29-order-splits-together-</h2>
     <ul>  
-      <li>Default stmtDate in late December - change year to next year.</li>
+      <li>Order transactions so splits are together.</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Order transactions so splits are together.</li>
+      <li>Fix splitting a transaction.</li>
+      <li>Fix checking total for split transactions.</li>
       <li>Set up matches for all accounts (DiscCC and Checking done).</li>
       <li>Verify total_amt over several records.</li>
       <li>Manually add some common aliases. (DiscCC and Checking done)</li>
@@ -55,6 +56,7 @@
     <li>git push</li>
     <li>log into github & create a merge request, and merge the code</li>
     <li>Back in VS Code...</li>
+    <li>git pull (in branch - do I need this?)</li>
     <li>git checkout main</li>
     <li>git pull</li>
     <li>should now have all changes in the main branch, and ready to start again with a new branch</li>

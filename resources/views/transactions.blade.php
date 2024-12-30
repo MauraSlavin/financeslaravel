@@ -904,7 +904,7 @@
                 }   // end of function changeCellToInput
 
 
-                function changeCellsToInputs($cell, origTransDate = NULL, origClearDate = NULL, origToFrom = NULL, origAmount = NULL, origAmtMike = NULL, origAmtMaura = NULL, origMethod = NULL, origCategory = NULL, origTracking = NULL, origStmtDate = NULL, origTotalAmt = NULL, origTotalKey = NULL, origNotes = NULL) {
+                function changeCellsToInputs($cell, origTransDate = null, origClearDate = null, origToFrom = null, origAmount = null, origAmtMike = null, origAmtMaura = null, origMethod = null, origCategory = null, origTracking = null, origStmtDate = null, origTotalAmt = null, origTotalKey = null, origNotes = null) {
                     // change all the cells to inputs, except the "Edit" button
                     if($cell.prop('tagName') == "BUTTON") {
                         $cell.parent().parent().find('td').each(function(index, td) {
