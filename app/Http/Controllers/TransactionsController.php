@@ -764,6 +764,8 @@ class TransactionsController extends Controller
             $response = DB::table("transactions")
                 ->where('id', $id)
                 ->update($dataToUpdate);
+            error_log("response to update (id: " . $id . "): ");
+            error_log(json_encode($response));
 
             return response()->json([
                 'message' => "Transaction updated successfully"
@@ -836,16 +838,17 @@ class TransactionsController extends Controller
             
             $response = DB::table('transactions')
                 ->insert($transaction);
-
+            $recordId = DB::getPdo()->lastInsertId();
+            
             // return redirect()->back()->with('success', 'Alias successfully written to database');
             return response()->json([
                 'success' => true,
-                'message' => 'Transaction created successfully',
-                // 'recordId' => $record->id
+                'message' => 'Transaction inserted successfully',
+                'recordId' => $recordId
             ], 200);
         } catch(\Exception $e) {
             error_log("\nProblem inserting transaction record");
-            error_log(json_encode(['exception' => $e]));
+            error_log(json_encode(['exception' => $e->getMessage()]));
             \Log::error('Error inserting transaction record.  ' . $e->getMessage());
             return response()->json([
                 'error' => 'An unexpected error occurred',

@@ -63,16 +63,14 @@ function verifyAmount(newValue) {
     }
 
     var numberDecimals = countDecimals(newValue);
-    if(numberDecimals > 2) {
-        isOK = confirm("This value (" + newValue + ") has more than 2 decimal places.  Is that OK?");
-        // isOK = true;  // temp
+    if(numberDecimals > 3) {
+        isOK = confirm("This value (" + newValue + ") has more than 3 decimal places.  Is that OK?");
         if(!isOK) return false;
     }
 
     // question if over 500 or less than -500
     if( newValue > 500 || newValue < -500) {
         isOK = confirm("This value (" + newValue + ") has is pretty big.  Is that OK?");
-        // isOK = true;  // temp
         if(!isOK) return false;
     }
 

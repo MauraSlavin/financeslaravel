@@ -17,7 +17,6 @@
         <!-- headers -->
         <h1>New Transaction</h1>
         <h6>* Required</h6>
-        <!-- <button type="button" id="saveTransaction" class="btn btn-success rounded-sm">Save Transaction</button> -->
 
         <!-- fields for a new transaction -->
         <form action="{{ route('writeTransaction') }}" method="POST">
@@ -99,7 +98,6 @@
 
             <button type="submit" class="btn btn-primary">Save Transaction</button>
         </form>
-        <!-- <button type="button" style="margin-bottom: 20px;" id="saveTransaction" class="btn btn-success rounded-sm">Save Transaction</button> -->
 
         <script>
             
