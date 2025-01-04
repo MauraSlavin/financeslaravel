@@ -60,28 +60,29 @@
                         <th>account</th>
                     @endif
                     <th>toFrom</th>
-                    <th>amount<br>
-                        <span id="splitTotal" hidden>Split Tot: </span>
+                    <th>amount
+                        <!-- <br><span id="splitTotal" hidden>Split Tot: </span> -->
                     </th>
+                    <th>category</th>
+                    <th>notes</th>
+                    <th>method</th>
+                    <th>tracking</th>
+                    <th>Edit/Save</th>
+                    <th>Split</th>
+                    <th>Delete</th>
+                    <th>stmtDate</th>
                     <th>amtMike</th>
                     <th>amtMaura</th>
-                    <th>method</th>
-                    <th>category</th>
-                    <th>tracking</th>
-                    <th>stmtDate</th>
                     <th>total_amt</th>
                     <th>total_key</th>
+                    <th>split_total</th>
                     @if($accountName == 'DiscSavings' || $accountName == 'all')
                         <th>bucket</th>
                     @endif
-                    <th>notes</th>
                     <th>lastBalanced</th>
                     <th>Spent</th>
                     <th>Budget thru this month</th>
                     <th>Full Year Budget</th>
-                    <th>Edit/Save</th>
-                    <th>Split</th>
-                    <th>Delete</th>
                 </tr>
             </thead>
 
@@ -101,18 +102,29 @@
                         @endif
                         <td class="toFrom">{{ $newTransaction["toFrom"] ?? NULL  }}</td>
                         <td class="amount">{{ $newTransaction["amount"] ?? NULL  }}</td>
+                        <td class="category">{{ $newTransaction["category"] ?? NULL  }}</td>
+                        <td class="notes">{{ $newTransaction["notes"] ?? NULL  }}</td>
+                        <td class="method">{{ $newTransaction["method"] ?? NULL  }}</td>
+                        <td class="tracking">{{ $newTransaction["tracking"] ?? NULL  }}</td>
+                        <!-- once this ("edit") is clicked, change to save.  Once saved, change back to edit -->
+                        <td>
+                            <button class="btn btn-primary editTransaction" data-id={{ $newTransaction["id"] }}>Edit</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-warning splitTransaction" data-id={{ $newTransaction["id"] }}>Split</button>
+                        </td>                       
+                        <td>
+                            <button class="btn btn-danger deleteTransaction" data-id={{ $newTransaction["id"] }}>Delete</button>
+                        </td>
+                        <td class="stmtDate">{{ $newTransaction["stmtDate"] ?? NULL  }}</td>
                         <td class="amtMike">{{ $newTransaction["amtMike"] ?? NULL  }}</td>
                         <td class="amtMaura">{{ $newTransaction["amtMaura"] ?? NULL  }}</td>
-                        <td class="method">{{ $newTransaction["method"] ?? NULL  }}</td>
-                        <td class="category">{{ $newTransaction["category"] ?? NULL  }}</td>
-                        <td class="tracking">{{ $newTransaction["tracking"] ?? NULL  }}</td>
-                        <td class="stmtDate">{{ $newTransaction["stmtDate"] ?? NULL  }}</td>
                         <td class="total_amt">{{ $newTransaction["total_amt"] ?? NULL  }}</td>
                         <td class="total_key">{{ $newTransaction["total_key"] ?? NULL  }}</td>
+                        <td class="split_total">???</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $newTransaction["bucket"] ?? NULL  }}</td>
                         @endif
-                        <td class="notes">{{ $newTransaction["notes"] ?? NULL  }}</td>
                         <td class="lastBalanced"></td>
                         <td class="spent">@if(isset($newTransaction["spent"])){{ $newTransaction["spent"] }}
                                           @else - 
@@ -125,16 +137,6 @@
                         <td class="yearBudget">@if(isset($newTransaction["yearBudget"])){{ $newTransaction["yearBudget"] }}
                                           @else - 
                                           @endif
-                        </td>
-                        <!-- once this ("edit") is clicked, change to save.  Once saved, change back to edit -->
-                        <td>
-                            <button id="editTransaction" class="btn btn-primary" data-id={{ $newTransaction["id"] }}>Edit</button>
-                        </td>
-                        <td>
-                            <button id="splitTransaction" class="btn btn-warning" data-id={{ $newTransaction["id"] }}>Split</button>
-                        </td>                       
-                        <td>
-                            <button id="deleteTransaction" class="btn btn-danger" data-id={{ $newTransaction["id"] }}>Delete</button>
                         </td>
                     </tr>
                 @endforeach
@@ -150,25 +152,26 @@
                     @endif
                     <td class="fw-bold">toFrom (existing trans)</td>
                     <td class="fw-bold">amount</td>
+                    <td class="fw-bold">category</td>
+                    <td class="fw-bold">notes</td>
+                    <td class="fw-bold">method</td>
+                    <td class="fw-bold">tracking</td>
+                    <td class="fw-bold">Edit/Save</td>    
+                    <td class="fw-bold">Split</td>    
+                    <td class="fw-bold">Delete</td>    
+                    <td class="fw-bold">stmtDate</td>
                     <td class="fw-bold">amtMike</td>
                     <td class="fw-bold">amtMaura</td>
-                    <td class="fw-bold">method</td>
-                    <td class="fw-bold">category</td>
-                    <td class="fw-bold">tracking</td>
-                    <td class="fw-bold">stmtDate</td>
                     <td class="fw-bold">total_amt</td>
                     <td class="fw-bold">total_key</td>
+                    <td class="fw-bold">split_total</td>
                     @if($accountName == 'DiscSavings' || $accountName == 'all')
                         <td class="fw-bold">bucket</td>
                     @endif
-                    <td class="fw-bold">notes</td>
                     <td class="fw-bold">lastBalanced</td>
                     <td class="fw-bold">Spent</td>
                     <td class="fw-bold">Budget thru this month</td>
                     <td class="fw-bold">Full Year Budget</td>
-                    <td class="fw-bold">Edit/Save</td>    
-                    <td class="fw-bold">Split</td>    
-                    <td class="fw-bold">Delete</td>    
                 </tr>
                 @endif
 
@@ -183,18 +186,30 @@
                         @endif
                         <td class="toFrom">{{ $transaction->toFrom }}</td>
                         <td class="amount">{{ $transaction->amount }}</td>
+                        <td class="category">{{ $transaction->category }}</td>
+                        <td class="notes">{{ $transaction->notes }}</td>
+                        <td class="method">{{ $transaction->method }}</td>
+                        <td class="tracking">{{ $transaction->tracking }}</td>
+                        <!-- once this ("edit") is clicked, change to save.  Once saved, change back to edit -->
+                        <!-- may need to edit these transactions -->
+                        <td>
+                            <button class="btn btn-primary editTransaction" data-id={{ $transaction->id }}>Edit</button>
+                        </td>                       
+                        <td>
+                            <button class="btn btn-warning splitTransaction" data-id={{ $transaction->id }}>Split</button>
+                        </td>                       
+                        <td>
+                            <button class="btn btn-danger deleteTransaction" data-id={{ $transaction->id }}>Delete</button>
+                        </td> 
+                        <td class="stmtDate">{{ $transaction->stmtDate }}</td>
                         <td class="amtMike">{{ $transaction->amtMike }}</td>
                         <td class="amtMaura">{{ $transaction->amtMaura }}</td>
-                        <td class="method">{{ $transaction->method }}</td>
-                        <td class="category">{{ $transaction->category }}</td>
-                        <td class="tracking">{{ $transaction->tracking }}</td>
-                        <td class="stmtDate">{{ $transaction->stmtDate }}</td>
                         <td class="total_amt">{{ $transaction->total_amt }}</td>
                         <td class="total_key">{{ $transaction->total_key }}</td>
+                        <td class="split_total">???</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $transaction->bucket }}</td>
                         @endif
-                        <td class="notes">{{ $transaction->notes }}</td>
                         <td class="lastBalanced">{{ $transaction->lastBalanced ? substr($transaction->lastBalanced, 0, 10) : NULL }}</td>
                         <td class="spent">@if(isset($transaction->spent)){{ $transaction->spent }}
                                           @else - 
@@ -207,18 +222,7 @@
                         <td class="yearBudget">@if(isset($transaction->yearBudget)){{ $transaction->yearBudget }}
                                           @else - 
                                           @endif
-                        </td>
-                        <!-- once this ("edit") is clicked, change to save.  Once saved, change back to edit -->
-                        <!-- may need to edit these transactions -->
-                        <td>
-                            <button id="editTransaction" class="btn btn-primary" data-id={{ $transaction->id }}>Edit</button>
-                        </td>                       
-                        <td>
-                            <button id="splitTransaction" class="btn btn-warning" data-id={{ $transaction->id }}>Split</button>
-                        </td>                       
-                        <td>
-                            <button id="deleteTransaction" class="btn btn-danger" data-id={{ $transaction->id }}>Delete</button>
-                        </td>                       
+                        </td>                      
                     </tr>
                 @endforeach
             </tbody>
@@ -315,14 +319,12 @@
                 // if nullOK is true, NULL is allowed
                 // returns a valid date, or false if date is not valid
                 function verifyDate(date, field, nullOK = false) {
-                    console.log("IN VERIFYDATE");
 
                     // make sure date is valid
                     var month, day, year;
 
                     // clear old error msg
                     var errorMsg = "";
-                    console.log("clear errorMsg text");
                     // $("#errorMsg").text(errorMsg);
 
                     // if nullOK, then a null or empty string is allowed.
@@ -334,11 +336,9 @@
                     var delimiter;
                     if(hasDashDelimiter) delimiter = '-';
                     else delimiter = '/';
-                    console.log("delimiter: ", delimiter);
 
                     // break date into parts
                     var newDate = date.split(delimiter);
-                    console.log("newDate: ", newDate);
 
                     // needs at least 2 elements in newDate (month & day)
                     if(newDate.length < 2) {
@@ -350,7 +350,6 @@
                     // if only month and day, add year to newDate variable
                     if(newDate.length == 2) {
                         var lengths = newDate.map(element => element.length);
-                        console.log("Lengths: ", lengths);
                         
                         if(Math.max(...lengths) > 2) {
                             errorMsg = field + ": Month and date should be 2 chars each (" + date + " entered).";
@@ -374,7 +373,6 @@
                     // year should be the longest, and should have 2 or 4 digits
                     if(![2,4].includes(maxLength)) {
                         errorMsg = field + ": Year must have 2 or 4 digits (" + date + " entered).";
-                        console.log("set errorMsg text to: ", errorMsg);
                         $("#errorMsg").text(errorMsg);
 
                         return false;
@@ -382,6 +380,9 @@
 
                     // Only one part can be 4 chars long
                     // Get all indices of the maximum length
+                    var minYear = 2020;
+                    var maxYear = 2030;
+
                     if(maxLength == 4) {
                         const maxIndices = lengthAndIndices.filter(obj => obj.length === maxLength).map(obj => obj.index);
                         if(maxIndices.length != 1) {
@@ -397,15 +398,14 @@
                         // year must be a number
                         if((typeof numYear === "number" && isNaN(numYear)) || typeof numYear != "number") {
                             errorMsg = field + ": Year must be a number (" + year + " entered).";
-                            console.log("set errorMsg text to: ", errorMsg);
                             $("#errorMsg").text(errorMsg);
                             
                             return false;
                         }
 
-                        // year must be between 2000 and 2050
-                        if(numYear < 2000 || numYear > 2050) {
-                            errorMsg = field + ": Year must be between 2000 and 2050 (" + year + " entered).";
+                        // year must be between minYear and maxYear
+                        if(numYear < minYear || numYear > maxYear) {
+                            errorMsg = field + ": Year must be between " + minYear + " and " + maxYear + " (" + year + " entered).";
                             $("#errorMsg").text(errorMsg);
                             
                             return false;
@@ -455,6 +455,13 @@
                         // any year is accepted
                         // NOTE: 4 digit year needed for SQL query
                         year = "20" + newDate[2];
+                        // year must be between minYear and maxYear
+                        if(year < minYear || year > maxYear) {
+                            errorMsg = field + ": Year must be between " + minYear + " and " + maxYear + " (" + year + " entered).";
+                            $("#errorMsg").text(errorMsg);
+                            
+                            return false;
+                        }
 
                         return year + "-" + month + "-" + day;
 
@@ -557,12 +564,11 @@
                                 newTransaction: newTransaction
                             }),
                             success: function(response) {
-                                console.log("Transaction updated successfully.\n", response.message);
+                                console.log(response.message);
                             },
                             error: function(xhr, status, error) {
                                 console.log("** FAILED ** to update transaction", error);
                                 alert("Failed to update transaction");
-
                             }
 
                         });
@@ -576,7 +582,13 @@
                             }),
                             dataType: 'json',
                             success: function(response) {
-                                console.log("Transaction inserted successfully.\n", response.message);
+                                console.log(response.message);
+                                // put new id on page where needed
+                                $record.find('.transId').text(response.recordId);
+                                $record.find('.transId').parent().attr('data-id', response.recordId);
+                                $record.find('.editTransaction').attr('data-id', response.recordId);
+                                $record.find('.splitTransaction').attr('data-id', response.recordId);
+                                $record.find('.deleteTransaction').attr('data-id', response.recordId);
                             },
                             error: function(xhr, status, error) {
                                 console.log("** FAILED ** to insert transaction", error);
@@ -593,7 +605,14 @@
 
                     // change all the cells to text (not inputs), except the "Save" button
                     //  & change Save button to Edit
-                    $(thisElement).parent().parent().find('td').each(function(index, td) {
+                    var $trElt;
+                    if( $(thisElement).parent().prop('tagName') == 'TR') {
+                        $trElt = $(thisElement).parent();
+                    } else {
+                        $trElt = $(thisElement).parent().parent();
+                    }
+                    // $(thisElement).parent().parent().find('td').each(function(index, td) {
+                    $trElt.find('td').each(function(index, td) {
                         
                         // index of cells in row (0 thru 17)
                         
@@ -625,8 +644,9 @@
                                 $(td).children(':first-child')
                                 .text('Edit')
                                 .removeClass("btn-success")     // change green to blue
+                                .removeClass("saveTransaction")
                                 .addClass("btn-primary")
-                                .attr("id", "editTransaction"); // change the id
+                                .addClass("editTransaction"); // change the id
                             }
                         }
                         
@@ -638,7 +658,7 @@
                 // If the new toFrom isn't a previously used value, ask if it should be changed automatically.
                 // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
                 function handleToFrom(newValue, toFroms, toFromAliases, origToFrom) {
-                    console.log("newValue: " + newValue);
+
                     var isGood = true;
                     var errorMsg = ''; 
 
@@ -646,7 +666,9 @@
                     var maxToFromChars = 100;
                     isGood = verifyVarCharLength(newValue, maxToFromChars);
                     if(!isGood) {
-                        okToTruncToFrom = confirm("toFrom truncated to:\n" + newValue + "\n\nIs this OK?");
+                        okToTruncToFrom = confirm("toFrom truncated from (length " + newValue.length + "):\n" + newValue + 
+                            "\nto (length " + maxToFromChars + "):\n" + newValue.substr(0, maxToFromChars) +
+                            "\n\nIs this OK?");
                         if(!okToTruncToFrom) {
                             return [false, "toFrom: Max chars of " + maxToFromChars + " exceeded."];
                         } else {
@@ -677,8 +699,9 @@
                     // If the new toFrom doesn't have an alias, should future examples be auto replaced in the future;
                     // If it DOES have an alias, if it should this case be changed.
                     var foundToFrom = toFromAliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase());
-                    // if no alias found...
-                    if( typeof foundToFrom === 'undefined' && newValue.toLowerCase() != origToFrom.toLowerCase()) {
+
+                    // if no alias found... and origToFrom is not null... and newValue is changed from origToFrom
+                    if( typeof foundToFrom === 'undefined' && origToFrom !== null && newValue.toLowerCase() != origToFrom.toLowerCase()) {
                         var question = "In the future, should this toFrom automatically be changed to " + newValue + " when the first " + numberOfAliasCharsToMatch + " characters match?" +
                             '\n\n"' + origToFrom.substr(0, numberOfAliasCharsToMatch) + '..." \n     to\n"' + newValue + '"';
                         var saveAlias = confirm(question);
@@ -725,7 +748,6 @@
                 // If a new tracking is entered, make sure it's not a mistake;
                 // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
                 function handleTracking(newValue, trackings, origTracking) {
-                    console.log("newValue: " + newValue);
                     var isGood = true;
                     var errorMsg = ''; 
 
@@ -896,12 +918,63 @@
                             $(thisElt).children(':first-child')
                                 .text('Save')
                                 .removeClass("btn-primary")     // blue to green
+                                .removeClass("editTransaction")
                                 .addClass("btn-success")
-                                .attr("id", "saveTransaction"); // change the id
+                                .addClass("saveTransaction"); // change the id
                         }
 
                     }
                 }   // end of function changeCellToInput
+
+
+                function getOrigValues($cell) {
+
+                    var origTransDate = $cell.closest("tr").find('.transDate').text();
+                    if(origTransDate == null) {
+                        origTransDate = $cell.closest("tr").find('.transDateEdit').text();
+                        var origClearDate = $cell.closest("tr").find('.clearDateEdit').text();
+                        var origToFrom = $cell.closest("tr").find('.toFromEdit').text();
+                        var origAmount = $cell.closest("tr").find('.amountEdit').text();
+                        var origAmtMike = $cell.closest("tr").find('.amtMikeEdit').text();
+                        var origAmtMaura = $cell.closest("tr").find('.amtMauraEdit').text();
+                        var origMethod = $cell.closest("tr").find('.methodEdit').text();
+                        var origCategory = $cell.closest("tr").find('.categoryEdit').text();
+                        var origTracking = $cell.closest("tr").find('.trackingEdit').text();
+                        var origStmtDate = $cell.closest("tr").find('.stmtDateEdit').text();
+                        var origTotalAmt = $cell.closest("tr").find('.total_amtEdit').text();
+                        var origTotalKey = $cell.closest("tr").find('.total_keyEdit').text();
+                        var origNotes = $cell.closest("tr").find('.notesEdit').text();
+                    } else {
+                        var origClearDate = $cell.closest("tr").find('.clearDate').text();
+                        var origToFrom = $cell.closest("tr").find('.toFrom').text();
+                        var origAmount = $cell.closest("tr").find('.amount').text();
+                        var origAmtMike = $cell.closest("tr").find('.amtMike').text();
+                        var origAmtMaura = $cell.closest("tr").find('.amtMaura').text();
+                        var origMethod = $cell.closest("tr").find('.method').text();
+                        var origCategory = $cell.closest("tr").find('.category').text();
+                        var origTracking = $cell.closest("tr").find('.tracking').text();
+                        var origStmtDate = $cell.closest("tr").find('.stmtDate').text();
+                        var origTotalAmt = $cell.closest("tr").find('.total_amt').text();
+                        var origTotalKey = $cell.closest("tr").find('.total_key').text();
+                        var origNotes = $cell.closest("tr").find('.notes').text();
+                    }
+                    return [
+                        origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes
+                    ];
+
+                }   // end of function getOrigValues
 
 
                 function changeCellsToInputs($cell, origTransDate = null, origClearDate = null, origToFrom = null, origAmount = null, origAmtMike = null, origAmtMaura = null, origMethod = null, origCategory = null, origTracking = null, origStmtDate = null, origTotalAmt = null, origTotalKey = null, origNotes = null) {
@@ -932,13 +1005,13 @@
                     // listen for changes to each input field
 
                     // transDate
-                    $(document).on('change', '.transDateEdit', function() {
-                        
+                    $('#editTransactionsTable').off('change', '.transDateEdit').on('change', '.transDateEdit', function(e) {
+                        e.stopPropagation();
+
                         var $input = $(this);
                         var newValue = $input.val();
                         var fieldClass = $input.prop("class");
                         $("#errorMsg").text("");
-                        console.log(".transDate changed...\n - newValue:" + newValue + "\n - fieldClass: " + fieldClass);
 
                         // check trans_date and clear_date
                         // verifyDate returns a valid date string (could be "") or false if not valid,
@@ -959,8 +1032,9 @@
                     });
 
                     // clearDate
-                    $(document).on('change', '.clearDateEdit', function() {
-                        
+                    $("#editTransactionsTable").off('change', '.clearDateEdit').on('change', '.clearDateEdit', function(e) {
+                        e.stopPropagation();
+ 
                         var $input = $(this);
                         var newValue = $input.val();
                         var fieldClass = $input.prop("class");
@@ -985,8 +1059,9 @@
                     });
 
                     // toFrom
-                    $("#editTransactionsTable").on('change', '.toFromEdit', function() {
-                                
+                    $("#editTransactionsTable").off('change', '.toFromEdit').on('change', '.toFromEdit', function(e) {
+                        e.stopPropagation();
+      
                         var $input = $(this);
                         var newValue = $input.val();
                         $("#errorMsg").text("");
@@ -1003,7 +1078,8 @@
                     });
 
                     // amount
-                    $(document).on('change', '.amountEdit', function() {
+                    $("#editTransactionsTable").off('change', '.amountEdit').on('change', '.amountEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1021,26 +1097,26 @@
 
                         // handle amtMike/amtMaura if amount is changed
                         // thisRcdCategory gets the category. MikeSpending, MauraSpending handled diffeently from the rest.
-                        var thisRcdCategory = $input.parent().parent().find(".categoryEdit").val();
+                        var thisRcdCategory = $input.parent().parent().find(".categoryEdit").first().val();
 
                         // if not MikeSpendinng or MauraSpending, split between amtMike & amtMaura
                         if(!["MikeSpending", "MauraSpending"].includes(thisRcdCategory)) {
 
                             // recalc Mike & Maura splits
-                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit');
+                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit').first();
                             $amtMikeEdit.val($input.val() / 2);
 
-                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit');
+                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
                             $amtMauraEdit.val($input.val() / 2);
 
                         // if MikeSpending, total is set to amtMike
                         } else if( thisRcdCategory == "MikeSpending") {
-                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit');
+                            var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit').first();
                             $amtMikeEdit.val($input.val());
 
                         // if MauraSpending, total is set to amtMaura
                         } else if( thisRcdCategory == "MauraSpending") {
-                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit');
+                            var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
                             $amtMauraEdit.val($input.val());
                         }
                         
@@ -1063,7 +1139,8 @@
                     });
 
                     // amtMike
-                    $(document).on('change', '.amtMikeEdit', function() {
+                    $("#editTransactionsTable").off('change', '.amtMikeEdit').on('change', '.amtMikeEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1118,7 +1195,7 @@
                             
                             // newValue is Mike's amt
                             // calc new amtMaura and put on page
-                            var newAmtMauraVal = (Number(amount) - Number(newValue)).toFixed(2);
+                            var newAmtMauraVal = (Number(amount) - Number(newValue)).toFixed(6);
                             $('.amtMauraEdit').prop('disabled', true);   // turn triggers off
                             $amtMaura.val(newAmtMauraVal);
                             $('.amtMauraEdit').prop('disabled', false);   // turn triggers back on
@@ -1157,7 +1234,8 @@
                     });
 
                     // amtMaura
-                    $(document).on('change', '.amtMauraEdit', function() {
+                    $("#editTransactionsTable").off('change', '.amtMauraEdit').on('change', '.amtMauraEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1214,7 +1292,7 @@
                             
                             // newValue is Maura's amt
                             // calc new amtMike and put on page
-                            var newAmtMikeVal = (Number(amount) - Number(newValue)).toFixed(2);
+                            var newAmtMikeVal = (Number(amount) - Number(newValue)).toFixed(6);
                             $('.amtMikeEdit').prop('disabled', true);   // turn triggers off
                             $amtMike.val(newAmtMikeVal);
                             $('.amtMikeEdit').prop('disabled', false);   // turn triggers back on
@@ -1253,7 +1331,8 @@
                     });
 
                     // method
-                    $(document).on('change', '.methodEdit', function() {
+                    $("#editTransactionsTable").off('change', '.methodEdit').on('change', '.methodEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1280,8 +1359,9 @@
                     });
 
                     // category
-                    $("#editTransactionsTable").on('change', '.categoryEdit', function() {
-                                
+                    $("#editTransactionsTable").off('change', '.categoryEdit').on('change', '.categoryEdit', function(e) {
+                        e.stopPropagation();
+     
                         var $input = $(this);
                         var newValue = $input.val();
                         $("#errorMsg").text("");
@@ -1331,7 +1411,8 @@
                     });
 
                     // tracking
-                    $(document).on('change', '.trackingEdit', function() {
+                    $("#editTransactionsTable").off('change', '.trackingEdit').on('change', '.trackingEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1350,7 +1431,8 @@
                     });
 
                     // stmtDate
-                    $(document).on('change', '.stmtDateEdit', function() {
+                    $("#editTransactionsTable").off('change', '.stmtDateEdit').on('change', '.stmtDateEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1368,7 +1450,8 @@
                     });
 
                     // total_amt
-                    $(document).on('change', '.total_amtEdit', function() {
+                    $("#editTransactionsTable").off('change', '.total_amtEdit').on('change', '.total_amtEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1389,7 +1472,8 @@
                     
                     
                     // total_key
-                    $(document).on('change', '.total_keyEdit', function() {
+                    $("#editTransactionsTable").off('change', '.total_keyEdit').on('change', '.total_keyEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1417,7 +1501,8 @@
 
 
                     // notes
-                    $(document).on('change', '.notesEdit', function() {
+                    $("#editTransactionsTable").off('change', '.notesEdit').on('change', '.notesEdit', function(e) {
+                        e.stopPropagation();
 
                         var $input = $(this);
                         var newValue = $input.val();
@@ -1453,14 +1538,12 @@
                 // handle changing beginning date
                 $('#beginDate').on('change', function() {
                     newBeginDate = verifyDate($(this).val(), "begin date");
-                    console.log("newBeginDate: ", newBeginDate);
                     $(this).val(newBeginDate);
                 });
                 
                 // handle changing end date
                 $('#endDate').on('change', function() {
                     newEndDate = verifyDate($(this).val(), "end date");
-                    console.log("newEndDate: ", newEndDate);
                     $(this).val(newEndDate);
                 });
             
@@ -1574,7 +1657,7 @@
 
 
                 // listen for "Edit" being clicked
-                $(document).on('click', '#editTransaction', function(e) {
+                $(document).on('click', '.editTransaction', function(e) {
                     e.preventDefault();
                     
                     var $cell = $(this);
@@ -1588,21 +1671,34 @@
                     // var origAccount = $cell.closest("tr").find('.account').text();
                     // if (origAccount == '') origAccount = "{{$accountName}}";
 
-                    var origTransDate = $cell.closest("tr").find('.transDate').text();
-                    var origClearDate = $cell.closest("tr").find('.clearDate').text();
-                    var origToFrom = $cell.closest("tr").find('.toFrom').text();
-                    var origAmount = $cell.closest("tr").find('.amount').text();
-                    var origAmtMike = $cell.closest("tr").find('.amtMike').text();
-                    var origAmtMaura = $cell.closest("tr").find('.amtMaura').text();
-                    var origMethod = $cell.closest("tr").find('.method').text();
-                    var origCategory = $cell.closest("tr").find('.category').text();
-                    var origTracking = $cell.closest("tr").find('.tracking').text();
-                    var origStmtDate = $cell.closest("tr").find('.stmtDate').text();
-                    var origTotalAmt = $cell.closest("tr").find('.total_amt').text();
-                    var origTotalKey = $cell.closest("tr").find('.total_key').text();
-                    var origNotes = $cell.closest("tr").find('.notes').text();
-
-                    // console.log("origAccount: ", origAccount, "\norigToFrom: ", origToFrom, "\norigAmount: ", origAmount);
+                    var origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes;
+                    [
+                        origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes
+                    ] = getOrigValues($cell);
 
                     // change all the cells to inputs, except the "Edit" button
                     changeCellsToInputs($cell, origTransDate, origClearDate, origToFrom, origAmount, origAmtMike, origAmtMaura, origMethod, origCategory, origTracking, origStmtDate, origTotalAmt, origTotalKey, origNotes);
@@ -1611,14 +1707,13 @@
                 
                 
                 // listen for "Save" being clicked
-                $(document).on('click', '#saveTransaction', function(e) {
+                $(document).on('click', '.saveTransaction', function(e) {
                     e.preventDefault();
                     
                     // get the id
                     var id = $(this).data('id');
                     if(id == 'null') id = null;
                     var thisElement = this;
-                    console.log("id (saving): " + id);
                     
                     // are the values in the record good
                     try {
@@ -1635,11 +1730,8 @@
                         // get needed data from record
                         var category = $record.find('.category').children(':first-child').val();
                         var amount = Number($record.find('.amount').children(':first-child').val());
-                        console.log("amount: ", amount);
                         var amtMike = Number($record.find('.amtMike').children(':first-child').val());
-                        console.log("amtMike: ", amtMike);
                         var amtMaura = Number($record.find('.amtMaura').children(':first-child').val());
-                        console.log("amtMaura: ", amtMaura);
                         var total_key = $record.find('.total_key').children(':first-child').val();
                         var total_amt = Number($record.find('.total_amt').children(':first-child').val());
                         var bucket = $record.find('.bucket').children(':first-child').val();
@@ -1753,7 +1845,7 @@
                                     console.log("totalAmts:", totalAmts);
 
                                     // sum of amounts for all total_keys should = total_amt                       
-                                    if(sumTotalAmts.toFixed(4) != total_amt.toFixed(4)) {
+                                    if(sumTotalAmts.toFixed(6) != total_amt.toFixed(6)) {
                                         errMsg = "Sum of all the amounts where total_key is " + total_key + " should be " + total_amt;
                                         alert(errMsg + "\nTransaction not updated in database.");
                                         throw errMsg;
@@ -1761,7 +1853,7 @@
                                     console.log("sumTotalAmts ok");
 
                                     // all total_amts should be the same for all total_keys
-                                    if(!totalAmts.every(element => element.toFixed(4) === totalAmts[0].toFixed(4))) {
+                                    if(!totalAmts.every(element => element.toFixed(6) === totalAmts[0].toFixed(6))) {
                                         errMsg = "Each amount for records where total_key is " + total_key + " should be the same (" + total_amt + ")";
                                         alert(errMsg + "\nTransaction not updated in database.");
                                         throw errMsg;
@@ -1770,6 +1862,8 @@
 
                                     // OK to write record
                                     updateTransactionRecord($record);
+                                    // console.log("1 changing id to: ", id);
+                                    // $(this).data('id',id);
 
                                     // change edittable cells in record to non-edittable
                                     makeNotEdittable(thisElement);
@@ -1786,7 +1880,9 @@
 
                             // OK to write record
                             updateTransactionRecord($record);
-
+                            // console.log("2 changing id to: ", id);
+                            // $(this).data('id',id);
+                            
                             // change edittable cells in record to non-edittable
                             makeNotEdittable(this);
 
@@ -1798,7 +1894,7 @@
                 });
                 
                 // listen for "Split" being clicked
-                $(document).on('click', '#splitTransaction', function(e) {
+                $(document).on('click', '.splitTransaction', function(e) {
                     e.preventDefault();
 
                     var $cell = $(this);    // used to change origTransaction to input fields
@@ -1809,35 +1905,107 @@
                     // click "Save" button to save each transaction
 
                     // needed to link the two new transactions
-                    var total_amt = $origTransaction.find('.amount').text();
-                    var total_key = $(this).data('id').toString();
-                    
+                    var total_key, total_this_split, total_all_splits, useEdit;
+
+                    total_this_split = $(this).parent().parent().find(".amount").text();
+                    useEdit = '';
+                    if(total_this_split == '') {
+                        useEdit = "Edit";
+                        total_this_split = $(this).parent().parent().find(".amountEdit").val();
+                    }
+
+                    if($(this).parent().parent().find(".total_keyEdit").val() != null) {
+                        // useEdit = "Edit";
+                        total_key = $(this).parent().parent().find(".total_keyEdit").val();
+                        total_all_splits = $(this).parent().parent().find(".total_amtEdit").val();
+                    } else {
+                        // useEdit = '';
+                        total_key = $(this).data('id').toString();
+                        total_all_splits = total_this_split;
+                    }
+                    // console.log("useEdit 1: " + useEdit);
+
+                    // if(typeof total_amt == "undefined") {
+                    //     total_amt = $origTransaction.find('.amount').text();
+                    // }
+                    // if(total_amt == '') {
+                    //     total_amt = $(this).parent().parent().find("[data-id=" + total_key + "]:first").parent().find(".amountEdit").val();
+                    // } 
+                    // else {
+                    //     useEdit = "Edit";
+                    //     total_amt = $origTransaction.find('.amount' + useEdit).val();
+                    // }
+                    // console.log("useEdit 2: " + useEdit);
+
                     // put total amount in "amount" column heading
-                    $("#splitTotal").removeAttr("hidden").text("Split Total: " + total_amt);
-                    splitTotal = total_amt;
+                    // $("#splitTotal").removeAttr("hidden").text("Split Total: " + total_amt);
+                    // splitTotal = total_amt;
 
-                    // amount, amtsplitTotalMike, amtMaura - all of these are div by 2, and need to be updated on page
-                    var newAmount = total_amt / 2;
+                    // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
+                    var newAmount = total_this_split / 2;
                     $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
+                    $origTransaction.find(".amount" + useEdit).val(newAmount);  // change amount in original transaction
 
-                    var newAmtMike = $origTransaction.find('.amtMike').text() / 2
-                    $origTransaction.find(".amtMike").text(newAmtMike);                 // change amtMike in original transaction
+                    // var newAmtMike = $origTransaction.find('.amtMike' + useEdit).text();
+                    // if(newAmtMike == '') {
+                        // newAmtMike = $origTransaction.find('.amtMike' + useEdit).val();
+                    // }
+                    newAmt = total_this_split / 4;
+                    $origTransaction.find(".amtMike" + useEdit).text(newAmt);                 // change amtMike in original transaction
+                    $origTransaction.find(".amtMike" + useEdit).val(newAmt);                 // change amtMike in original transaction
+                    $origTransaction.find(".amtMaura" + useEdit).text(newAmt);               // change amtMaura in original transaction
+                    $origTransaction.find(".amtMaura" + useEdit).val(newAmt);               // change amtMaura in original transaction
 
-                    var newAmtMaura = $origTransaction.find('.amtMaura').text() / 2
-                    $origTransaction.find(".amtMaura").text(newAmtMaura);               // change amtMaura in original transaction
+                    // var newAmtMaura = $origTransaction.find('.amtMaura' + useEdit).text();
+                    // if(newAmtMaura == '') {
+                    //     newAmtMaura = $origTransaction.find('.amtMaura' + useEdit).val();
+                    // }
 
-                    // total_amt and total_key are changed in original transaction, so update on page
-                    $origTransaction.find(".total_amt").text(total_amt);
-                    $origTransaction.find(".total_key").text(total_key);
+                    // if total_amt is not null, 
+                    //   set total_amt & total_key in original transaction, so update on page
+                    if($origTransaction.find(".total_").text() == '') {
+                        $origTransaction.find(".total_amt").text(total_all_splits);
+                        $origTransaction.find(".total_key").text(total_key);
+                    }
                     
-                    changeCellsToInputs($cell);
+                    var origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes;
+                    [
+                        origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes
+                    ] = getOrigValues($origTransaction);
+
+                    changeCellsToInputs($origTransaction, origTransDate, origClearDate, origToFrom, origAmount, origAmtMike, origAmtMaura, origMethod, origCategory, origTracking, origStmtDate, origTotalAmt, origTotalKey, origNotes);
                     // NOTE:  original transaction gets updated when "Save" button hit
 
                     // clone splitTransaction on page with edittable cells
                     var $clonedTransaction = $origTransaction.clone();
 
                     // set id to null
-                    $clonedTransaction.find("tr").attr("data-id", "null");
+                    // $clonedTransaction.find("tr").attr("data-id", "null");
+                    $clonedTransaction.attr("data-id", "null");
                     $clonedTransaction.find(".transId").text("null");
                     $clonedTransaction.find(".saveTransaction").attr("data-id", "null");
                     $clonedTransaction.find(".splitTransaction").attr("data-id", "null");
@@ -1849,7 +2017,7 @@
                 });
                 
                 // listen for "Delete" being clicked
-                $(document).on('click', '#deleteTransaction', function(e) {
+                $(document).on('click', '.deleteTransaction', function(e) {
                     e.preventDefault();
                     
                     var $row = $(this).closest('tr');
