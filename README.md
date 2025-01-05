@@ -1,16 +1,15 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2025-01-01-verify-split-totals</h2>
+<h2>Working on branch: 2025-01-05-default-fields-for-new-transaction</h2>
     <ul>  
-      <li>Works for initial display of transactions (this was pushed)</li>
-      <li>Does it work for new transactions uploaded?</li>
-      <li>Search: // handle splitTotal if amount is changed </li>
+      <li>haven't started yet</li>
+      <li>default category, etc, for common toFroms</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>default category, etc, for common toFroms</li>
+      <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up matches for all accounts (DiscCC and Checking done).</li>
       <li>Manually add some common aliases. (DiscCC and Checking done)</li>
       <li>"IGNORE" parts of aliases (see toFromAliases table)</li>
