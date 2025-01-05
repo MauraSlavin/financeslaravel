@@ -60,9 +60,7 @@
                         <th>account</th>
                     @endif
                     <th>toFrom</th>
-                    <th>amount
-                        <!-- <br><span id="splitTotal" hidden>Split Tot: </span> -->
-                    </th>
+                    <th>amount</th>
                     <th>category</th>
                     <th>notes</th>
                     <th>method</th>
@@ -121,7 +119,7 @@
                         <td class="amtMaura">{{ $newTransaction["amtMaura"] ?? NULL  }}</td>
                         <td class="total_amt">{{ $newTransaction["total_amt"] ?? NULL  }}</td>
                         <td class="total_key">{{ $newTransaction["total_key"] ?? NULL  }}</td>
-                        <td class="split_total">???</td>
+                        <td class="split_total">{{ $newTransaction["split_total"] ?? NULL  }}</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $newTransaction["bucket"] ?? NULL  }}</td>
                         @endif
@@ -206,7 +204,7 @@
                         <td class="amtMaura">{{ $transaction->amtMaura }}</td>
                         <td class="total_amt">{{ $transaction->total_amt }}</td>
                         <td class="total_key">{{ $transaction->total_key }}</td>
-                        <td class="split_total">???</td>
+                        <td class="split_total">{{ $transaction->split_total }}</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $transaction->bucket }}</td>
                         @endif
@@ -231,8 +229,6 @@
         
         <script>
             
-            var splitTotal = 0; // used to keep track of total of split transactions
-
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -244,6 +240,33 @@
 
             $(document).ready(function() {
                 
+                // highlight split_totals where they != total_amt for the key (total_key)
+                var rows = $("#editTransactionsTable tbody tr");
+                var missingSplitValues = [];     // remeber if some splits don't equal the total
+                rows.each(function(index, row) {
+                    var rowData = $(row);
+
+                    // if there is a total_key
+                    if(rowData.find(".total_key").text() != '') {
+                        // and the total_amt != split_total
+                        if(Number(rowData.find(".total_amt").text()) != Number(rowData.find(".split_total").text())) {
+                            // highlight total_amt and split_total
+                            rowData.find(".total_amt").css("background-color", "yellow");
+                            rowData.find(".split_total").css("background-color", "yellow");
+                            // note id for row where split total doesn't match total_amt
+                            missingSplitValues.push(rowData.attr('data-id'));
+                        }
+                    }
+
+                });
+
+                // show an alert warning the user that some mismatches were found.
+                if(missingSplitValues.length >0) {
+                    var msg = missingSplitValues.join("\n");
+                    msg = "The following ids had split totals that do not add up to the total_amt:\n" + msg;
+                    alert(msg);                        
+                }
+
                 // get hidden variables
                 var accountNames = $("#accountNames").val();
                 // console.log("accountNames: ", accountNames);
@@ -272,24 +295,6 @@
                 buckets = JSON.parse(buckets);
 
                 var origToFrom = '';    // want it scoped here
-
-                // get the date of the first of the current month in mm/dd/yyyy format
-                // function getFirst() {
-                //     const now = new Date();
-                //     var firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-                //     console.log("in GETFIRST...");
-                //     console.log(" - firstDay: " + firstDay);
-
-                //     // this month as a 0 left padded 2 char string
-                //     var month = ('00' + (firstDay.getMonth() + 1).toString()).slice(-2);
-                //     console.log(" - month: " + month);
-
-                //     // put in yyyy-mm-01 format (01 for the first of the month)
-                //     firstDay = `${firstDay.getFullYear()}-${month}-01`;
-                //     console.log(" - firstDay: " + firstDay);
-
-                //     return firstDay;
-                // }
 
                 // is the month a valid month? Returns "invalid" if not, the month if it is valid
                 function checkMonth(month) {
@@ -1119,23 +1124,7 @@
                             var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
                             $amtMauraEdit.val($input.val());
                         }
-                        
-                            // // if the total is off, turn it red and note the difference to put on the page
-                            // var thisTotalAmt = $input.parent().parent().find(".total_amt").children(":first-child").val();
-                            // var totalDiffText = ""; // assume no difference
-
-                            // if(splitTotal != thisTotalAmt) {
-                            //     var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
-                            //     $("#splitTotal").css("color","red");
-
-                            // // otherwise, change the color back to skyblue
-                            // } else {
-                            //     $("#splitTotal").css("color","skyblue");
-                            // }
-
-                            // // put the splitTotal in the amount header (span id = splitTotal)
-                            // $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
-                        
+                                               
                     });
 
                     // amtMike
@@ -1204,33 +1193,7 @@
 
 
                         // handle splitTotal if amount is changed
-                        // if(isGood) {
 
-                        //     // recalc splitTotal - add all amount input fields
-                        //     splitTotal = 0;
-                        //     var $theseTransactions = $input.parent().parent().parent();
-                        //     $theseTransactions.find('td').each(function(index, td) {
-                        //         if( $(td).attr('class') == "amount" && $(td).children(':first-child').prop('tagName') == 'INPUT') {
-                        //             splitTotal += Number($(td).children(':first-child').val());
-                        //         };
-                        //     });
-
-                        //     // if the total is off, turn it red and note the difference to put on the page
-                        //     var thisTotalAmt = $input.parent().parent().find(".total_amt").children(":first-child").val();
-                        //     var totalDiffText = ""; // assume no difference
-
-                        //     if(splitTotal != thisTotalAmt) {
-                        //         var totalDiffText = " (" + (thisTotalAmt - splitTotal) + ")";
-                        //         $("#splitTotal").css("color","red");
-
-                        //     // otherwise, change the color back to skyblue
-                        //     } else {
-                        //         $("#splitTotal").css("color","skyblue");
-                        //     }
-
-                        //     // put the splitTotal in the amount header (span id = splitTotal)
-                        //     $('#splitTotal').text("Split Total: " + splitTotal + totalDiffText);
-                        // }
                     });
 
                     // amtMaura
@@ -1923,23 +1886,6 @@
                         total_key = $(this).data('id').toString();
                         total_all_splits = total_this_split;
                     }
-                    // console.log("useEdit 1: " + useEdit);
-
-                    // if(typeof total_amt == "undefined") {
-                    //     total_amt = $origTransaction.find('.amount').text();
-                    // }
-                    // if(total_amt == '') {
-                    //     total_amt = $(this).parent().parent().find("[data-id=" + total_key + "]:first").parent().find(".amountEdit").val();
-                    // } 
-                    // else {
-                    //     useEdit = "Edit";
-                    //     total_amt = $origTransaction.find('.amount' + useEdit).val();
-                    // }
-                    // console.log("useEdit 2: " + useEdit);
-
-                    // put total amount in "amount" column heading
-                    // $("#splitTotal").removeAttr("hidden").text("Split Total: " + total_amt);
-                    // splitTotal = total_amt;
 
                     // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
                     var newAmount = total_this_split / 2;
