@@ -405,6 +405,44 @@ class TransactionsController extends Controller
     // for route /accounts/{accountName}/{beginDate}/{endDate}
     public function transactions($accountName, $beginDate = 'null', $endDate = 'null',  $clearedBalance = NULL, $registerBalance = NULL, $lastBalanced = NULL) {
 
+        function calcSplitTotals($transactions) {
+
+            // get splits that might not be in transactions
+            $splitKeys = array_column($transactions, 'total_keys');
+            $ids = array_column($transactions, 'id');
+
+            $extraSplitTransactions = DB::table("transactions")
+                ->whereIn("total_key", $splitKeys)
+                ->whereNotIn("id", $ids)
+                ->get()->toArray();
+
+            if(count($extraSplitTransactions) != 0) {
+                error_log("\n\n\nNot ALL splits are in this timeframe!!!\n\n\n");
+            }
+
+            // error_log("transactions:");
+            // error_log(json_encode($transactions));
+            // Group transactions by total_key and sum amounts
+            $splitTotals = array_reduce($transactions, function($splitSum, $item) {
+                if ($item->total_key) {
+                    $splitSum[$item->total_key] = ($splitSum[$item->total_key] ?? 0) + floatval($item->amount);
+                }
+                return $splitSum;
+            }, []);
+
+            // // Print splitTotals 
+            // foreach ($splitTotals as $total_key => $amount) {
+            //     echo "Total Key: $total_key, Amount: $amount\n";
+            // }
+
+            foreach($transactions as $transaction) {
+                $splitTotal = $splitTotals[$transaction->total_key] ?? null;
+                $transaction->split_total = $splitTotal;
+            }
+            
+            return $transactions;
+        }
+
         // begin & end date default to a string null to keep the place in the url
         if($beginDate == 'null') $beginDate = null;
         if($endDate == 'null') $endDate = null;
@@ -486,6 +524,9 @@ class TransactionsController extends Controller
 
         // combine transactions
         $transactions = array_merge($outstandingTransactions, $clearedTransactions);
+
+        // calc split transaction totals
+        $transactions = calcSplitTotals($transactions);
 
         // Get today's date (for next few queries)
         $thisMonth = date('m');

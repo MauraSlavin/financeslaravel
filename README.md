@@ -1,43 +1,17 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2024-12-29-fix-splitting-transaction</h2>
+<h2>Working on branch: 2025-01-01-verify-split-totals</h2>
     <ul>  
-      <li>Not all verification is correct in split transactions.  Make sure it still works when editting, adding a new transaction, changing a split a new transaction.</li>
-        <ol>
-          <li>trans_date</li>
-          <li>clear_date</li>
-          <li>toFrom</li>
-          <li>amount</li>
-          <li>category</li>
-          <li>notes</li>
-          <li>method</li>
-          <li>tracking</li>
-          <li>stmtDate</li>
-          <li>amtMike</li>
-          <li>amtMaura</li>
-          <li>total_amt</li>
-          <li>total_key</li>
-        </ul>
-      <li>NOTE: search "check this out" - I don't think this should default to DiscCC</li>
-      <li>Check changing category to xxxSpending (esp in split transactions)</li>
-      <li>Check changing category from xxxSpending to something like Transfer (esp in split transactions)</li>
-      <li>Check changing amount when category is xxxSpending (esp in split transactions)</li>
-      <li>Check changing amount when category is something like Transfer (esp in split transactions)</li>
-      <li>When splitting: amount, amtMike, amtMaura, total_amt, total_key are init correctly (when not MikeSpending or MauraSpending),<br>
-      but changing category to MikeSpending or MauraSpending is no longer working.
-      <li>Fixing splitting a transaction.</li>
-      <li>Changed toFixed(2) to toFixed(6) to accommodate split pennies between Mike & Maura</li>
-      <li>Order columns in a more helpful way (Done).</li>
-      <li></li>
-      <li>NOTE!!    Don't forget to delete "TEST" transaction. </li>
+      <li>Works for initial display of transactions (this was pushed)</li>
+      <li>Does it work for new transactions uploaded?</li>
+      <li>Search: // handle splitTotal if amount is changed </li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Fix checking total for split transactions. Use "split_total" column in transactions table.</li>
+      <li>default category, etc, for common toFroms</li>
       <li>Set up matches for all accounts (DiscCC and Checking done).</li>
-      <li>Verify total_amt over several records.</li>
       <li>Manually add some common aliases. (DiscCC and Checking done)</li>
       <li>"IGNORE" parts of aliases (see toFromAliases table)</li>
       <li>Get saving aliases to work.</li>
@@ -78,7 +52,7 @@
     <li>when ready to push changes...</li>
     <li>git add * &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // includes all changes</li>
     <li>git commit -m <notes> &nbsp;&nbsp;&nbsp; // ready to push</li>
-    <li>git push</li>
+    <li>git push (again with -- suggested)</li>
     <li>log into github & create a merge request, and merge the code</li>
     <li>Back in VS Code...</li>
     <li>git pull (in branch - do I need this?)</li>
