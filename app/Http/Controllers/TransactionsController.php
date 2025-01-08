@@ -225,24 +225,22 @@ class TransactionsController extends Controller
             }
             $newRecord->toFrom = $lc_toFrom;
 
-
-            // replace toFrom with alias if it exists
+            // handle different length origToFrom values
+            $toFrom = $newRecord->toFrom;
             $toFromAlias = DB::table("toFromAliases")
-                ->where("origToFrom", '=', substr($newRecord->toFrom, 0, 11))
-                ->get()->toArray();
-            if($toFromAlias) {
-                $newRecord->toFrom = $toFromAlias[0]->transToFrom;
-            }
+                ->where('origToFrom', '=', DB::raw('LEFT(?, LENGTH(origToFrom))'))
+                ->setBindings([$toFrom])
+                // ->dumpRawSql()
+                ->first();
 
             // handle default categories, notes, tracking, and splits
             if($toFromAlias) {
-                $category = $toFromAlias[0]->category;
+                $newRecord->toFrom = $toFromAlias->transToFrom;  // might not have been caught before; if origToFrom in table < 11 chars
+                $category = $toFromAlias->category;
                 $newRecord->category = $category ?? null;
                 
                 // handle extraDefaults
-                $extraDefaults = $toFromAlias[0]->extraDefaults;
-                error_log("\n --- extraDefaults: " );
-                error_log(" --- " . $extraDefaults . "\n");
+                $extraDefaults = $toFromAlias->extraDefaults;
 
                 if($extraDefaults) {
                     $extraDefaultsArray = json_decode($extraDefaults, true);
@@ -253,16 +251,39 @@ class TransactionsController extends Controller
                     }
                     
                     // Handle tracking
+                    $multipleTracking = false;
+                    // is there default tracking?
                     if (isset($extraDefaultsArray['tracking'])) {
-                        $newRecord->tracking = $extraDefaultsArray['tracking'];
+
+                        // if it's an array, there may be more than one tracking element
+                        if(is_array($extraDefaultsArray['tracking'])) {
+                            // use the first tracking in the first new record
+                            $newRecord->tracking = $extraDefaultsArray['tracking'][0];
+                            // if the array has more than one element, store the extra tracking elements in $multipleTracking
+                            //      to write to cloned split transaction records.
+                            if(count($extraDefaultsArray['tracking']) > 1) {
+                                $multipleTracking = array_slice($extraDefaultsArray['tracking'], 1);
+                            }
+
+                        // if tracking is just text, that will be the tracking for the original and any split transactions.
+                        } else {
+                            // multipleTracking will be false in this case
+                            $newRecord->tracking = $extraDefaultsArray['tracking'];
+                        }
                     }
 
                     // Handle splits
                     if (isset($extraDefaultsArray['splits'])) {
-                        error_log("splits: " . json_encode($extraDefaultsArray['splits']));
 
+                        if(is_numeric($extraDefaultsArray['splits'])) {
+                            $typeSplit = "number";
+                            $numberSplits = $extraDefaultsArray['splits'] + 1;      // +1 for original record
+                        } else {
+                            $typeSplit = "categories";
+                            $numberSplits = count($extraDefaultsArray['splits']) + 1;      // +1 for original record
+                        }
+                        
                         // adjust newRecord
-                        $numberSplits = count($extraDefaultsArray['splits'])+1;  // include existing rcd
                         $origAmount = $newRecord->amount;
                         $splitAmount = round($origAmount/$numberSplits, 4); // to 4 decimal places; fix manually if needed
                         $newRecord->amount = $splitAmount;
@@ -284,12 +305,15 @@ class TransactionsController extends Controller
                         }
 
                         // create splits from copy of newRecord
-                        foreach($extraDefaultsArray['splits'] as $split) {
+                        for( $numSplit = 0; $numSplit < $numberSplits-1; $numSplit++) {
+
                             // make a full copy
                             $splitRecord = unserialize(serialize($newRecord));
 
                             // modify as needed
-                            $splitRecord->category = $split;
+                            if($typeSplit == "categories") $splitRecord->category = $extraDefaultsArray['splits'][$numSplit];
+                            else $splitRecord->category = null;
+
                             if($splitRecord->category == "MikeSpending") {
                                 $splitRecord->amtMike = $splitAmount;
                                 $splitRecord->amtMaura = 0;
@@ -301,6 +325,11 @@ class TransactionsController extends Controller
                                 $splitRecord->amtMike = round($splitAmount/2, 4);
                             }
 
+                            // change default tracking, if there were multiple ones
+                            if($multipleTracking && isset($multipleTracking[$numSplit])) {
+                                $splitRecord->tracking = $multipleTracking[$numSplit];
+                            }
+
                             // append to array of split records
                             $splitRecords[] = $splitRecord;
                         }
@@ -309,18 +338,12 @@ class TransactionsController extends Controller
                 }
             }
 
-            // create error for testing
-            // $newRecord['total_key'] = "123456789";
-
             // add this newRecord to newRecords
             $newRecords[] = $newRecord;
             // add each splitRecord to newRecords
             foreach($splitRecords as $splitRecord) {
                 $newRecords[] = $splitRecord;
             }
-
-            // error_log("NUMBER of newRecords = " . count($newRecords));
-            // foreach($newRecords as $rcd) error_log(json_encode($rcd));
         }
 
         return $newRecords;
@@ -508,6 +531,11 @@ class TransactionsController extends Controller
 
         if(count($extraSplitTransactions) != 0) {
             error_log("\n\n\nNot ALL splits are in this timeframe!!!\n\n\n");
+        }
+
+        // make sure all transactions have a total_key
+        foreach($transactions as $trxIdx=>$transaction) {
+            if(!isset($transaction->total_key)) $transactions[$trxIdx]->total_key = null;
         }
 
         // Group transactions by total_key and sum amounts
@@ -708,8 +736,7 @@ class TransactionsController extends Controller
     // reads the csv file, messages, and writes to transactions database
     // Right now (10/2/24), $account has to be "disccc".  
     //      - modify so it can be anything in a new table (accounts?) that defines how the records are built for each account
-    public function upload($accountName)
-    {
+    public function upload($accountName) {
         // convert mm/dd/yyyy to yyyy-mm-dd
         function reformatDate($date) {
             $dateParts = explode("/", $date);
@@ -855,7 +882,6 @@ class TransactionsController extends Controller
         // get max id in transactions table
         $maxId = DB::table('transactions')
             ->max('id');
-        error_log("maxID: " . json_encode($maxId));
 
         $nextId = $maxId + 1;
         $dummyToRealTotalKeyMap = [];
@@ -863,11 +889,11 @@ class TransactionsController extends Controller
 
         // assign ids, and fill in total_keys where needed
         foreach($newRecords as $newIdx=>$newRecord) {
-
             $newRecords[$newIdx]->id = $nextId;
 
             // if total_key is not a number, it is a dummy and needs to be replaced.
-            if(!is_numeric($newRecord->total_key)) {
+            if(isset($newRecord->total_key) && !is_numeric($newRecord->total_key)) {
+
                 // is this a new mapping?
                 $existingMap = $this->findArray($dummyToRealTotalKeyMap, $newRecord->total_key);
 
