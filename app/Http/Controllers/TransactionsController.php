@@ -105,9 +105,8 @@ class TransactionsController extends Controller
 
 
     // Convert csv data to transaction records
-    public function convertCsv($newCsvData, $accounts, $accountName) {
+    public function convertCsv($newCsvData, $accounts, $accountName, $key_dummies, $max_splits) {
 
-        // error_log(count($newCsvData) . " new transactions loaded.");
         // handle each record for the specific account
 
         // need fields in the transactions table
@@ -147,8 +146,6 @@ class TransactionsController extends Controller
         $ignore = DB::table("toFromAliases")
             ->where('transToFrom', 'IGNORE')
             ->pluck('origToFrom');
-        error_log("ignore:");
-        error_log(json_encode($ignore));
             
         // get mapping information (which csv fields map to which trans fields, including formulas)
         $mapping = DB::table("accounts")
@@ -157,17 +154,20 @@ class TransactionsController extends Controller
             ->where("accountName", $accountName)
             ->get()->toArray();
 
+        $current_split_idx = 0;
+
         // build transaction record from csv file record and write to the transactions table
         foreach($newCsvData as $transaction) {
 
             $fieldsLeft = [];   // transaction fields that have not yet been calculated
-            $newRecord = [];    // start with a fresh record to write to the db
+            $newRecord = new \stdClass();    // start with a fresh record to write to the db
+            $splitRecords = []; // additional records for splits
 
             // all the fields are left, to begin with
             foreach($transaction_fields as $field) $fieldsLeft[] = $field;
 
             // set account
-            $newRecord['account'] = $accountName;
+            $newRecord->account = $accountName;
             // account is done, remove from fieldsLeft
             removeElementByValue($fieldsLeft, 'account');
 
@@ -176,7 +176,7 @@ class TransactionsController extends Controller
 
                 // if formula is null, it's a straight assignment
                 if($map->formulas == null) {
-                    $newRecord[$map->transField] = $transaction[$map->csvField];
+                    $newRecord->{$map->transField} = $transaction[$map->csvField];
                     // field is done, remove from fieldsLeft
                     removeElementByValue($fieldsLeft, $map->transField);
                 } else {
@@ -189,22 +189,22 @@ class TransactionsController extends Controller
                     $formula = str_replace($map->csvField, $replace, $formula);
 
                     // evaluate the formula to get the data needed
-                    $newRecord[$map->transField] = eval( "return $formula;");
+                     $newRecord->{$map->transField} = eval( "return $formula;");
                     // field is done, remove from fieldsLeft
                     removeElementByValue($fieldsLeft, $map->transField);
                 }
-
+                
                 // the trans_date and clear_date need to be reformatted (mm/dd/yyyy to yyyy-mm-dd)
                 if(strpos($map->transField, "_date") !== false) {
-                    $newRecord[$map->transField] = reformatDate($newRecord[$map->transField]);
+                     $newRecord->{$map->transField} = reformatDate( $newRecord->{$map->transField});
                 }
             }
 
             // guess at statement date.  
             //  -- If it clears before the lastStmtDay, assume it's in the current month's statement
             //  -- Otherwise, make the statement date the next month.
-            if($newRecord['clear_date'] <= ($year . "-" . $month . "-" . $lastStmtDay)) {
-                $newRecord['stmtDate'] = date("y") . "-" . date("M");
+            if($newRecord->clear_date <= ($year . "-" . $month . "-" . $lastStmtDay)) {
+                $newRecord->stmtDate = date("y") . "-" . date("M");
             } else {
                 // if Dec, add 1 to year when adding one to the month
                 if($month == 12) {
@@ -212,29 +212,119 @@ class TransactionsController extends Controller
                 } else {
                     $stmtDateYear = date("y");
                 }
-                $newRecord['stmtDate'] = $stmtDateYear . "-" . date("M", mktime(0,0,0,$month+1,$dayOfMonth,$year));
+                $newRecord->stmtDate = $stmtDateYear . "-" . date("M", mktime(0,0,0,$month+1,$dayOfMonth,$year));
             }        
 
             // stmtDate is done, remove from fieldsLeft
             removeElementByValue($fieldsLeft, "stmtDate");
 
+            // remove strings to ignore from transaction toFrom
+            $lc_toFrom = strtolower($newRecord->toFrom);
+            foreach ($ignore as $ignoreString) {
+                $lc_toFrom = preg_replace('/\b' . preg_quote(strtolower($ignoreString), '/') . '\b/', '', $lc_toFrom);
+            }
+            $newRecord->toFrom = $lc_toFrom;
+
+
             // replace toFrom with alias if it exists
             $toFromAlias = DB::table("toFromAliases")
-                ->where("origToFrom", '=', substr($newRecord['toFrom'], 0, 11))
+                ->where("origToFrom", '=', substr($newRecord->toFrom, 0, 11))
                 ->get()->toArray();
             if($toFromAlias) {
-                $newRecord['toFrom'] = $toFromAlias[0]->transToFrom;
+                $newRecord->toFrom = $toFromAlias[0]->transToFrom;
+            }
+
+            // handle default categories, notes, tracking, and splits
+            if($toFromAlias) {
+                $category = $toFromAlias[0]->category;
+                $newRecord->category = $category ?? null;
+                
+                // handle extraDefaults
+                $extraDefaults = $toFromAlias[0]->extraDefaults;
+                error_log("\n --- extraDefaults: " );
+                error_log(" --- " . $extraDefaults . "\n");
+
+                if($extraDefaults) {
+                    $extraDefaultsArray = json_decode($extraDefaults, true);
+
+                    // Handle notes
+                    if (isset($extraDefaultsArray['notes'])) {
+                        $newRecord->notes = $extraDefaultsArray['notes'];
+                    }
+                    
+                    // Handle tracking
+                    if (isset($extraDefaultsArray['tracking'])) {
+                        $newRecord->tracking = $extraDefaultsArray['tracking'];
+                    }
+
+                    // Handle splits
+                    if (isset($extraDefaultsArray['splits'])) {
+                        error_log("splits: " . json_encode($extraDefaultsArray['splits']));
+
+                        // adjust newRecord
+                        $numberSplits = count($extraDefaultsArray['splits'])+1;  // include existing rcd
+                        $origAmount = $newRecord->amount;
+                        $splitAmount = round($origAmount/$numberSplits, 4); // to 4 decimal places; fix manually if needed
+                        $newRecord->amount = $splitAmount;
+                        $newRecord->total_amt = $origAmount;
+                        $newRecord->total_key = $key_dummies[$current_split_idx];
+                        $current_split_idx++;
+                        if($current_split_idx >= $max_splits) { 
+                            error_log("\n\n\n  TOO MANY SPLIT TRANSACTIONS!!  ");
+                        }
+                        if($newRecord->category == "MikeSpending") {
+                            $newRecord->amtMike = $splitAmount;
+                            $newRecord->amtMaura = 0;
+                        } else if($newRecord->category == "MauraSpending") {
+                            $newRecord->amtMaura = $splitAmount;
+                            $newRecord->amtMike = 0;
+                        } else {
+                            $newRecord->amtMaura = round($splitAmount/2, 4);
+                            $newRecord->amtMike = round($splitAmount/2, 4);
+                        }
+
+                        // create splits from copy of newRecord
+                        foreach($extraDefaultsArray['splits'] as $split) {
+                            // make a full copy
+                            $splitRecord = unserialize(serialize($newRecord));
+
+                            // modify as needed
+                            $splitRecord->category = $split;
+                            if($splitRecord->category == "MikeSpending") {
+                                $splitRecord->amtMike = $splitAmount;
+                                $splitRecord->amtMaura = 0;
+                            } else if($splitRecord->category == "MauraSpending") {
+                                $splitRecord->amtMaura = $splitAmount;
+                                $splitRecord->amtMike = 0;
+                            } else {
+                                $splitRecord->amtMaura = round($splitAmount/2, 4);
+                                $splitRecord->amtMike = round($splitAmount/2, 4);
+                            }
+
+                            // append to array of split records
+                            $splitRecords[] = $splitRecord;
+                        }
+                    }
+
+                }
             }
 
             // create error for testing
             // $newRecord['total_key'] = "123456789";
 
+            // add this newRecord to newRecords
             $newRecords[] = $newRecord;
+            // add each splitRecord to newRecords
+            foreach($splitRecords as $splitRecord) {
+                $newRecords[] = $splitRecord;
+            }
 
+            // error_log("NUMBER of newRecords = " . count($newRecords));
+            // foreach($newRecords as $rcd) error_log(json_encode($rcd));
         }
 
         return $newRecords;
-    }
+    }   // end function convertCsv
 
 
     // find and question possible duplicates
@@ -247,8 +337,9 @@ class TransactionsController extends Controller
     public function findDuplicates($newRecords) {
 
         foreach($newRecords as $rcdIdx=>$record) {
+
             // check dates within two days of trans_date
-            $trans_date = Carbon::parse($record['trans_date']);
+            $trans_date = Carbon::parse($record->trans_date);
             $orig_date = $trans_date->format('Y-m-d');
             
             // get one & 2 days before trans_date
@@ -275,18 +366,20 @@ class TransactionsController extends Controller
             ];
 
             $dupsMaybe = DB::table('transactions')
-                ->where('account', $record['account'])
-                ->where('toFrom', $record['toFrom'] )
+                ->where('account', $record->account)
+                ->where('toFrom', $record->toFrom )
                 ->whereIn('trans_date', $formattedDates)
                 ->where(function ($query) use ($record) {
-                    $query->where('amount', $record['amount'])
-                        ->orWhere('total_amt', $record['amount']);
+                    $query->where('amount', $record->amount)
+                        ->orWhere('total_amt', $record->amount);
                 })
                 ->get()->toArray();
                            
             // add element to indicate if this might be a duplicate transaction
-            if(count($dupsMaybe) > 0) $newRecords[$rcdIdx]['dupMaybe'] = true;
-            else $newRecords[$rcdIdx]['dupMaybe'] = false;
+            // if(count($dupsMaybe) > 0) $newRecords[$rcdIdx]['dupMaybe'] = true;
+            if(count($dupsMaybe) > 0) $newRecords[$rcdIdx]->dupMaybe = true;
+            // else $newRecords[$rcdIdx]['dupMaybe'] = false;
+            else $newRecords[$rcdIdx]->dupMaybe = false;
             
             // error_log("\ndupsMaybe: ");
             // if(count($dupsMaybe) > 0) {
@@ -310,13 +403,16 @@ class TransactionsController extends Controller
         foreach($records as $record) {
             // write the transaction to the database.
             try {
-                $dupMaybe = $record['dupMaybe'] ?? false;
-                unset($record['dupMaybe']);
+                $dupMaybe = $record->dupMaybe ?? false;
+                $split_total = $record->split_total ?? null;
+                unset($record->dupMaybe);
+                unset($record->split_total);
 
-                $result = DB::table('transactions')->insertGetId($record);
-                $record['id'] = $result;
+                $result = DB::table('transactions')->insertGetId((array)$record);
+                $record->id = $result;
 
-                $record['dupMaybe'] = $dupMaybe;
+                $record->dupMaybe = $dupMaybe;
+                $record->split_total = $split_total;
                 $recordsWithIds[] = $record;     // for the blade to show uploaded transactions with id
 
             } catch (\Exception $e) {
@@ -414,24 +510,27 @@ class TransactionsController extends Controller
             error_log("\n\n\nNot ALL splits are in this timeframe!!!\n\n\n");
         }
 
-        // error_log("transactions:");
-        // error_log(json_encode($transactions));
         // Group transactions by total_key and sum amounts
-        $splitTotals = array_reduce($transactions, function($splitSum, $item) {
-            if ($item->total_key) {
-                $splitSum[$item->total_key] = ($splitSum[$item->total_key] ?? 0) + floatval($item->amount);
+        if($ids != []) {
+            $splitTotals = array_reduce($transactions, function($splitSum, $item) {
+                if ($item->total_key) {
+                    $splitSum[$item->total_key] = ($splitSum[$item->total_key] ?? 0) + floatval($item->amount);
+                }
+                return $splitSum;
+            }, []);
+        } else {
+            $splitTotals = [];
+        }
+
+        if(count($splitTotals) > 0) {
+            foreach($transactions as $transaction) {
+                $splitTotal = $splitTotals[$transaction->total_key] ?? null;
+                $transaction->split_total = $splitTotal;
             }
-            return $splitSum;
-        }, []);
-
-        // // Print splitTotals 
-        // foreach ($splitTotals as $total_key => $amount) {
-        //     echo "Total Key: $total_key, Amount: $amount\n";
-        // }
-
-        foreach($transactions as $transaction) {
-            $splitTotal = $splitTotals[$transaction->total_key] ?? null;
-            $transaction->split_total = $splitTotal;
+        } else {
+            foreach($transactions as $transaction) {
+                $transaction->split_total = "n/a";
+            }
         }
         
         return $transactions;
@@ -593,6 +692,19 @@ class TransactionsController extends Controller
 
     }
 
+
+    // returns the subarray with the given key,
+    // or false if not found
+    public function findArray($array, $key) {
+        foreach ($array as $subarray) {
+            if ($subarray[0] === $key) {
+                return $subarray;
+            }
+        }
+        return false;
+    }
+
+
     // reads the csv file, messages, and writes to transactions database
     // Right now (10/2/24), $account has to be "disccc".  
     //      - modify so it can be anything in a new table (accounts?) that defines how the records are built for each account
@@ -725,8 +837,12 @@ class TransactionsController extends Controller
         // If Checking, modify csv for upload
         if($accountName == "Checking") $newCsvData = $this->modifyCsvForChecking($newCsvData);
 
+        // will be replaced when id's are determined
+        $key_dummies = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj'];
+        $max_splits = count($key_dummies);
+
         // Convert csv data to transaction records
-        $newRecords = $this->convertCsv($newCsvData, $accounts, $accountName);
+        $newRecords = $this->convertCsv($newCsvData, $accounts, $accountName, $key_dummies, $max_splits);
         // error_log("\nnewRecords:");
         // error_log(json_encode($newRecords));
         // foreach($newRecords as $newRecord) {
@@ -734,15 +850,55 @@ class TransactionsController extends Controller
         //     error_log(json_encode($newRecord));
         // }
 
+        // add split totals to newRecords
+        // need record ids, first.
+        // get max id in transactions table
+        $maxId = DB::table('transactions')
+            ->max('id');
+        error_log("maxID: " . json_encode($maxId));
+
+        $nextId = $maxId + 1;
+        $dummyToRealTotalKeyMap = [];
+        $current_dummy_idx = 0;
+
+        // assign ids, and fill in total_keys where needed
+        foreach($newRecords as $newIdx=>$newRecord) {
+
+            $newRecords[$newIdx]->id = $nextId;
+
+            // if total_key is not a number, it is a dummy and needs to be replaced.
+            if(!is_numeric($newRecord->total_key)) {
+                // is this a new mapping?
+                $existingMap = $this->findArray($dummyToRealTotalKeyMap, $newRecord->total_key);
+
+                // if new, mape a new map array
+                // and set total_key to the nextId
+                if($existingMap === false) {
+                    $map = [$newRecord->total_key, $nextId];
+                    $dummyToRealTotalKeyMap[] = $map;
+                    $newRecords[$newIdx]->total_key = $nextId;
+                } else {
+                    // set total_key from map
+                    $newRecords[$newIdx]->total_key = $existingMap[1];
+                }
+            }
+
+            $nextId++;
+        }
+        
+        // fill in split totals for new records
+        $newRecords = $this->calcSplitTotals($newRecords);
+
         // Look for possible duplicate transactions
         $newRecords = $this->findDuplicates($newRecords);
-        
+
         // Write new records to transactions table
         $newTransactions = $this->writeNewRecordsToTransactions($newRecords);
+        foreach($newTransactions as $trxIdx=>$newTransaction) {
+            $newTransactions[$trxIdx] = (array)$newTransaction; // for page (expecting arrays)
+        }
 
         // TO DO:  order transactions by trans_date descending, toFrom ascending
-
-
 
         // error_log(json_encode($newCsvData));
         return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'toFromAliases' => $toFromAliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
@@ -774,7 +930,6 @@ class TransactionsController extends Controller
     public function update(Request $request)
     {
         try {
-
             // get transaction to update from payload
             $data = json_decode($request->getContent(), true);
             $transaction = $data['newTransaction'];
@@ -785,6 +940,8 @@ class TransactionsController extends Controller
             // put it back as an object (from json)
             $transaction = json_decode($transaction);
             $id = $transaction->id;
+            error_log("transaction:");
+            error_log(json_encode($transaction));
 
             // set fields to be updated
             $dataToUpdate = [
@@ -806,7 +963,7 @@ class TransactionsController extends Controller
             $response = DB::table("transactions")
                 ->where('id', $id)
                 ->update($dataToUpdate);
-            error_log("response to update (id: " . $id . "): ");
+            error_log("response after update (id: " . $id . "): ");
             error_log(json_encode($response));
 
             return response()->json([
@@ -901,6 +1058,21 @@ class TransactionsController extends Controller
     }
 
 
+    // get default values for a given toFrom
+    public function getDefaults($toFrom): JsonResponse
+    {
+        try {
+            // $defaults = DB::table()
+            //     ...
+            return response()->json($defaults);
+        } catch(\Exception $e) {
+            error_log("\nProblem getting default values for toFrom: " . $toFrom . ".");
+            error_log(json_encode(['exception' => $e, 'trace' => $e->getTraceAsString(),
+            ]));
+
+            return response()->json(['error' => 'An unexpected error occurred'], 500);
+        }
+    }
     // get total_key transactions
     public function totalKey($totalKey): JsonResponse
     {
