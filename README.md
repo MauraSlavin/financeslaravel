@@ -3,29 +3,18 @@
 
 <h2>Working on branch: 2025-01-05-default-fields-for-new-transaction</h2>
     <ul>
-      <li>get extra from toFromAliases to work</li>
-      <li>calc split total when uploading transactions</li>
-      <li>done {"notes": "charging"; "tracking":"Bolt"}</li>
-      <li>done {"splits": ["MauraSpending"]}</li>
-      <li>done {"splits": ["MikeSpending"]}</li>
-      <li>done {"splits": ["MauraSpending", "MikeSpending", "Kids"]}</li>
-      <li>done {"splits": ["MikeSpending","MauraSpending"]}</li>
-      <li>Need to handle tracking being an array... {"splits": ["Bolt"], "notes": "tolls", "tracking": ["CRZ", "Bolt"]}</li>
-      <li>Need to handle #, rather than array of categories... {"splits": 3}</li>
+      <li>add records to toFromAliases for Checking (Disc sav?, other accounts?)
       <li>added records to toFromAliases - from DiscCC last 6 months (july - dec 24)</li>
-      <li>default category is working</li>
-      <li> IN PROCESS...  TransactionsController; line 908 - sql query; then need to fill in defaults, make split categories, etc.</li>
-      <li>default category, etc, for common toFroms</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
+      <li>** similar from when uploading when adding single transactions</li>
+      <li>**Manually** add some common aliases. (DiscCC done)</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
-      <li>Set up matches for all accounts (DiscCC and Checking done).</li>
-      <li>Manually add some common aliases. (DiscCC done)</li>
-      <li>"IGNORE" parts of aliases (see toFromAliases table)</li>
-      <li>Get saving aliases to work.</li>
-      <li>Assets</li>
+      <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
+      <li>Get saving aliases to work.  Include extraDefaults.</li>
+      <li>** Assets</li>
       <li> --- Include ability to set end date</li>
       <li>Add transactions by cloning a transaction line, instead of using the new form</li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
@@ -34,15 +23,14 @@
 
 <h2>Future Functionality:</h2>
   <ul>
+    <li>** Handle Great Bay Limo</li>
+    <li>** Page to update values of things like WF, JH, House, Prudential, etc. all on one page (can update values for each account separately, now)</li>
     <li>From CSV file, load data into database<br>
-    - put matches between CSV & transactions table in a table to define the matches for each account (only done for DiscCC, and partially done for Checking - special processing needed for checking csv file)<br>
-    - look for duplicate entries (ask user to verify or skip)</li>
+    - put matches between CSV & transactions table in a table to define the matches for each account (only done for DiscCC, and partially done for Checking - special processing done for checking csv file)</li>
     <li>Append Spending transactions to Google Sheets<br> -- https://www.phind.com/search?cache=f8twduhlg5g1fo4ca2bkrs7c</li>
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
-    <li>Handle Great Bay Limo</li>
-    <li>Page to update values of things like WF, JH, House, Prudential, etc. all on one page (can update values for each account separately, now)</li>
     <li>Spending?</li>
     <li>Loans?</li>
     <li>App for Marina's Miles??</li>
