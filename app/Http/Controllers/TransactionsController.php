@@ -752,6 +752,8 @@ class TransactionsController extends Controller
             }
         }
 
+        error_log("in upload");
+        
         // set default beginDate and endDate
         [$beginDate, $endDate] = $this->setDefaultBeginEndDates();
 

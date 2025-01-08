@@ -52,7 +52,7 @@
   </ul>
 
 
-<h2>uploadMatch documentation</h2>
+<h2>uploadMatch Documentation</h2>
   <p>uploadMatch determines how each field in the transactions table gets filled from the csv download.</p>
 
   <h3>account_id</h3>
