@@ -1,15 +1,14 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2025-01-05-default-fields-for-new-transaction</h2>
+<h2>Working on branch: 2025-01-08-defaults-and-splits-individual-transactions</h2>
     <ul>
-      <li>add records to toFromAliases for Checking (Disc sav?, other accounts?)
-      <li>added records to toFromAliases - from DiscCC last 6 months (july - dec 24)</li>
+      <li>not started yet</li>
+      <li>** similar from when uploading when adding single transactions</li>
     </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>** similar from when uploading when adding single transactions</li>
       <li>**Manually** add some common aliases. (DiscCC done)</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>

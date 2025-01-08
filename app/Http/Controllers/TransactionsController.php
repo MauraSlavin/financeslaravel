@@ -74,7 +74,7 @@ class TransactionsController extends Controller
         fclose($handle);
 
         return $newCsvData;
-    }
+    }   // end function readUploadCsv
 
     
     // tweak records for Checking to make import more helpful
@@ -82,27 +82,17 @@ class TransactionsController extends Controller
 
         foreach($newCsvData as $idx=>$record) {
         
-            // Amount is "Amount Debit" or "Amount Credit" (won't be a number in both)
+            // Combine "Amount Debit" or "Amount Credit" into Amount (won't be a number in both)
             if($record["Amount Debit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Debit"];
             else if ($record["Amount Credit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Credit"];
             else $newCsvData[$idx]["Amount"] = "0"; // to prevent an error
 
             // Amount Credit and Amount Debit are no longer needed
             unset($newCsvData[$idx]["Amount Credit"], $newCsvData[$idx]["Amount Debit"]);
-            
-            // remove extraneous strings from Description
-            $extraneousStrings = [
-                "External Deposit ",
-                "Deposit ",
-                "External Withdrawal ",
-                "Withdrawal "
-            ];
-            $newCsvData[$idx]["Description"] = str_replace($extraneousStrings, "", $record["Description"]);
-
         }
+
         return $newCsvData;
     }
-
 
     // Convert csv data to transaction records
     public function convertCsv($newCsvData, $accounts, $accountName, $key_dummies, $max_splits) {
@@ -123,8 +113,7 @@ class TransactionsController extends Controller
         // get the day of the month for the last transaction on a statement
         //      defaults to the last day of the month
         $lastStmtDay = null;
-        foreach ($accounts as $thisAccount) {
-
+        foreach ($accounts as $i=>$thisAccount) {
             if ($thisAccount->accountName == $accountName) {
                 $lastStmtDay = $thisAccount->lastStmtDate;
                 break;
@@ -146,18 +135,18 @@ class TransactionsController extends Controller
         $ignore = DB::table("toFromAliases")
             ->where('transToFrom', 'IGNORE')
             ->pluck('origToFrom');
-            
+                    
         // get mapping information (which csv fields map to which trans fields, including formulas)
         $mapping = DB::table("accounts")
             ->leftJoin("uploadmatch", "accounts.id", '=', "uploadmatch.account_id")
             ->select("csvField", "transField", "formulas")
             ->where("accountName", $accountName)
             ->get()->toArray();
-
+        
         $current_split_idx = 0;
 
         // build transaction record from csv file record and write to the transactions table
-        foreach($newCsvData as $transaction) {
+        foreach($newCsvData as $i=>$transaction) {
 
             $fieldsLeft = [];   // transaction fields that have not yet been calculated
             $newRecord = new \stdClass();    // start with a fresh record to write to the db
@@ -183,13 +172,24 @@ class TransactionsController extends Controller
                     // if formula has a value, massage and evaluate it
                     //      the csvField indicates which element of the $transactions record,
                     //      so replace the csvField with the array reference
+                    // see README.MD for allowed formulas
                     $formula = $map->formulas;  // string to be changed
                     $search = $map->csvField;   // string to look for
                     $replace = "\$transaction['".($map->csvField)."']"; // new string to replace
                     $formula = str_replace($map->csvField, $replace, $formula);
 
+                    // handle concatenated fields
+                    $isConcatPos = strpos($formula, ' + ');
+                    if($isConcatPos !== false) {
+                        $string2 = trim(substr($formula, $isConcatPos+2));
+                        $replaceString2 = "\$transaction['".($string2)."']";
+                        $formula = str_replace($string2, $replaceString2, $formula);
+                        $formula = str_replace(" + ", " . ' ' . ", $formula);
+                    }
+
                     // evaluate the formula to get the data needed
-                     $newRecord->{$map->transField} = eval( "return $formula;");
+                    $newRecord->{$map->transField} = eval( "return $formula;");
+
                     // field is done, remove from fieldsLeft
                     removeElementByValue($fieldsLeft, $map->transField);
                 }
@@ -222,6 +222,7 @@ class TransactionsController extends Controller
             $lc_toFrom = strtolower($newRecord->toFrom);
             foreach ($ignore as $ignoreString) {
                 $lc_toFrom = preg_replace('/\b' . preg_quote(strtolower($ignoreString), '/') . '\b/', '', $lc_toFrom);
+                $lc_toFrom = trim($lc_toFrom);
             }
             $newRecord->toFrom = $lc_toFrom;
 
@@ -765,20 +766,14 @@ class TransactionsController extends Controller
             ->distinct()->get("toFrom")->toArray();
         $toFroms = array_column($toFroms, 'toFrom');
         $toFroms = str_replace(" ", "%20", json_encode($toFroms));
-
-        // error_log("\ntoFroms: " . json_encode($toFroms));
-        // foreach($toFroms as $thisOne) error_log(" - " . json_encode($thisOne));
         
         // get toFromAliases (auto converts what the "bank" uses to what's in the database)
         $toFromAliases = DB::table("toFromAliases")
             ->get()->toArray();
         $toFromAliases = str_replace(" ", "%20", json_encode($toFromAliases));
-        // error_log("\ntoFromAliases:");
-        // foreach($toFromAliases as $thisOne) error_log(" - " . json_encode($thisOne));
 
         // get all the defined account names
         $accountNames = array_column($accounts, 'accountName');
-        // error_log("accountNames: " . json_encode($accountNames));
 
         // if accountName not in accounts, it's not a valid accountName
         if(!in_array($accountName, $accountNames)) {
@@ -860,7 +855,7 @@ class TransactionsController extends Controller
 
         // READ transactions from csv file
         $newCsvData = $this->readUploadCsv($accountName);
-
+        
         // If Checking, modify csv for upload
         if($accountName == "Checking") $newCsvData = $this->modifyCsvForChecking($newCsvData);
 
@@ -870,12 +865,6 @@ class TransactionsController extends Controller
 
         // Convert csv data to transaction records
         $newRecords = $this->convertCsv($newCsvData, $accounts, $accountName, $key_dummies, $max_splits);
-        // error_log("\nnewRecords:");
-        // error_log(json_encode($newRecords));
-        // foreach($newRecords as $newRecord) {
-        //     error_log("newRecord:");
-        //     error_log(json_encode($newRecord));
-        // }
 
         // add split totals to newRecords
         // need record ids, first.
