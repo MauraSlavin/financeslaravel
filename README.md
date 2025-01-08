@@ -2,8 +2,19 @@
   <ul><li>php artisan serve</li></ul>
 
 <h2>Working on branch: 2025-01-05-default-fields-for-new-transaction</h2>
-    <ul>  
-      <li>haven't started yet</li>
+    <ul>
+      <li>get extra from toFromAliases to work</li>
+      <li>calc split total when uploading transactions</li>
+      <li>done {"notes": "charging"; "tracking":"Bolt"}</li>
+      <li>done {"splits": ["MauraSpending"]}</li>
+      <li>done {"splits": ["MikeSpending"]}</li>
+      <li>done {"splits": ["MauraSpending", "MikeSpending", "Kids"]}</li>
+      <li>done {"splits": ["MikeSpending","MauraSpending"]}</li>
+      <li>Need to handle tracking being an array... {"splits": ["Bolt"], "notes": "tolls", "tracking": ["CRZ", "Bolt"]}</li>
+      <li>Need to handle #, rather than array of categories... {"splits": 3}</li>
+      <li>added records to toFromAliases - from DiscCC last 6 months (july - dec 24)</li>
+      <li>default category is working</li>
+      <li> IN PROCESS...  TransactionsController; line 908 - sql query; then need to fill in defaults, make split categories, etc.</li>
       <li>default category, etc, for common toFroms</li>
     </ul>
     
@@ -11,19 +22,12 @@
     <ul>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up matches for all accounts (DiscCC and Checking done).</li>
-      <li>Manually add some common aliases. (DiscCC and Checking done)</li>
+      <li>Manually add some common aliases. (DiscCC done)</li>
       <li>"IGNORE" parts of aliases (see toFromAliases table)</li>
       <li>Get saving aliases to work.</li>
       <li>Assets</li>
       <li> --- Include ability to set end date</li>
-      <li>Subtotal of split transactions - fix in edittable mode</li>
-      <li> --- working for one split.</li>
-      <li> --- doesn't quite work for multiple splits, but can work around</li>
-      <li> --- revove split total when splits all splits are saved / deleted (nothing else edittable)</li>
       <li>Add transactions by cloning a transaction line, instead of using the new form</li>
-      <li>Split Spending change amtMike, amtMaura, category</li>
-      <li>When entering/editting transaction, autofill amtMaura when amtMike entered (or vice versa)</li>
-      <li>Look for duplicate transactions when uploading - done except for toFrom aliases</li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
     </ul>

@@ -53,34 +53,34 @@
             <!-- table headers -->
             <thead>
                 <tr>
-                    <th>id</th>
-                    <th>trans_date</th>
-                    <th>clear_date</th>
+                    <th style="width: 100px; word-break: break-word;">id</th>
+                    <th style="width: 100px; word-break: break-word;">trans_date</th>
+                    <th style="width: 100px; word-break: break-word;">clear_date</th>
                     @if($accountName == 'all')
-                        <th>account</th>
+                        <th style="width: 100px; word-break: break-word;">account</th>
                     @endif
-                    <th>toFrom</th>
-                    <th>amount</th>
-                    <th>category</th>
-                    <th>notes</th>
-                    <th>method</th>
-                    <th>tracking</th>
-                    <th>Edit/Save</th>
-                    <th>Split</th>
-                    <th>Delete</th>
-                    <th>stmtDate</th>
-                    <th>amtMike</th>
-                    <th>amtMaura</th>
-                    <th>total_amt</th>
-                    <th>total_key</th>
-                    <th>split_total</th>
+                    <th style="width: 100px; word-break: break-word;">toFrom</th>
+                    <th style="width: 100px; word-break: break-word;">amount</th>
+                    <th style="width: 100px; word-break: break-word;">category</th>
+                    <th style="width: 100px; word-break: break-word;">notes</th>
+                    <th style="width: 100px; word-break: break-word;">method</th>
+                    <th style="width: 100px; word-break: break-word;">tracking</th>
+                    <th style="width: 100px; word-break: break-word;">Edit/Save</th>
+                    <th style="width: 100px; word-break: break-word;">Split</th>
+                    <th style="width: 100px; word-break: break-word;">Delete</th>
+                    <th style="width: 100px; word-break: break-word;">stmtDate</th>
+                    <th style="width: 100px; word-break: break-word;">amtMike</th>
+                    <th style="width: 100px; word-break: break-word;">amtMaura</th>
+                    <th style="width: 100px; word-break: break-word;">total_amt</th>
+                    <th style="width: 100px; word-break: break-word;">total_key</th>
+                    <th style="width: 100px; word-break: break-word;">split_total</th>
                     @if($accountName == 'DiscSavings' || $accountName == 'all')
-                        <th>bucket</th>
+                        <th style="width: 100px; word-break: break-word;">bucket</th>
                     @endif
-                    <th>lastBalanced</th>
-                    <th>Spent</th>
-                    <th>Budget thru this month</th>
-                    <th>Full Year Budget</th>
+                    <th style="width: 100px; word-break: break-word;">lastBalanced</th>
+                    <th style="width: 100px; word-break: break-word;">Spent</th>
+                    <th style="width: 100px; word-break: break-word;">Budget thru this month</th>
+                    <th style="width: 100px; word-break: break-word;">Full Year Budget</th>
                 </tr>
             </thead>
 
@@ -496,9 +496,10 @@
                     var newTransaction = {};
 
                     // id has class transId for existing transactions, and newtransaction for just added transactions
-                    var transId = $record.find('.transId').text();
+                    // var transId = $record.find('.transId').text();
+                    var transId = $record.data('id');
                     if(transId == 'null') newTransaction['id'] = null;
-                    else newTransaction['id'] = Number($record.find('.transId').text());
+                    else newTransaction['id'] = Number(transId);
                     
                     newTransaction['trans_date'] = $record.find('.transDate').children(':first-child').val();
 
@@ -511,9 +512,9 @@
                     else newTransaction['account'] = account;
                     
                     newTransaction['toFrom'] = $record.find('.toFrom').children(':first-child').val();
-                    newTransaction['amount'] = Number($record.find('.amount').children(':first-child').val());
-                    newTransaction['amtMike'] = Number($record.find('.amtMike').children(':first-child').val());
-                    newTransaction['amtMaura'] = Number($record.find('.amtMaura').children(':first-child').val());
+                    newTransaction['amount'] = parseFloat($record.find('.amount').children(':first-child').val());
+                    newTransaction['amtMike'] = parseFloat($record.find('.amtMike').children(':first-child').val());
+                    newTransaction['amtMaura'] = parseFloat($record.find('.amtMaura').children(':first-child').val());
 
                     var method = $record.find('.method').children(':first-child').val();
                     if(method !== '' && method !== 'null' && method !== 'NULL') newTransaction['method'] = method;
@@ -532,7 +533,7 @@
                     else newTransaction['stmtDate'] = null;
                     
                     var total_amt = $record.find('.total_amt').children(':first-child').val();
-                    if(total_amt !== '' && total_amt !== 'null' && total_amt !== 'NULL') newTransaction['total_amt'] = Number(total_amt);
+                    if(total_amt !== '' && total_amt !== 'null' && total_amt !== 'NULL') newTransaction['total_amt'] = parseFloat(total_amt);
                     else newTransaction['total_amt'] = null;
                     
                     var total_key = $record.find('.total_key').children(':first-child').val();
@@ -569,10 +570,13 @@
                                 newTransaction: newTransaction
                             }),
                             success: function(response) {
+                                console.log(response)
                                 console.log(response.message);
                             },
                             error: function(xhr, status, error) {
                                 console.log("** FAILED ** to update transaction", error);
+                                console.log("** FAILED ** to update transaction. status", status);
+                                console.log("** FAILED ** to update transaction. xhr", xhr);
                                 alert("Failed to update transaction");
                             }
 
@@ -1080,6 +1084,32 @@
                         } else {
                             $("#errorMsg").text("");
                         }
+
+                        // fill in defaults
+
+                        // get default
+                        $.ajax({
+                            url: '/transactions/getDefaults/' + newValue,
+                            type: 'GET',
+                            dataType: 'json',
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                                // totalKey: total_key
+                            },
+                            success: function(response) {
+
+                                console.log("response: ", response);
+                                response.forEach(record => {
+                                    console.log(" -- record: ", record);
+                                });
+
+                            },
+                            error: function(xhr, status, error) {
+                                var errorMsg = "Error getting defaults for toFrom: " + newValue;
+                                console.error(errorMsg, error);
+                                alert(errorMsg, error);
+                            }
+                        });
                     });
 
                     // amount
@@ -1628,7 +1658,6 @@
                     // get the id of the transaction being editted
                     var id = $(this).data('id');
                     console.log("id (editting): " + id);
-                    // console.log("cell id: " + $cell.data('id'));
 
                     // get the original account, toFrom, amount
                     // var origAccount = $cell.closest("tr").find('.account').text();
@@ -1677,7 +1706,7 @@
                     var id = $(this).data('id');
                     if(id == 'null') id = null;
                     var thisElement = this;
-                    
+
                     // are the values in the record good
                     try {
 
@@ -1754,102 +1783,12 @@
                             }
                         }
 
-                        // if total_amt is complete...
-                        // sum of amounts for all total_keys should = total_amt
-                        // all total_amts should be the same for all total_keys
-                        var total_amt_done = false;  // false if no total_key, so it's not checked
-                        if(total_key != '') {
-                            total_amt_done = confirm("Are all the split transactions for total_key: " + total_key + " entered?");
-                            // total_amt_done = false;     // temp
-                        }
+                        // OK to write record
+                        updateTransactionRecord($record);
+                        
+                        // change edittable cells in record to non-edittable
+                        makeNotEdittable(this);
 
-                        if(total_amt_done) {
-                            // for all records with the same total_key,
-                            // sumTotalAmts is the sum of all the amount values where total_key is the given total_key
-                            // totalAmts is an array of each of the total_amt values where total_key is the given total_key
-
-                            $.ajax({
-                                url: '/transactions/totalKey/' + total_key,
-                                type: 'GET',
-                                dataType: 'json',
-                                data: {
-                                    _token: "{{ csrf_token() }}"
-                                    // totalKey: total_key
-                                },
-                                success: function(response) {
-                                    // calculate sumTotalAmts and totalAmts
-                                    var sumTotalAmts = 0;
-                                    var totalAmts = [];
-
-                                    console.log("response: ", response);
-                                    var thisIdFound = false;    // make sure record being updated is included
-
-                                    response.forEach(record => {
-                                        // use amount & total_amt entered for current id
-                                        if(record['id'] == id) {
-                                            sumTotalAmts += amount;
-                                            totalAmts.push(total_amt);
-                                            thisIdFound = true;
-                                        // otherwise use amount and total_amt in database
-                                        } else {
-                                            sumTotalAmts += Number(record['amount']);
-                                            totalAmts.push(Number(record['total_amt']));
-                                        }
-                                    });
-
-                                    // include this record, if not in response from database
-                                    //      Can happen if total_key is changed.
-                                    if(!thisIdFound) {
-                                        sumTotalAmts += amount;
-                                        totalAmts.push(total_amt);  
-                                    }
-
-                                    console.log("sumTotalAmts: ", sumTotalAmts);
-                                    console.log("totalAmts:", totalAmts);
-
-                                    // sum of amounts for all total_keys should = total_amt                       
-                                    if(sumTotalAmts.toFixed(6) != total_amt.toFixed(6)) {
-                                        errMsg = "Sum of all the amounts where total_key is " + total_key + " should be " + total_amt;
-                                        alert(errMsg + "\nTransaction not updated in database.");
-                                        throw errMsg;
-                                    }
-                                    console.log("sumTotalAmts ok");
-
-                                    // all total_amts should be the same for all total_keys
-                                    if(!totalAmts.every(element => element.toFixed(6) === totalAmts[0].toFixed(6))) {
-                                        errMsg = "Each amount for records where total_key is " + total_key + " should be the same (" + total_amt + ")";
-                                        alert(errMsg + "\nTransaction not updated in database.");
-                                        throw errMsg;
-                                    }
-                                    console.log("totalAmts ok");
-
-                                    // OK to write record
-                                    updateTransactionRecord($record);
-                                    // console.log("1 changing id to: ", id);
-                                    // $(this).data('id',id);
-
-                                    // change edittable cells in record to non-edittable
-                                    makeNotEdittable(thisElement);
-
-                                },
-                                error: function(xhr, status, error) {
-                                    var errorMsg = "Error getting total_key transactions.";
-                                    console.error(errorMsg, error);
-                                    alert(errorMsg, error);
-                                }
-                            });
-
-                        } else {
-
-                            // OK to write record
-                            updateTransactionRecord($record);
-                            // console.log("2 changing id to: ", id);
-                            // $(this).data('id',id);
-                            
-                            // change edittable cells in record to non-edittable
-                            makeNotEdittable(this);
-
-                        }
                     } catch (error) {
                         console.error("Error checking record: ", error);
                     }                  
