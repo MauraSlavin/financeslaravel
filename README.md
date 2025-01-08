@@ -51,6 +51,80 @@
     <li>should now have all changes in the main branch, and ready to start again with a new branch</li>
   </ul>
 
+
+<h2>uploadMatch Documentation</h2>
+  <p>uploadMatch determines how each field in the transactions table gets filled from the csv download.</p>
+
+  <h3>account_id</h3>
+  <p>See account_id under "toFromAliases documentation" below.</p>
+
+  <h3>csvField</h3>
+  <p>The field in the downloaded csv field from the financial institution.</p>
+
+  <h3>transField</h3>
+  <p>The corresponding field in the local transactions table.</p>
+
+  <h3>formulas</h3>
+  <p>How the csv data needs to be manipulated to assign the transactions fields correctly.  This is what is allowed:</p>
+  <ul>
+    <li>+, -, *, /, numbers</li>
+    <p>For example, "-.5*Amount" reverses the sign and multiplies the csvField ("Amount" in this case - see the uploadMatch table) by 0.5, and assigns the result to transField ("amtMike" or "amtMaura" in this case - see the uploadMatch table) in that transaction record.</p>
+    <li>if x / then y / else z; in the form (x) ? (y) : z</li>
+    <p>For example, "(Check Number) ? ('Ck #' . Check Number)  : '' " puts "Ck #123" in the method field if the Check Number is 123, and a null string if there is no check number</p>
+    <li>concatenates fields using "+"</li>
+    <p>For example: "Description + Memo" is used to combine these two fields in the csv file into the toFrom column of the transactions table for the Checking account. A space is inserted between them, and the resulting string is trimmed.  Only 2 fields can be concatenated.</p>
+  </ul>
+
+<h2>toFromAliases documentation</h2>
+
+  <h3>account_id</h3>
+  <p>account_ids are the ids of the accounts in the accounts table.  As of 1/8/25:</p>
+  <ol>
+    <li>Cash</li>
+    <li>Checking</li>
+    <li>DiscCC</li>
+    <li>DiscSavings</li>
+    <li>VISA</li>
+    <li>Mike</li>
+    <li>MauraSCU</li>
+    <li>MauraDisc</li>
+    <li>* EJ</li>
+    <li>* TIAA</li>
+    <li>* WF-Inv</li>
+    <li>* WF-IRA</li>
+    <li>* JH</li>
+    <li>FSA</li>
+    <li>ChargePoint</li>
+    <li>ElectrifyAmerica</li>
+    <li>* House</li>
+    <li>* Prudential</li>
+    <li>Eversource</li>
+    <li>LTC</li>
+  </ol>
+  <p>* investment accounts (as opposed to transactional accounts).  A transactional account is something like a checking, savings, or cc; an investment account would be a CD or a retirement acct.
+
+  <h3>origToFrom</h3>
+  <p>...is the beginning of the verbiage in the downloaded csv file from the financial institution.  Only as much as needed for a match is in the table.</p>
+
+  <h3>transToFrom (with IGNORE)</h3>
+  <p>...is the desired toFrom verbiage in the local transactions table.</p>
+  <p>If this is set to "IGNORE", the origToFrom is spliced from the string for the account indicated by the account_id.  This lets us ignore things like "External deposit" in the Checking csv download, and "sq*" in the Disc cc csv download to make matching that csv description easier to match to the local transactions toFrom field.</p>
+
+  <h3>category</h3>
+  <p>...is the default category for the toFrom text.</p>
+
+  <h3>extraDefaults</h3>
+  <p>...allow for default notes, tracking, and split categories.  A few different formats are allowed:</p>
+  <ul>
+    <li>"notes":"text" or "tracking":"text"</li>
+      <p>Sets the notes or the tracking to the text given.  Can use both. For example: {"notes":"charging","tracking":"Bolt"}</p>
+    <li>{"splits":["MauraSpending","MikeSpending","Kids"]}</li>
+      <p>Creates duplicate transactions with different categories in addition to the default category.  The total_amt is divided equally among all the splits, and the total_key is the id of the original transaction. There's a limit of 10 transactions in the toFromAliases table (more can be created manually in the interface, if needed).</p>
+    <li>{"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
+      <p>Multiple default tracking (& notes, I think) can be given for each split.  In this case, two records are created: the original from the csv download, and a duplicate with a category of "Bolt".  The original transaction gets tracking "CRZ", and the duplicate gets tracking "Bolt".  Both get notes "tolls".  Each gets 1/2 the total amount.</p>
+  </ul>
+
+
 <h2>Database notes:</h2>
   <ul>
     <li>transactions: has each transaction</li>
