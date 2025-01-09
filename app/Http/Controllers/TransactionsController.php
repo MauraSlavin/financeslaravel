@@ -38,7 +38,7 @@ class TransactionsController extends Controller
 
     // get transactions from csv file
     public function readUploadCsv($accountName) {
-        
+
         // csv files are expected to be in the public/uploadFiles folder.
         $fullFilePath = public_path('uploadFiles/' . strtolower($accountName) . '.csv');
 
@@ -49,6 +49,11 @@ class TransactionsController extends Controller
 
         // open the file
         $handle = fopen($fullFilePath, 'r');
+
+        // ignore first 3 lines of VISA csv file
+        if($accountName == 'VISA') {
+            for($i = 1; $i <= 3; $i++) $garbage = fgetcsv($handle, 1000, ',');
+        }
 
         // get header row
         $headers = fgetcsv($handle, 1000, ',');
@@ -93,6 +98,25 @@ class TransactionsController extends Controller
 
         return $newCsvData;
     }
+
+
+    // tweak records for VISA to make import more helpful
+    public function modifyCsvForVISA($newCsvData) {
+
+        foreach($newCsvData as $idx=>$record) {
+
+            // Combine "Amount Debit" or "Amount Credit" into Amount (won't be a number in both)
+            if($record["Amount Debit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Debit"];
+            else if ($record["Amount Credit"] != '') $newCsvData[$idx]["Amount"] = $record["Amount Credit"];
+            else $newCsvData[$idx]["Amount"] = "0"; // to prevent an error
+
+            // Amount Credit and Amount Debit are no longer needed
+            unset($newCsvData[$idx]["Amount Credit"], $newCsvData[$idx]["Amount Debit"]);
+        }
+
+        return $newCsvData;
+    }
+
 
     // Convert csv data to transaction records
     public function convertCsv($newCsvData, $accounts, $accountName, $key_dummies, $max_splits) {
@@ -752,8 +776,7 @@ class TransactionsController extends Controller
             }
         }
 
-        error_log("in upload");
-        
+       
         // set default beginDate and endDate
         [$beginDate, $endDate] = $this->setDefaultBeginEndDates();
 
@@ -860,6 +883,8 @@ class TransactionsController extends Controller
         
         // If Checking, modify csv for upload
         if($accountName == "Checking") $newCsvData = $this->modifyCsvForChecking($newCsvData);
+        // If VISA, modify csv for upload
+        if($accountName == "VISA") $newCsvData = $this->modifyCsvForVISA($newCsvData);
 
         // will be replaced when id's are determined
         $key_dummies = ['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj'];

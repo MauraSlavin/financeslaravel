@@ -9,7 +9,7 @@
     
 <h2>To do:</h2>
     <ul>
-      <li>**Manually** add some common aliases. (DiscCC done)</li>
+      <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>
@@ -63,6 +63,7 @@
 
   <h3>transField</h3>
   <p>The corresponding field in the local transactions table.</p>
+  <p>NOTE: trans_date and clear_date look like "trans date" and "clear date" in the database.  The "_" is there, but not displaying in MySQL Workbench.</p>
 
   <h3>formulas</h3>
   <p>How the csv data needs to be manipulated to assign the transactions fields correctly.  This is what is allowed:</p>
