@@ -1,10 +1,15 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2025-01-08-defaults-and-splits-individual-transactions</h2>
+<h2>Working on branch: 2025-01-09-defaults-and-splits-individual-transactions</h2>
     <ul>
-      <li>not started yet</li>
-      <li>** similar from when uploading when adding single transactions</li>
+      <li>** search "// left off here"</li>
+      <li>Sets default category, and for extraDefaults, handles "notes" and "tracking"</li>
+      <li>Need to do:</li>
+      <li> - {"method":"ATM","notes":"ATM"}</li>
+      <li> - {"splits":["MauraSpending","MikeSpending","Kids"]}</li>
+      <li> - {"splits":3}</li>
+      <li> - {"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
     </ul>
     
 <h2>To do:</h2>

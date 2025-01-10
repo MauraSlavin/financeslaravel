@@ -982,8 +982,6 @@ class TransactionsController extends Controller
             // put it back as an object (from json)
             $transaction = json_decode($transaction);
             $id = $transaction->id;
-            error_log("transaction:");
-            error_log(json_encode($transaction));
 
             // set fields to be updated
             $dataToUpdate = [
@@ -1101,11 +1099,22 @@ class TransactionsController extends Controller
 
 
     // get default values for a given toFrom
-    public function getDefaults($toFrom): JsonResponse
+    public function getDefaults($account, $toFrom): JsonResponse
     {
+
         try {
-            // $defaults = DB::table()
-            //     ...
+            $accountId = DB::table('accounts')
+                ->where('accountName', $account)
+                ->pluck('id');
+            $accountId = $accountId[0];
+            error_log("accountId: " . $accountId);
+            $defaults = DB::table('toFromAliases')
+                ->where('account_id', $accountId)
+                ->where('transToFrom', $toFrom)
+                ->first();
+
+            error_log("\n\ndefaults: " . json_encode($defaults) . "\n\n");
+
             return response()->json($defaults);
         } catch(\Exception $e) {
             error_log("\nProblem getting default values for toFrom: " . $toFrom . ".");

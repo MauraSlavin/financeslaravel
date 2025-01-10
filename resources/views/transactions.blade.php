@@ -498,7 +498,7 @@
                     // id has class transId for existing transactions, and newtransaction for just added transactions
                     // var transId = $record.find('.transId').text();
                     var transId = $record.data('id');
-                    if(transId == 'null') newTransaction['id'] = null;
+                    if(transId == 'null' || transId == null) newTransaction['id'] = null;
                     else newTransaction['id'] = Number(transId);
                     
                     newTransaction['trans_date'] = $record.find('.transDate').children(':first-child').val();
@@ -1075,6 +1075,8 @@
                         var newValue = $input.val();
                         $("#errorMsg").text("");
 
+                        var account = $("#accountName").text();
+
                         [isGood, errorMsg] = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
                         if(isGood === false) {
                             $("#errorMsg").text(errorMsg);
@@ -1089,7 +1091,7 @@
 
                         // get default
                         $.ajax({
-                            url: '/transactions/getDefaults/' + newValue,
+                            url: '/transactions/getDefaults/' + account + "/" + newValue,
                             type: 'GET',
                             dataType: 'json',
                             data: {
@@ -1099,9 +1101,22 @@
                             success: function(response) {
 
                                 console.log("response: ", response);
-                                response.forEach(record => {
-                                    console.log(" -- record: ", record);
-                                });
+                                console.log("category: ", response['category']);
+                                if(response !== null) {
+                                    $input.parent().parent().find(".category").find("input").val(response['category']);
+
+                                    console.log("extraDefaults: ", response['extraDefaults']);
+                                    var extraDefaults = JSON.parse(response['extraDefaults']);
+                                    console.log("extraDefaults: ", extraDefaults, "; type: ", typeof extraDefaults);
+                                    if('notes' in extraDefaults) {
+                                        $input.parent().parent().find(".notesEdit").val(extraDefaults['notes']);
+                                    }
+                                    if('tracking' in extraDefaults) {
+                                        $input.parent().parent().find(".trackingEdit").val(extraDefaults['tracking']);
+                                    }
+
+                                    // left off here
+                                }
 
                             },
                             error: function(xhr, status, error) {
