@@ -502,11 +502,14 @@ class TransactionsController extends Controller
     // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
     //      includes line "all" for all transactions
     public function index() {
-        // get all account names
-        $accountNames = DB::table('accounts')
+        
+        // get all account names & ids
+        $results = DB::table('accounts')
+            ->select("id", "accountName")
             ->where("type", "trans")
-            ->distinct()->get("accountName")->toArray();
-        $accountNames = array_column($accountNames, 'accountName');
+            ->get()->toArray();
+        $accountNames = array_column($results, 'accountName');
+        $accountIds = array_column($results, 'id');
 
         $accounts = DB::table('transactions')
             ->select(
@@ -578,7 +581,7 @@ class TransactionsController extends Controller
         if(count($splitTotals) > 0) {
             foreach($transactions as $transaction) {
                 $splitTotal = $splitTotals[$transaction->total_key] ?? null;
-                $transaction->split_total = $splitTotal;
+                $transaction->split_total = round($splitTotal, 4);
             }
         } else {
             foreach($transactions as $transaction) {
@@ -623,7 +626,9 @@ class TransactionsController extends Controller
 
         // get all the defined account names
         $accountNames = array_column($accounts, 'accountName');
+        $accountIds = array_column($accounts, 'id');
         // error_log("accountNames: " . json_encode($accountNames));
+        // error_log("accountIds: " . json_encode($accountIds));
 
         // if accountName not in accounts and is not 'all', it's not a valid accountName
         if(!in_array($accountName, $accountNames) && $accountName != 'all') {
@@ -709,6 +714,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // add ytd spent, budget through current month, full year budget to transactions variable for each transaction
+        // and fill in accountId
         foreach($transactions as $transaction) {
             $ytmBudget = $this->findTotalBudget($ytmBudgets, $thisYear, $transaction->category);
             $thisYearBudget = $this->findTotalBudget($yearBudgets, $thisYear, $transaction->category);
@@ -716,9 +722,13 @@ class TransactionsController extends Controller
             $transaction->ytmBudget = $ytmBudget;
             $transaction->yearBudget = $thisYearBudget;
             $transaction->spent = $spent;
+
+            // fill in accountId
+            $accountIdx = array_search($transaction->account, $accountNames);
+            $transaction->accountId = $accountIds[$accountIdx];
         }
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'toFroms' => $toFroms, 'toFromAliases' => $toFromAliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'toFroms' => $toFroms, 'toFromAliases' => $toFromAliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
     }
 
 
@@ -1107,13 +1117,20 @@ class TransactionsController extends Controller
                 ->where('accountName', $account)
                 ->pluck('id');
             $accountId = $accountId[0];
-            error_log("accountId: " . $accountId);
+            $lowerToFrom = strtolower($toFrom);
+
             $defaults = DB::table('toFromAliases')
                 ->where('account_id', $accountId)
-                ->where('transToFrom', $toFrom)
+                ->whereRaw("LOWER(transToFrom) = ?", [$lowerToFrom])
                 ->first();
 
-            error_log("\n\ndefaults: " . json_encode($defaults) . "\n\n");
+            // if none found, look in origToFrom
+            if($defaults == null) {
+                $defaults = DB::table('toFromAliases')
+                ->where('account_id', $accountId)
+                ->whereRaw("LOWER(origToFrom) = ?", [$lowerToFrom])
+                ->first();
+            }
 
             return response()->json($defaults);
         } catch(\Exception $e) {

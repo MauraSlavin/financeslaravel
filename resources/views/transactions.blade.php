@@ -18,6 +18,9 @@
         <h1>Transactions loaded for 
             <span id="accountName">{{$accountName}}</span>
         </h1>
+        @if($accountName != "all")
+            <p id="accountId" style="display: none;"></p>
+        @endif
         <h3>Cleared balance: {{ $clearedBalance }}</h3>
         <h3>Register balance: {{ $registerBalance }}</h3>
         <h3>Last Balanced: {{ $lastBalanced }}</h3>
@@ -26,6 +29,7 @@
             <h5>Transactions that may be a duplicate have a background color of <span class="dupMaybe">yellow</span>.</h5>
         @endif
         <input type="hidden" id="accountNames"  name="accountNames"  value={{ json_encode($accountNames) }}>
+        <input type="hidden" id="accountIds"  name="accountIds"  value={{ json_encode($accountIds) }}>
         <input type="hidden" id="toFroms"       name="toFroms"       value={{ $toFroms }}>
         <input type="hidden" id="toFromAliases" name="toFromAliases" value={{ $toFromAliases }}>
         <input type="hidden" id="categories"    name="categories"    value={{ $categories }}>
@@ -58,6 +62,7 @@
                     <th style="width: 100px; word-break: break-word;">clear_date</th>
                     @if($accountName == 'all')
                         <th style="width: 100px; word-break: break-word;">account</th>
+                        <th style="display: none;">id</th>
                     @endif
                     <th style="width: 100px; word-break: break-word;">toFrom</th>
                     <th style="width: 100px; word-break: break-word;">amount</th>
@@ -97,6 +102,7 @@
                         <td class="clearDate">{{ $newTransaction["clear_date"] ?? NULL  }}</td>
                         @if($accountName == 'all')
                             <td class="account">{{ $newTransaction["account"] ?? NULL  }}</td>
+                            <td style="display: none;" class="accountId">{{ $newTransaction["accountId"] ?? "id"  }}</td>
                         @endif
                         <td class="toFrom">{{ $newTransaction["toFrom"] ?? NULL  }}</td>
                         <td class="amount">{{ $newTransaction["amount"] ?? NULL  }}</td>
@@ -147,6 +153,7 @@
                     <td class="fw-bold">clear_date</td>
                     @if($accountName == 'all')
                         <td class="fw-bold">account</td>
+                        <td style="display: none;" class="fw-bold">id</td>
                     @endif
                     <td class="fw-bold">toFrom (existing trans)</td>
                     <td class="fw-bold">amount</td>
@@ -181,6 +188,8 @@
                         <td class="clearDate">{{ $transaction->clear_date }}</td>
                         @if($accountName == 'all')
                             <td class="account">{{ $transaction->account }}</td>
+                            <!-- <td class="accountId">{{ $transaction->account }}</td> -->
+                            <td style="display: none;" class="accountId">{{ $transaction->accountId }}</td>
                         @endif
                         <td class="toFrom">{{ $transaction->toFrom }}</td>
                         <td class="amount">{{ $transaction->amount }}</td>
@@ -271,6 +280,16 @@
                 var accountNames = $("#accountNames").val();
                 // console.log("accountNames: ", accountNames);
                 accountNames = JSON.parse(accountNames);
+
+                var accountIds = $("#accountIds").val();
+                accountIds = JSON.parse(accountIds);
+
+                // fill in hidden accountId, if accountName is not "all"
+                if($("#accountName").text() != "all") {
+                    // alert($("#accountName").text());
+                    var accountIdx = accountNames.indexOf($('#accountName').text());
+                    $("#accountId").text(accountIds[accountIdx]);
+                }
 
                 var toFroms = $("#toFroms").val();
                 toFroms = toFroms.replaceAll("%20", " ");
@@ -666,8 +685,7 @@
                 // If a new toFrom is entered, make sure it's not a mistake;
                 // If the new toFrom isn't a previously used value, ask if it should be changed automatically.
                 // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
-                function handleToFrom(newValue, toFroms, toFromAliases, origToFrom) {
-
+                function handleToFrom(newValue, account, accountId, toFroms, toFromAliases, origToFrom) {
                     var isGood = true;
                     var errorMsg = ''; 
 
@@ -707,7 +725,8 @@
 
                     // If the new toFrom doesn't have an alias, should future examples be auto replaced in the future;
                     // If it DOES have an alias, if it should this case be changed.
-                    var foundToFrom = toFromAliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase());
+                    // Account has to match, too.
+                    var foundToFrom = toFromAliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase() && alias.account_id == accountId);
 
                     // if no alias found... and origToFrom is not null... and newValue is changed from origToFrom
                     if( typeof foundToFrom === 'undefined' && origToFrom !== null && newValue.toLowerCase() != origToFrom.toLowerCase()) {
@@ -1076,8 +1095,14 @@
                         $("#errorMsg").text("");
 
                         var account = $("#accountName").text();
+                        var accountId;
+                        if(account == "all") {
+                            accountId = $input.parent().parent().find(".accountIdEdit").val();
+                        } else {
+                            accountId = $("#accountId").text();
+                        }
 
-                        [isGood, errorMsg] = handleToFrom(newValue, toFroms, toFromAliases, origToFrom);
+                        [isGood, errorMsg] = handleToFrom(newValue, account, accountId, toFroms, toFromAliases, origToFrom);
                         if(isGood === false) {
                             $("#errorMsg").text(errorMsg);
                             $input.css("background-color", "yellow").val(origToFrom);
@@ -1100,22 +1125,97 @@
                             },
                             success: function(response) {
 
-                                console.log("response: ", response);
-                                console.log("category: ", response['category']);
-                                if(response !== null) {
+                                if(response != null && Object.keys(response).length !== 0) {
                                     $input.parent().parent().find(".category").find("input").val(response['category']);
 
                                     console.log("extraDefaults: ", response['extraDefaults']);
                                     var extraDefaults = JSON.parse(response['extraDefaults']);
                                     console.log("extraDefaults: ", extraDefaults, "; type: ", typeof extraDefaults);
-                                    if('notes' in extraDefaults) {
-                                        $input.parent().parent().find(".notesEdit").val(extraDefaults['notes']);
-                                    }
-                                    if('tracking' in extraDefaults) {
-                                        $input.parent().parent().find(".trackingEdit").val(extraDefaults['tracking']);
-                                    }
+                                    if(extraDefaults != null) {
+                                        // left off here
+                                        if('notes' in extraDefaults) {
+                                            $input.parent().parent().find(".notesEdit").val(extraDefaults['notes']);
+                                        }
+                                        if('tracking' in extraDefaults) {
+                                            $input.parent().parent().find(".trackingEdit").val(extraDefaults['tracking']);
+                                        }
+                                        if('method' in extraDefaults) {
+                                            $input.parent().parent().find(".methodEdit").val(extraDefaults['method']);
+                                        }
+                                        if('splits' in extraDefaults) {
+                                            if(typeof extraDefaults['splits'] == 'number') {
+                                                // make this many splits, but no additional changes (blank categories)
+                                                var numberSplits = extraDefaults['splits'];
+                                                console.log("number generic splits: ", numberSplits);
+                                                
+                                                // add "xxx" for total_key placeholder
+                                                $input.parent().parent().find(".total_keyEdit").val("xxx");
 
-                                    // left off here
+                                                // clone original transaction
+                                                var $newTransaction = $input.parent().parent().clone();
+
+                                                // make sure id is null (since it's new)
+                                                $newTransaction.attr('data-id', 'null');
+                                                $newTransaction.find('td').each(function(index, td) {
+                                                    var $cell = $(td);
+                                                    switch ($cell.prop('class')) {
+
+                                                        case 'transId': 
+                                                            $cell.text('null');
+                                                            break;
+
+                                                        case 'undefined':
+                                                            $cell.children(':first-child').attr('data-id', 'null');
+                                                            break;
+
+                                                        case '':
+                                                            $cell.children(':first-child').attr('data-id', 'null');
+                                                            break;
+                                                            
+                                                        default:
+                                                            $cell.text('');
+                                                    }
+                                                    
+                                                });
+                                                // make it edittable
+                                                changeCellsToInputs($newTransaction);
+
+                                                // put values for trans_date, clear_date, toFrom in cloned transaction
+                                                var toFrom = $input.parent().parent().find(".toFromEdit").val();
+                                                console.log("toFrom: ", toFrom);
+                                                $newTransaction.find(".toFromEdit").val(toFrom);
+                                                
+                                                var transDate = $input.parent().parent().find(".transDateEdit").val();
+                                                console.log("transDate: ", transDate);
+                                                $newTransaction.find(".transDateEdit").val(transDate);
+                                                
+                                                var clearDate = $input.parent().parent().find(".clearDateEdit").val();
+                                                console.log("clearDate: ", clearDate);
+                                                $newTransaction.find(".clearDateEdit").val(clearDate);
+
+                                                // total_key gets set to "xxx" as a placeholder
+                                                $newTransaction.find(".total_keyEdit").val("xxx");
+                                                
+                                                // make sure category is blanked out in clones
+                                                $newTransaction.find(".category").val("");
+
+                                                // add this to the list of transactions for each split
+                                                for(var i = 1; i <= numberSplits; i++) {
+                                                    // prepend it to the list of transactions
+                                                    console.log("i: ", i);
+                                                    $("tbody").prepend($newTransaction.clone());
+                                                }
+                                            } else {
+                                                var numberSplits = extraDefaults['splits'].length;
+                                                console.log("number names splits: ", numberSplits);
+                                                var newCategories = extraDefaults['splits'];
+                                                newCategories.forEach(category => console.log(" - " + category));
+                                                // extraDefaults['splits'] has the categories to split into
+                                                // number of splits is the number of elements in extraDefaults['splits']
+                                                //      (in addition to the original)
+                                            }
+                                        }
+                                    }  // end of if extraDefaults != null
                                 }
 
                             },

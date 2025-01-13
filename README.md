@@ -1,26 +1,41 @@
 <h2>To start:</h2>
   <ul><li>php artisan serve</li></ul>
 
-<h2>Working on branch: 2025-01-09-defaults-and-splits-individual-transactions</h2>
+<h2>Working on branch: 2025-01-10-defaults-and-splits-individual-transactions</h2>
     <ul>
       <li>** search "// left off here"</li>
       <li>Sets default category, and for extraDefaults, handles "notes" and "tracking"</li>
       <li>Need to do:</li>
-      <li> - {"method":"ATM","notes":"ATM"}</li>
-      <li> - {"splits":["MauraSpending","MikeSpending","Kids"]}</li>
-      <li> - {"splits":3}</li>
-      <li> - {"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
+      <li> - working on {"splits":["MauraSpending","MikeSpending","Kids"]}<br>
+      done - creates splits; "xxx" for total_key; copies dates & category<br>
+      to do - add amt to total_amt as they are filled in<br>
+      to do - when first record saved, change "xxx" total_key for others to saved transaction's id</li>
+      <li> - to do - {"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
+      <li> - done - not tested<br>{"method":"ATM","notes":"ATM"}</li>
+      <li> - done {"splits":3}</li>
     </ul>
+
+<h2>BUGS</h2>
+  <ul>
+    <li>Error msg: The GET method is not supported for route transactions/insertTrans. Supported methods: POST.<br>
+    GET /transactions/insertTrans</li>
+    <li>When splitting a transaction that was already saved (?), saving the original + all split (so get duplicate transactions - splits and original not split).</li>
+  </ul>
     
 <h2>To do:</h2>
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
+      <li>No category or amtMike (for Maura's) / amtMaura (for Mike's) when adding transactions to Mike/Maura Spending accounts.</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>
       <li>** Assets</li>
       <li> --- Include ability to set end date</li>
-      <li>Add transactions by cloning a transaction line, instead of using the new form</li>
+      <li>Automate:<br>
+      Spending<br>
+      GB Limo<br>
+      trips<br>
+      </li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
     </ul>
@@ -29,8 +44,6 @@
   <ul>
     <li>** Handle Great Bay Limo</li>
     <li>** Page to update values of things like WF, JH, House, Prudential, etc. all on one page (can update values for each account separately, now)</li>
-    <li>From CSV file, load data into database<br>
-    - put matches between CSV & transactions table in a table to define the matches for each account (only done for DiscCC, and partially done for Checking - special processing done for checking csv file)</li>
     <li>Append Spending transactions to Google Sheets<br> -- https://www.phind.com/search?cache=f8twduhlg5g1fo4ca2bkrs7c</li>
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
