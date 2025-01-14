@@ -515,7 +515,6 @@
                     var newTransaction = {};
 
                     // id has class transId for existing transactions, and newtransaction for just added transactions
-                    // var transId = $record.find('.transId').text();
                     var transId = $record.data('id');
                     if(transId == 'null' || transId == null) newTransaction['id'] = null;
                     else newTransaction['id'] = Number(transId);
@@ -617,6 +616,29 @@
                                 $record.find('.editTransaction').attr('data-id', response.recordId);
                                 $record.find('.splitTransaction').attr('data-id', response.recordId);
                                 $record.find('.deleteTransaction').attr('data-id', response.recordId);
+
+                                // if the total_key was resolved response.newTotalKey has the new key), change that on the page
+                                if(response.newTotalKey !== false) {
+                                    var oldTotalKey = $record.find('.total_key').text();
+                                    $record.find('.total_key').text(response.newTotalKey);
+
+                                    // change the total_key for other transactions with the same placeholder
+                                    var rows = $("#editTransactionsTable tbody tr");
+                                    rows.each(function(index, row) {
+                                        var rowData = $(row);
+
+                                        // rows not in edit mode
+                                        if(rowData.find(".total_key").text() == oldTotalKey) {
+                                            rowData.find(".total_key").text(response.newTotalKey);
+                                        }
+
+                                        // rows in edit mode
+                                        if(rowData.find(".total_keyEdit").val() == oldTotalKey) {
+                                            rowData.find(".total_keyEdit").val(response.newTotalKey);
+                                        }
+                                    });
+
+                                }
                             },
                             error: function(xhr, status, error) {
                                 console.log("** FAILED ** to insert transaction", error);
@@ -1132,7 +1154,7 @@
                                     var extraDefaults = JSON.parse(response['extraDefaults']);
                                     console.log("extraDefaults: ", extraDefaults, "; type: ", typeof extraDefaults);
                                     if(extraDefaults != null) {
-                                        // left off here
+
                                         if('notes' in extraDefaults) {
                                             $input.parent().parent().find(".notesEdit").val(extraDefaults['notes']);
                                         }
@@ -1207,12 +1229,65 @@
                                                 }
                                             } else {
                                                 var numberSplits = extraDefaults['splits'].length;
-                                                console.log("number names splits: ", numberSplits);
+                                                console.log("number named splits: ", numberSplits);
+                                                                   
+                                                // add "xxx" for total_key placeholder
+                                                $input.parent().parent().find(".total_keyEdit").val("xxx");
+
+                                                // clone original transaction
+                                                var $newTransaction = $input.parent().parent().clone();
+
+                                                // make sure id is null (since it's new)
+                                                $newTransaction.attr('data-id', 'null');
+                                                $newTransaction.find('td').each(function(index, td) {
+                                                    var $cell = $(td);
+                                                    switch ($cell.prop('class')) {
+
+                                                        case 'transId': 
+                                                            $cell.text('null');
+                                                            break;
+
+                                                        case 'undefined':
+                                                            $cell.children(':first-child').attr('data-id', 'null');
+                                                            break;
+
+                                                        case '':
+                                                            $cell.children(':first-child').attr('data-id', 'null');
+                                                            break;
+                                                            
+                                                        default:
+                                                            $cell.text('');
+                                                    }
+                                                    
+                                                });
+                                                // make it edittable
+                                                changeCellsToInputs($newTransaction);
+
+                                                // put values for trans_date, clear_date, toFrom in cloned transaction
+                                                var toFrom = $input.parent().parent().find(".toFromEdit").val();
+                                                // console.log("toFrom: ", toFrom);
+                                                $newTransaction.find(".toFromEdit").val(toFrom);
+                                                
+                                                var transDate = $input.parent().parent().find(".transDateEdit").val();
+                                                // console.log("transDate: ", transDate);
+                                                $newTransaction.find(".transDateEdit").val(transDate);
+                                                
+                                                var clearDate = $input.parent().parent().find(".clearDateEdit").val();
+                                                // console.log("clearDate: ", clearDate);
+                                                $newTransaction.find(".clearDateEdit").val(clearDate);
+
+                                                // total_key gets set to "xxx" as a placeholder
+                                                $newTransaction.find(".total_keyEdit").val("xxx");
+                                                
+                                                // add this to the list of transactions for each split with the new category
                                                 var newCategories = extraDefaults['splits'];
-                                                newCategories.forEach(category => console.log(" - " + category));
-                                                // extraDefaults['splits'] has the categories to split into
-                                                // number of splits is the number of elements in extraDefaults['splits']
-                                                //      (in addition to the original)
+                                                newCategories.forEach(category => {
+                                                    // make sure category is blanked out in clones
+                                                    $newTransaction.find(".categoryEdit").val(category);
+                                                    // prepend it to the list of transactions
+                                                    $("tbody").prepend($newTransaction.clone());
+                                                });
+
                                             }
                                         }
                                     }  // end of if extraDefaults != null
@@ -1268,6 +1343,39 @@
                         } else if( thisRcdCategory == "MauraSpending") {
                             var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
                             $amtMauraEdit.val($input.val());
+                        }
+
+
+                        // left off here
+                        // NOTE:  This doesn't handle the transactions that are NOT in edit mode
+
+
+                        // if there is a total_key, adjust total_amt for all records with that key
+                        // if any of the records are not in edit mode, put them in edit mode.  Throw an alert.
+                        var totalKey = $input.parent().parent().find(".total_keyEdit").val();
+
+                        if($input.parent().parent().find(".total_keyEdit").val() != '') {
+                            // get all the total_key input values
+                            var totalKeyElmts = $input.parent().parent().parent().find('.total_keyEdit');
+
+                            // get new total amount (sum of current amounts)
+                            var newTotalAmt = 0;
+                            var amount;
+                            totalKeyElmts.each( (index, totalKeyElt) => {
+                                if($(totalKeyElt).val() == totalKey) {
+                                    // get amount for this transaction (with matching totalKey)
+                                    amount = $(totalKeyElt).parent().parent().find('.amountEdit').val();
+                                    // add to total amount
+                                    newTotalAmt += Number(amount);
+                                }
+                            });
+
+                            // update total amount for each transaction with the matching total_key
+                            totalKeyElmts.each( (index, totalKeyElt) => {
+                                if($(totalKeyElt).val() == totalKey) {
+                                    $(totalKeyElt).parent().parent().find('.total_amtEdit').val(newTotalAmt);
+                                }
+                            });
                         }
                                                
                     });
@@ -1898,7 +2006,7 @@
                             }
                         }
 
-                        // OK to write record
+                        // OK to write record (will update total_key if this is the first of a group of split transactions to be saved)
                         updateTransactionRecord($record);
                         
                         // change edittable cells in record to non-edittable
