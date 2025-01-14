@@ -7,9 +7,10 @@
       <li>Sets default category, and for extraDefaults, handles "notes" and "tracking"</li>
       <li>Need to do:</li>
       <li> - working on {"splits":["MauraSpending","MikeSpending","Kids"]}<br>
+      =>=>=>  SET stmtDate<br>
       done - creates splits; "xxx" for total_key; copies dates & category<br>
-      to do - add amt to total_amt as they are filled in<br>
-      to do - when first record saved, change "xxx" total_key for others to saved transaction's id</li>
+      done - add amt to total_amt as they are filled in (when all transactions are in edit mode)<br>
+      done - when first record saved, change "xxx" total_key for others to saved transaction's id</li>
       <li> - to do - {"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
       <li> - done - not tested<br>{"method":"ATM","notes":"ATM"}</li>
       <li> - done {"splits":3}</li>
@@ -26,6 +27,7 @@
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>No category or amtMike (for Maura's) / amtMaura (for Mike's) when adding transactions to Mike/Maura Spending accounts.</li>
+      <li>When editting transactions, when changing the amount for splits (total_key has a value), code needs to handle when some of the splits are NOT in edit mode.</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>

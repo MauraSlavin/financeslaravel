@@ -978,7 +978,6 @@ class TransactionsController extends Controller
     }
 
     // update a transaction
-    // public function update($newTransaction)
     public function update(Request $request)
     {
         try {
@@ -1083,16 +1082,32 @@ class TransactionsController extends Controller
         // $transaction needs to be array, not object
         $transaction = (array)$transaction;
 
+        // change null numeric values to 0
+        foreach(["amount", "amtMike", "amtMaura"] as $field) {
+            if($transaction[$field] == null) $transaction[$field] = 0;
+        }
+
         try {
-            
+            // insert the transaction
             $response = DB::table('transactions')
                 ->insert($transaction);
             $recordId = DB::getPdo()->lastInsertId();
             
-            // return redirect()->back()->with('success', 'Alias successfully written to database');
+            // if total_key is not numeric (it's a placeholder), update the total_key for all transactions with total_key matching current record
+            if(!is_numeric($transaction['total_key'])) {
+                // the new total_key is the id of the newly saved transaction
+                $newTotalKey = $recordId;
+                $response = DB::table('transactions')
+                    ->where('total_key', $transaction['total_key'])
+                    ->update(['total_key' => $newTotalKey]);
+            } else {
+                $newTotalKey = false;
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Transaction inserted successfully',
+                'newTotalKey' => $newTotalKey,
                 'recordId' => $recordId
             ], 200);
         } catch(\Exception $e) {
