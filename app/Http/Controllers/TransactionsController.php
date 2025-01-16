@@ -630,6 +630,19 @@ class TransactionsController extends Controller
         // error_log("accountNames: " . json_encode($accountNames));
         // error_log("accountIds: " . json_encode($accountIds));
 
+        // cut-off dates for a statement period, if not the end of the month
+        $allLastStmtDates = array_column($accounts, 'lastStmtDate');
+
+        $lastStmtDates = [];
+        foreach($accounts as $accountIdx=>$account) {
+            if($allLastStmtDates[$accountIdx] !== null) {
+                $lastStmtDates[] = [
+                    'accountName' => $accountNames[$accountIdx],
+                    'lastStmtDate' => $allLastStmtDates[$accountIdx]
+                ];
+            }
+        }
+
         // if accountName not in accounts and is not 'all', it's not a valid accountName
         if(!in_array($accountName, $accountNames) && $accountName != 'all') {
             return response()->json(['error' => $accountName . ' is not a defined account'], 412);
@@ -728,7 +741,7 @@ class TransactionsController extends Controller
             $transaction->accountId = $accountIds[$accountIdx];
         }
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'toFroms' => $toFroms, 'toFromAliases' => $toFromAliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFroms' => $toFroms, 'toFromAliases' => $toFromAliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
     }
 
 

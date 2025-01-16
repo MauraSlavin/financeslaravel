@@ -30,6 +30,7 @@
         @endif
         <input type="hidden" id="accountNames"  name="accountNames"  value={{ json_encode($accountNames) }}>
         <input type="hidden" id="accountIds"  name="accountIds"  value={{ json_encode($accountIds) }}>
+        <input type="hidden" id="lastStmtDates"  name="lastStmtDates"  value={{ json_encode($lastStmtDates) }}>
         <input type="hidden" id="toFroms"       name="toFroms"       value={{ $toFroms }}>
         <input type="hidden" id="toFromAliases" name="toFromAliases" value={{ $toFromAliases }}>
         <input type="hidden" id="categories"    name="categories"    value={{ $categories }}>
@@ -1346,7 +1347,6 @@
                         }
 
 
-                        // left off here
                         // NOTE:  This doesn't handle the transactions that are NOT in edit mode
 
 
@@ -1861,6 +1861,56 @@
                             
                     });
                         
+                    // set stmtDate based on account
+
+                    // get last statement dates from hidden field on page
+                    // note: if not in this array, defaults to the last day of the month
+                    var lastStmtDates = $("#lastStmtDates").val();
+                    lastStmtDates = JSON.parse(lastStmtDates);
+                    lastStmtDates.forEach(stmtDate => console.log(" - ", stmtDate, "; type: " + typeof stmtDate));
+            
+                    // get accountName
+                    var accountName = $("#accountName").text();
+
+                    // if transactions have multiple accounts, can't determine the statement date.
+                    // can do this when the account is changed.
+                    if(accountName != "all") {
+                        lastStmtDate = lastStmtDates.find(item => item.accountName === accountName);
+
+                        // get current date info
+                        const currentDate = new Date();
+                        var year = currentDate.getFullYear() - 2000;
+                        var month = currentDate.toLocaleString('default', { month: 'short' });
+                        var day = currentDate.getDate();
+                        console.log(year, month, day);
+
+
+                        if(lastStmtDate) {
+                            // this year = month if today is before the cutoff date,
+                            // otherwise it's next month
+                            var cutoffdate = lastStmtDate['lastStmtDate'];
+
+                            if(day < cutoffdate) {
+                                $newTransaction.find(".stmtDate").text(year.toString() + "-" + month);
+                            } else if(month == 'Dec') {
+                            // if it's after the cutoff date, and this is December, the stmtDate is jan of next year
+                                $newTransaction.find(".stmtDate").text((year+1).toString() + "-" + 'Jan');
+                            } else {
+                            // if it's after the cutoff day, add a month.
+                                const nextMonth = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+                                const nextMonthAbbrev = nextMonth.toLocaleString('default', { 
+                                    month: 'short',
+                                    year: 'numeric',
+                                    day: 'numeric'
+                                }).split(' ')[0];
+                                $newTransaction.find(".stmtDate").text(year.toString() + "-" + nextMonthAbbrev);
+                            }
+                        } else {
+                            // default to last day; so stmtDate defaults to this year - month
+                            $newTransaction.find(".stmtDate").text(year.toString() + "-" + month);
+                        }
+                    }
+
                     // make it edittable
                     changeCellsToInputs($newTransaction);
 
