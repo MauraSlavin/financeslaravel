@@ -276,10 +276,10 @@ class TransactionsController extends Controller
                     }
                     
                     // Handle tracking
+                    //  -- just beginning - handle multiple tracking (one for each split)
                     $multipleTracking = false;
                     // is there default tracking?
                     if (isset($extraDefaultsArray['tracking'])) {
-
                         // if it's an array, there may be more than one tracking element
                         if(is_array($extraDefaultsArray['tracking'])) {
                             // use the first tracking in the first new record

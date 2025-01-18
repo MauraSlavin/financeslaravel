@@ -1151,27 +1151,35 @@
                                 if(response != null && Object.keys(response).length !== 0) {
                                     $input.parent().parent().find(".category").find("input").val(response['category']);
 
-                                    console.log("extraDefaults: ", response['extraDefaults']);
+                                    // get any extra defaults and process them (if they exist)
                                     var extraDefaults = JSON.parse(response['extraDefaults']);
-                                    console.log("extraDefaults: ", extraDefaults, "; type: ", typeof extraDefaults);
                                     if(extraDefaults != null) {
 
+                                        // fill in the default notes
                                         if('notes' in extraDefaults) {
                                             $input.parent().parent().find(".notesEdit").val(extraDefaults['notes']);
                                         }
+
+                                        // fill in the default tracking
                                         if('tracking' in extraDefaults) {
                                             $input.parent().parent().find(".trackingEdit").val(extraDefaults['tracking']);
                                         }
+
+                                        // fill in the default method
                                         if('method' in extraDefaults) {
                                             $input.parent().parent().find(".methodEdit").val(extraDefaults['method']);
                                         }
+
+                                        // create default splits
+                                        // If this is a number, create that many splits (no default categories, etc)
+                                        // If this is an array, create a split for each category in the array
                                         if('splits' in extraDefaults) {
+                                            // If this is a number, create that many splits (no default categories, etc)
                                             if(typeof extraDefaults['splits'] == 'number') {
                                                 // make this many splits, but no additional changes (blank categories)
                                                 var numberSplits = extraDefaults['splits'];
-                                                console.log("number generic splits: ", numberSplits);
                                                 
-                                                // add "xxx" for total_key placeholder
+                                                // add "xxx" for total_key placeholder; to be changed when the first split is saved
                                                 $input.parent().parent().find(".total_keyEdit").val("xxx");
 
                                                 // clone original transaction
@@ -1205,15 +1213,12 @@
 
                                                 // put values for trans_date, clear_date, toFrom in cloned transaction
                                                 var toFrom = $input.parent().parent().find(".toFromEdit").val();
-                                                console.log("toFrom: ", toFrom);
                                                 $newTransaction.find(".toFromEdit").val(toFrom);
                                                 
                                                 var transDate = $input.parent().parent().find(".transDateEdit").val();
-                                                console.log("transDate: ", transDate);
                                                 $newTransaction.find(".transDateEdit").val(transDate);
                                                 
                                                 var clearDate = $input.parent().parent().find(".clearDateEdit").val();
-                                                console.log("clearDate: ", clearDate);
                                                 $newTransaction.find(".clearDateEdit").val(clearDate);
 
                                                 // total_key gets set to "xxx" as a placeholder
@@ -1225,14 +1230,14 @@
                                                 // add this to the list of transactions for each split
                                                 for(var i = 1; i <= numberSplits; i++) {
                                                     // prepend it to the list of transactions
-                                                    console.log("i: ", i);
                                                     $("tbody").prepend($newTransaction.clone());
                                                 }
+
+                                            // If this is an array, create a split for each category in the array
                                             } else {
                                                 var numberSplits = extraDefaults['splits'].length;
-                                                console.log("number named splits: ", numberSplits);
                                                                    
-                                                // add "xxx" for total_key placeholder
+                                                // add "xxx" for total_key placeholder; changed to a number when the first split is saved.
                                                 $input.parent().parent().find(".total_keyEdit").val("xxx");
 
                                                 // clone original transaction
@@ -1261,30 +1266,53 @@
                                                     }
                                                     
                                                 });
+
                                                 // make it edittable
                                                 changeCellsToInputs($newTransaction);
 
                                                 // put values for trans_date, clear_date, toFrom in cloned transaction
                                                 var toFrom = $input.parent().parent().find(".toFromEdit").val();
-                                                // console.log("toFrom: ", toFrom);
                                                 $newTransaction.find(".toFromEdit").val(toFrom);
                                                 
                                                 var transDate = $input.parent().parent().find(".transDateEdit").val();
-                                                // console.log("transDate: ", transDate);
                                                 $newTransaction.find(".transDateEdit").val(transDate);
                                                 
                                                 var clearDate = $input.parent().parent().find(".clearDateEdit").val();
-                                                // console.log("clearDate: ", clearDate);
                                                 $newTransaction.find(".clearDateEdit").val(clearDate);
+                                                
+                                                // notes
+                                                var notes = $input.parent().parent().find(".notesEdit").val();
+                                                $newTransaction.find(".notesEdit").val(notes);
+                                                
+                                                // tracking
+                                                var multipleTracking, tracking;
+                                                // if multiple tracking entered, there should be one for each category (including the original)
+                                                // set original value here
+                                                if(typeof extraDefaults['tracking'] == 'object') {
+                                                    multipleTracking = true;
+                                                    tracking = extraDefaults['tracking'][0];
+                                                    $cell.find(".trackingEdit").val(tracking);  // needs to be in the original transaction on the page
+                                                    $newTransaction.find(".trackingEdit").val(tracking);
+                                                } else {
+                                                    multipleTracking = false;
+                                                    tracking = $input.parent().parent().find(".trackingEdit").val();
+                                                    $newTransaction.find(".trackingEdit").val(tracking);
+                                                }
 
-                                                // total_key gets set to "xxx" as a placeholder
+                                                // stmtDate
+                                                var stmtDate = $input.parent().parent().find(".stmtDateEdit").val();
+                                                $newTransaction.find(".stmtDateEdit").val(stmtDate);
+
+                                                // total_key gets set to "xxx" as a placeholder; set to number when first split saved
                                                 $newTransaction.find(".total_keyEdit").val("xxx");
                                                 
                                                 // add this to the list of transactions for each split with the new category
                                                 var newCategories = extraDefaults['splits'];
-                                                newCategories.forEach(category => {
+                                                var newTracking = extraDefaults['tracking'];
+                                                newCategories.forEach( (category, idx) => {
                                                     // make sure category is blanked out in clones
                                                     $newTransaction.find(".categoryEdit").val(category);
+                                                    if(multipleTracking) $newTransaction.find(".trackingEdit").val(newTracking[idx+1]);
                                                     // prepend it to the list of transactions
                                                     $("tbody").prepend($newTransaction.clone());
                                                 });
@@ -1867,7 +1895,6 @@
                     // note: if not in this array, defaults to the last day of the month
                     var lastStmtDates = $("#lastStmtDates").val();
                     lastStmtDates = JSON.parse(lastStmtDates);
-                    lastStmtDates.forEach(stmtDate => console.log(" - ", stmtDate, "; type: " + typeof stmtDate));
             
                     // get accountName
                     var accountName = $("#accountName").text();
@@ -1882,8 +1909,6 @@
                         var year = currentDate.getFullYear() - 2000;
                         var month = currentDate.toLocaleString('default', { month: 'short' });
                         var day = currentDate.getDate();
-                        console.log(year, month, day);
-
 
                         if(lastStmtDate) {
                             // this year = month if today is before the cutoff date,

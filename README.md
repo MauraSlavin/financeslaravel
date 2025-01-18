@@ -4,19 +4,10 @@
     <li>go to url: <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-01-10-defaults-and-splits-individual-transactions</h2>
+<h2>Just finished branch: 2025-01-10-defaults-and-splits-individual-transactions</h2>
+<h2>Working on branch: 2025-01-18-auto-GB-Limo</h2>
     <ul>
-      <li>** search "// left off here"</li>
-      <li>Sets default category, and for extraDefaults, handles "notes" and "tracking"</li>
-      <li>Need to do:</li>
-      <li> - to do - {"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
-      <li> - done {"splits":["MauraSpending","MikeSpending","Kids"]}<br>
-      done - SET stmtDate<br>
-      done - creates splits; "xxx" for total_key; copies dates & category<br>
-      done - add amt to total_amt as they are filled in (when all transactions are in edit mode)<br>
-      done - when first record saved, change "xxx" total_key for others to saved transaction's id</li>
-      <li> - done {"method":"ATM","notes":"ATM"}</li>
-      <li> - done {"splits":3}</li>
+      <li>automate GB Limo pay</li>
     </ul>
 
 <h2>BUGS</h2>
