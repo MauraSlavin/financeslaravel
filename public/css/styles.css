@@ -45,6 +45,27 @@ table th {
     margin: 20px;
 }
 
+#gb {
+    background-color: lightblue;
+}
+
+#gb h1 {
+    margin: 10px;
+}
+
+#gblimo {
+    background-color: darkviolet;
+    color: white;
+}
+
+#gbpayperiodnote {
+    width: 300px;
+}
+
+#gbspendingnote {
+    width: 300px;
+}
+
 /* make transactions just uploaded more visible */
 .newtransaction {
     color: red;

@@ -11,6 +11,7 @@
     <h1>Accounts</h1>
     <!-- <a href="{{ route('assets') }}" class="btn btn-primary">Assets</a> -->
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
+    <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
 
         <table>
             <thead>
@@ -50,6 +51,14 @@
 
 
                     const url = '/accounts/assets';
+                    window.location.href = url;
+                });
+
+                $('#gblimo').on('click', function(e) {
+                    e.preventDefault();
+
+
+                    const url = '/accounts/gblimo';
                     window.location.href = url;
                 });
             });
