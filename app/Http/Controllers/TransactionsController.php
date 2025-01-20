@@ -1379,8 +1379,40 @@ class TransactionsController extends Controller
         $accounts[] = getTotalAssets($accounts);
 
         return view('assets', ['accounts' => $accounts]);
-    }
+    }   // end of function assets
 
+
+    // Prompt for input needed, and process GB Limo paycheck
+    public function gblimo() {
+
+        // Input param: 
+        //  (nothing)
+        //
+        // Returns:
+        //  (nothing)
+
+        // get defaults
+
+        // paycheck date - one week since last one
+        $gboldpaycheckdate = DB::table('transactions')
+            ->where('toFrom', 'Great Bay Limo')
+            ->max('trans_date');
+
+            // add a week to it
+        $newpaycheckdate = new \DateTime($gboldpaycheckdate);
+        $newpaycheckdate->modify("+1 week");
+        $newpaycheckdate = $newpaycheckdate->format("Y-m-d");
+        
+        // spending transfer date (defaults to today)
+        $timezone = new \DateTimeZone('America/New_York');
+        $today = new \DateTime('now', $timezone);
+        $gbspendingdate = $today->format("Y-m-d");
+
+        // statement date can default to the spending date
+
+        return view('gblimo', ['gbpaycheckdate' => $newpaycheckdate, 'gbspendingdate' => $gbspendingdate, 'gbstmtdate' => $gbspendingdate]);
+
+    }   // end of function gblimo
 
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
     // transactions table was altered to no longer allow "MMSpending" as a category.

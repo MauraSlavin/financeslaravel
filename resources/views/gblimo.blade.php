@@ -1,0 +1,152 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+    </head>
+
+    <body id="gb">
+
+        <!-- include common functions -->
+        <!-- <script src="{{ asset('js/commonFunctions.js') }}"></script> -->
+
+
+        <!-- headers -->
+        <h1>GB Limo Paycheck Processing Page</h1>
+
+        <form>
+        <!-- <form action="<2 curly brackets> route('writeGBLimo') <2 curly brackets>" method="POST"> -->
+            @csrf
+
+            <!-- Net paycheck amt -->
+            <div class="form-row">
+                <label class="gbnetpaylabel" for="gbnetpay">Paycheck total (from checking): </label><br>
+                <input class="gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay" class="form-control" required>
+            </div>
+
+            <!-- Federal taxes -->
+            <div class="form-row">
+                <label class="gbtaxwhlabel" for="gbtaxwh">Federal taxes withheld (from paystub): </label><br>
+                <input class="gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh" class="form-control" value=0>
+            </div>
+
+            <!-- Amt that Mike & Maura get for spending -->
+            <div class="form-row">
+                <label class="gbspendinglabel" for="gbspending">M&M Spending (each, not total - from GB Limo Google Sheets): </label><br>
+                <input class="gbspendinginput" type="number" id="gbspending" name="gbspending" class="form-control" required>
+            </div>
+
+            <!-- Paycheck date -->
+            <div class="form-row">
+                <label class="gbpaycheckdatelabel" for="gbpaycheckdate">Paycheck date (from checking): </label><br>
+                <input class="gbpaycheckdateinput" type="date" id="gbpaycheckdate" name="gbpaycheckdate" class="form-control" value="{{ $gbpaycheckdate }}" required>
+            </div>
+
+            <!-- Spending transfer date -->
+            <div class="form-row">
+                <label class="gbspendingdatelabel" for="gbspendingdate">Date Spending transfered to M&M (probably today's date): </label><br>
+                <input class="gbspendingdateinput" type="date" id="gbspendingdate" name="gbspendingdate" class="form-control" value="{{ $gbspendingdate }}" required>
+            </div>
+
+            <!-- Statement date -->
+            <div class="form-row">
+                <label class="gbstmtdatelabel" for="gbstmtdate">Statement date for checking (only month and year are used - probably this month and year): </label><br>
+                <input class="gbstmtdateinput" type="text" id="gbstmtdate" name="gbstmtdate" class="form-control" value="{{ $gbspendingdate }}" required>
+            </div>
+
+            <!-- Pay period (for notes column of transactions table - for paycheck deposit) -->
+            <div class="form-row">
+                <label class="gbpayperiodnotelabel" for="gbpayperiodnote">Pay period (Mon - Sun): </label><br>
+                <input class="gbpayperiodnoteinput" type="text" id="gbpayperiodnote" name="gbpayperiodnote" class="form-control" required>
+            </div>
+
+            <!-- Spend note (for notes column of transacctions table - for spending transfer) -->
+            <div class="form-row">
+                <label class="gbspendingnotelabel" for="gbspendingnote">Note for Spending transactions<br>(ie: Great Bay Limo; mm/dd/yyyy pay - using date deposited in checking): </label><br>
+                <input class="gbspendingnoteinput" type="text" id="gbspendingnote" name="gbspendingnote" class="form-control" required>
+            </div>
+
+        </form>        
+        
+        <script>
+            
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            
+            $(document).ready(function() {
+                // left off here (if needed)
+
+                // Pay period is the Monday - Sunday immediately preceding the paycheck date
+                function getPayPeriod() {
+                    // get paycheckdate
+                    var paycheckdate = $("#gbpaycheckdate").val();
+
+                    // get end of previous pay period
+                    var endpayperiod = getPreviousSunday(paycheckdate);
+
+                    // get beginning of previous pay period
+                    var beginpayperiod = getSixDaysBefore(endpayperiod);
+
+                    return beginpayperiod + " - " + endpayperiod;
+                }
+
+                // Get previous Sunday (end of pay period)
+                function getPreviousSunday(dateString) {
+                    const date = new Date(dateString);
+                    
+                    // Subtract days until we reach a Sunday
+                    while (date.getDay() !== 0 && date > new Date(1970, 0, 1)) {
+                        date.setDate(date.getDate()-1);
+                    }
+                    
+                    // Set the timezone to New York
+                    date.setUTCHours(date.getUTCHours() - date.getTimezoneOffset() / 60);
+
+                    // Return the formatted date
+                    return date.toISOString().split('T')[0];
+                }   // end function getPreviousSunday
+
+                function getSixDaysBefore(dateString) {
+                    const date = new Date(dateString);
+                    
+                    // Subtract 6 days
+                    date.setDate(date.getDate() - 6);
+                    
+                    // Format the date as YYYY-MM-DD
+                    return date.toISOString().split('T')[0];
+                }   // end function getSixDaysBefore
+
+                // reformat statement date
+                // get default date from page (format yyyy-mm-dd)
+                var stmtDate = $("#gbstmtdate").val();
+                // get numeric string month
+                var month = stmtDate.substr(5, 2);
+
+                // convert month to a 3 char abbrev
+                const months = [
+                    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                ];
+                month = months[parseInt(month, 10) - 1];
+
+                // change stmtDate to yy-Mon & put on page
+                stmtDate = stmtDate.substr(2, 2) + "-" + month;
+                $("#gbstmtdate").val(stmtDate);
+
+                // default note for paycheck deposit
+                var payperiod = getPayPeriod();               
+                $("#gbpayperiodnote").val("Pay " + payperiod);
+
+                // default note for spending transaction
+                $("#gbspendingnote").val("Great Bay Limo; " + $("#gbspendingdate").val() + " pay");
+            });
+
+        </script>
+    </body>
+
+</html>

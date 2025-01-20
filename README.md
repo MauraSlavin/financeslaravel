@@ -4,10 +4,13 @@
     <li>go to url: <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Just finished branch: 2025-01-10-defaults-and-splits-individual-transactions</h2>
 <h2>Working on branch: 2025-01-18-auto-GB-Limo</h2>
     <ul>
       <li>automate GB Limo pay</li>
+      <li>NEED - button to create and write the SQL queries</li>
+      <li>NEED - alert to remind me to actually do the transfers</li>
+      <li>DONE - Interface - form for data needed</li>
+      See GB Limo tab in MySQL Workbench</li>
     </ul>
 
 <h2>BUGS</h2>
