@@ -66,6 +66,10 @@ table th {
     width: 300px;
 }
 
+#GBLimoButton {
+    margin: 20px;
+}
+
 /* make transactions just uploaded more visible */
 .newtransaction {
     color: red;

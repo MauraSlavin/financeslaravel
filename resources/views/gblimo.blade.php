@@ -9,64 +9,65 @@
 
     <body id="gb">
 
-        <!-- include common functions -->
+        <!-- include common functions, if needed -->
         <!-- <script src="{{ asset('js/commonFunctions.js') }}"></script> -->
-
 
         <!-- headers -->
         <h1>GB Limo Paycheck Processing Page</h1>
 
-        <form>
-        <!-- <form action="<2 curly brackets> route('writeGBLimo') <2 curly brackets>" method="POST"> -->
+        <!-- <form> -->
+        <form action="{{ route('writegblimo') }}" method="POST">
             @csrf
 
             <!-- Net paycheck amt -->
             <div class="form-row">
                 <label class="gbnetpaylabel" for="gbnetpay">Paycheck total (from checking): </label><br>
-                <input class="gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay" class="form-control" required>
+                <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay" required>
             </div>
 
             <!-- Federal taxes -->
             <div class="form-row">
                 <label class="gbtaxwhlabel" for="gbtaxwh">Federal taxes withheld (from paystub): </label><br>
-                <input class="gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh" class="form-control" value=0>
+                <input class="form-control gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh" value=0>
             </div>
 
             <!-- Amt that Mike & Maura get for spending -->
             <div class="form-row">
                 <label class="gbspendinglabel" for="gbspending">M&M Spending (each, not total - from GB Limo Google Sheets): </label><br>
-                <input class="gbspendinginput" type="number" id="gbspending" name="gbspending" class="form-control" required>
+                <input class="form-control gbspendinginput" type="number" id="gbspending" name="gbspending" required>
             </div>
 
             <!-- Paycheck date -->
             <div class="form-row">
                 <label class="gbpaycheckdatelabel" for="gbpaycheckdate">Paycheck date (from checking): </label><br>
-                <input class="gbpaycheckdateinput" type="date" id="gbpaycheckdate" name="gbpaycheckdate" class="form-control" value="{{ $gbpaycheckdate }}" required>
+                <input class="form-control gbpaycheckdateinput" type="date" id="gbpaycheckdate" name="gbpaycheckdate" value="{{ $gbpaycheckdate }}" required>
             </div>
 
             <!-- Spending transfer date -->
             <div class="form-row">
                 <label class="gbspendingdatelabel" for="gbspendingdate">Date Spending transfered to M&M (probably today's date): </label><br>
-                <input class="gbspendingdateinput" type="date" id="gbspendingdate" name="gbspendingdate" class="form-control" value="{{ $gbspendingdate }}" required>
+                <input class="form-control gbspendingdateinput" type="date" id="gbspendingdate" name="gbspendingdate" value="{{ $gbspendingdate }}" required>
             </div>
 
             <!-- Statement date -->
             <div class="form-row">
                 <label class="gbstmtdatelabel" for="gbstmtdate">Statement date for checking (only month and year are used - probably this month and year): </label><br>
-                <input class="gbstmtdateinput" type="text" id="gbstmtdate" name="gbstmtdate" class="form-control" value="{{ $gbspendingdate }}" required>
+                <input class="form-control gbstmtdateinput" type="text" id="gbstmtdate" name="gbstmtdate" value="{{ $gbspendingdate }}" required>
             </div>
 
             <!-- Pay period (for notes column of transactions table - for paycheck deposit) -->
             <div class="form-row">
                 <label class="gbpayperiodnotelabel" for="gbpayperiodnote">Pay period (Mon - Sun): </label><br>
-                <input class="gbpayperiodnoteinput" type="text" id="gbpayperiodnote" name="gbpayperiodnote" class="form-control" required>
+                <input class="form-control gbpayperiodnoteinput" type="text" id="gbpayperiodnote" name="gbpayperiodnote" required>
             </div>
 
             <!-- Spend note (for notes column of transacctions table - for spending transfer) -->
             <div class="form-row">
                 <label class="gbspendingnotelabel" for="gbspendingnote">Note for Spending transactions<br>(ie: Great Bay Limo; mm/dd/yyyy pay - using date deposited in checking): </label><br>
-                <input class="gbspendingnoteinput" type="text" id="gbspendingnote" name="gbspendingnote" class="form-control" required>
+                <input class="form-control gbspendingnoteinput" type="text" id="gbspendingnote" name="gbspendingnote" required>
             </div>
+
+            <button type="submit" class="btn btn-success" style="margin: 20px;">Process GB Limo pay</button>
 
         </form>        
         
@@ -144,6 +145,7 @@
 
                 // default note for spending transaction
                 $("#gbspendingnote").val("Great Bay Limo; " + $("#gbspendingdate").val() + " pay");
+
             });
 
         </script>

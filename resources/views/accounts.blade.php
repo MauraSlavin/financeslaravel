@@ -3,13 +3,11 @@
         <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script> -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </head>
 
     <body>
     <h1>Accounts</h1>
-    <!-- <a href="{{ route('assets') }}" class="btn btn-primary">Assets</a> -->
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
 
@@ -46,17 +44,17 @@
 
             $(document).ready(function() {
 
+                // Assets button
                 $('#assets').on('click', function(e) {
                     e.preventDefault();
-
 
                     const url = '/accounts/assets';
                     window.location.href = url;
                 });
 
+                // GB Limo button
                 $('#gblimo').on('click', function(e) {
                     e.preventDefault();
-
 
                     const url = '/accounts/gblimo';
                     window.location.href = url;
