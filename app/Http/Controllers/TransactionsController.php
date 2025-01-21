@@ -1225,9 +1225,58 @@ class TransactionsController extends Controller
         DB::table('transactions')
             ->insert($transaction);
 
-        return redirect()->route('transactions', ['accountName' => $transaction['account']])->with('success', 'New Transaction saved.');
-    }
+        // return redirect()->route('transactions', ['accountName' => $transaction['account']])->with('success', 'New Transaction saved.');
+        return redirect()->route('accounts')->with('success', 'New Transaction saved.');
+    }   // end of function writeTransaction
 
+
+    // write transactions to database for GB Limo pay & spending
+    // 6 transactions total:
+    // - one for gross paycheck
+    // - one for taxes withheld from paycheck
+    // - two each for Mike/Maura Spending (4 total)
+    // --- out of checking; into respective spending accts
+    public function writeGBLimo(Request $request) {
+
+        // left off here
+
+        // transaction for gross paycheck deposit to checking
+        function writeGBgrossPay($request) {
+            error_log("need code to write gross pay here");
+        }
+
+        // transaction for tax withheld from deposit to checking
+        function writeGBtaxWH($request) {
+            error_log("need code to write tax withheld here");
+        }
+
+        // write spending transactions for Mike (checking to spending)
+        function writeGBspending($request, $MorM) {
+            error_log("need code to write " . $MorM . " spending here");
+        }
+
+        error_log("In writeGBLimo");
+        // transaction for gross paycheck deposit to checking
+        writeGBgrossPay($request);
+
+        // transaction for tax withheld from deposit to checking
+        writeGBtaxWH($request);
+
+        // write spending transactions for Mike (checking to spending)
+        writeGBspending($request, "Mike");
+
+        // write spending transactions for Maura (checking to spending)
+        writeGBspending($request, "MauraSCU");
+
+        // go back to accounts page
+
+        //   *** NOTE ****
+        // Should have some indication that the GB Limo processing worked,
+        // AND reminder to actually DO the transfers!!
+
+        return redirect()->route('accounts')->with('success', 'GB Limo Paycheck Processing completed.');
+    }   // end of writeGBLimo
+    
 
     // Show assets and current values
     public function assets($endDate = null) {
@@ -1385,13 +1434,7 @@ class TransactionsController extends Controller
     // Prompt for input needed, and process GB Limo paycheck
     public function gblimo() {
 
-        // Input param: 
-        //  (nothing)
-        //
-        // Returns:
-        //  (nothing)
-
-        // get defaults
+        // get defaults for page
 
         // paycheck date - one week since last one
         $gboldpaycheckdate = DB::table('transactions')
@@ -1414,6 +1457,8 @@ class TransactionsController extends Controller
 
     }   // end of function gblimo
 
+
+    
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
     // transactions table was altered to no longer allow "MMSpending" as a category.
     // split each MMSpending transaction into a MauraSpending and MikeSpending

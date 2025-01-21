@@ -25,8 +25,10 @@ Route::get('/passname', function () {
 // ---- ACCOUNTS ROUTES ---- 
 // see list of assets & most recent values
 Route::get('/accounts/assets', 'App\Http\Controllers\TransactionsController@assets')->name('assets');
-// process GB Limo paycheck
+// process GB Limo paycheck - ask for data needed to write database records
 Route::get('/accounts/gblimo', 'App\Http\Controllers\TransactionsController@gblimo')->name('gblimo');
+// process GB Limo paycheck - write the records to the database
+Route::post('/accounts/writegblimo', 'App\Http\Controllers\TransactionsController@writeGBLimo')->name("writegblimo");
 // set lastBalanced value to today's date for all cleared transactions for this account
 Route::get('/accounts/{accountName}/balances', 'App\Http\Controllers\TransactionsController@balances')->name('balances');
 // Transactions for account accountName with trans_dates in the date range given

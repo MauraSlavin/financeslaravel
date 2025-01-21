@@ -7,7 +7,8 @@
 <h2>Working on branch: 2025-01-18-auto-GB-Limo</h2>
     <ul>
       <li>automate GB Limo pay</li>
-      <li>NEED - button to create and write the SQL queries</li>
+      <li>NEED - button (done) to create and write the SQL queries<br>
+      --- route is working; need code to INSERT the transactions</li>
       <li>NEED - alert to remind me to actually do the transfers</li>
       <li>DONE - Interface - form for data needed</li>
       See GB Limo tab in MySQL Workbench</li>
