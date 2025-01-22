@@ -144,7 +144,7 @@
                 $("#gbpayperiodnote").val("Pay " + payperiod);
 
                 // default note for spending transaction
-                $("#gbspendingnote").val("Great Bay Limo; " + $("#gbspendingdate").val() + " pay");
+                $("#gbspendingnote").val("Great Bay Limo; " + $("#gbpaycheckdate").val() + " pay");
 
             });
 

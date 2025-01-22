@@ -41,6 +41,12 @@ table th {
     text-decoration: underline;
 }
 
+#acctsMsg {
+    color: red;
+    font-weight: bold;
+    margin: 20px;
+}
+
 #assets {
     margin: 20px;
 }
