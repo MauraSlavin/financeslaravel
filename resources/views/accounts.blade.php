@@ -8,6 +8,9 @@
 
     <body>
     <h1>Accounts</h1>
+    @if(session()->has('acctsMsg'))
+        <h2 id="acctsMsg">{{ session('acctsMsg') }}</h2>
+    @endif
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
 

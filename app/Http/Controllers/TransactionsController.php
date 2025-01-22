@@ -501,7 +501,7 @@ class TransactionsController extends Controller
 
     // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
     //      includes line "all" for all transactions
-    public function index() {
+    public function index($acctsMsg = null) {
         
         // get all account names & ids
         $results = DB::table('accounts')
@@ -543,7 +543,7 @@ class TransactionsController extends Controller
         }
         $accounts[] = $all;
 
-        return view('accounts', ['accounts' => $accounts]);
+        return view('accounts', ['accounts' => $accounts, 'acctsMsg' => $acctsMsg]);
     }
 
     function calcSplitTotals($transactions) {
@@ -759,7 +759,7 @@ class TransactionsController extends Controller
                 ->whereNull('lastBalanced')
                 ->whereNotNull('clear_date')
                 ->update(['lastBalanced' => $now]);
-            return redirect()->route('accounts');
+            return redirect()->route('accounts')->with("acctsMsg", "Last balances updated.");
 
         } catch (\Exception $e) {
             \Log::error('Error updating lastBalanced columns in transactions table: ' . $e->getMessage());
@@ -1061,7 +1061,6 @@ class TransactionsController extends Controller
                     'transToFrom' => $newValue,
                 ]);
 
-            // return redirect()->back()->with('success', 'Alias successfully written to database');
             return response()->json([
                 'success' => true,
                 'message' => 'Record created successfully',
@@ -1190,7 +1189,6 @@ class TransactionsController extends Controller
 
     // form to add new transaction
     public function addTransaction() {
-        // return redirect()->route('addTransaction');
         return view('addtransaction');
     }
 
@@ -1225,8 +1223,8 @@ class TransactionsController extends Controller
         DB::table('transactions')
             ->insert($transaction);
 
-        // return redirect()->route('transactions', ['accountName' => $transaction['account']])->with('success', 'New Transaction saved.');
-        return redirect()->route('accounts')->with('success', 'New Transaction saved.');
+        return redirect()->route('accounts')->with("acctsMsg", "Transaction added.");
+
     }   // end of function writeTransaction
 
 
@@ -1238,29 +1236,108 @@ class TransactionsController extends Controller
     // --- out of checking; into respective spending accts
     public function writeGBLimo(Request $request) {
 
-        // left off here
-
         // transaction for gross paycheck deposit to checking
         function writeGBgrossPay($request) {
-            error_log("need code to write gross pay here");
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbpaycheckdate');
+            $transaction['clear_date'] = $request->input('gbpaycheckdate');
+            $transaction['account'] = "Checking";
+            $transaction['toFrom'] = "Great Bay Limo";
+            $grossPay = $request->input('gbnetpay') + $request->input('gbtaxwh');
+            $transaction['amount'] = $grossPay;
+            $transaction['amtMike'] = $grossPay / 2;
+            $transaction['amtMaura'] = $grossPay / 2;
+            $transaction['method'] = 'ACH';
+            $transaction['category'] = 'IncomeMisc';
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+            $transaction['total_amt'] = $request->input('gbnetpay');
+            $transaction['total_key'] = "ggg";
+            $transaction['notes'] = $request->input('gbpayperiodnote');
+           
+            $payId = DB::table("transactions")
+                ->insertGetId($transaction);
+
+            // set the total_key to the id of the record just inserted.
+            DB::table("transactions")
+                ->where("total_key", "ggg")
+                ->update(["total_key" => $payId]);
+
+            return $payId;
         }
 
         // transaction for tax withheld from deposit to checking
-        function writeGBtaxWH($request) {
-            error_log("need code to write tax withheld here");
+        function writeGBtaxWH($request, $payId) {
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbpaycheckdate');
+            $transaction['clear_date'] = $request->input('gbpaycheckdate');
+            $transaction['account'] = "Checking";
+            $transaction['toFrom'] = "Great Bay Limo";
+            $transaction['amount'] = -$request->input('gbtaxwh');
+            $transaction['amtMike'] = -$request->input('gbtaxwh') / 2;
+            $transaction['amtMaura'] = -$request->input('gbtaxwh') / 2;
+            $transaction['method'] = 'ACH';
+            $transaction['category'] = 'IncomeTaxes';
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+            $transaction['total_amt'] = $request->input('gbnetpay');
+            $transaction['total_key'] = $payId;
+            $transaction['notes'] = $request->input('gbpayperiodnote');
+           
+            $result = DB::table("transactions")
+                ->insert($transaction);
+
+            if(!$result) error_log("ERROR inserting TAX WITHHELD to transactions table: " . json_encode($result));
+
+            return;
         }
 
-        // write spending transactions for Mike (checking to spending)
+        // write spending transactions for Mike or Maura ($MorM) (checking to spending)
         function writeGBspending($request, $MorM) {
-            error_log("need code to write " . $MorM . " spending here");
+
+            // Checking to spending record
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbspendingdate');
+            $transaction['clear_date'] = $request->input('gbspendingdate');
+            $transaction['account'] = "Checking";
+            $transaction['toFrom'] = $MorM;
+            $grossSpending = $request->input('gbnetpay') + $request->input('gbtaxwh');
+            $transaction['amount'] = -$request->input('gbspending');
+            $transaction['amtMike'] = -$request->input('gbspending') / 2;
+            $transaction['amtMaura'] = -$request->input('gbspending') / 2;
+            $transaction['method'] = 'Internet';
+            $transaction['category'] = 'ExtraSpending';
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+            $transaction['notes'] = $request->input('gbspendingnote');
+           
+            DB::table("transactions")
+                ->insert($transaction);
+
+            // Spending from Checking record
+            // Only make needed changes to transaction record
+            $transaction['account'] = $MorM;
+            $transaction['toFrom'] = "Checking";
+            $transaction['amount'] = $request->input('gbspending');
+            if($MorM == "Mike") {
+                $transaction['amtMike'] = $request->input('gbspending');
+                $transaction['amtMaura'] = 0;
+            } else {
+                $transaction['amtMaura'] = $request->input('gbspending');
+                $transaction['amtMike'] = 0;
+            }
+            unset($transaction['category']);
+
+            DB::table("transactions")
+                ->insert($transaction);
+
+            return;
         }
 
-        error_log("In writeGBLimo");
         // transaction for gross paycheck deposit to checking
-        writeGBgrossPay($request);
+        // $payId is the id for the paycheck record,
+        //      used as total_amt to tie this and the next record as a split transaction
+        $payId = writeGBgrossPay($request);
 
         // transaction for tax withheld from deposit to checking
-        writeGBtaxWH($request);
+        writeGBtaxWH($request, $payId);
 
         // write spending transactions for Mike (checking to spending)
         writeGBspending($request, "Mike");
@@ -1268,13 +1345,9 @@ class TransactionsController extends Controller
         // write spending transactions for Maura (checking to spending)
         writeGBspending($request, "MauraSCU");
 
-        // go back to accounts page
-
-        //   *** NOTE ****
-        // Should have some indication that the GB Limo processing worked,
-        // AND reminder to actually DO the transfers!!
-
-        return redirect()->route('accounts')->with('success', 'GB Limo Paycheck Processing completed.');
+        // go back to accounts page, with reminder wrt transfer
+        $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts.";
+        return redirect()->route('accounts')->with('acctsMsg', $reminder);
     }   // end of writeGBLimo
     
 

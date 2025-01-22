@@ -4,14 +4,9 @@
     <li>go to url: <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-01-18-auto-GB-Limo</h2>
+<h2>Working on branch: nothing in progress - in MAIN branch</h2>
     <ul>
-      <li>automate GB Limo pay</li>
-      <li>NEED - button (done) to create and write the SQL queries<br>
-      --- route is working; need code to INSERT the transactions</li>
-      <li>NEED - alert to remind me to actually do the transfers</li>
-      <li>DONE - Interface - form for data needed</li>
-      See GB Limo tab in MySQL Workbench</li>
+      <li> (details go here)</li>
     </ul>
 
 <h2>BUGS</h2>
@@ -33,7 +28,6 @@
       <li> --- Include ability to set end date</li>
       <li>Automate:<br>
       Spending<br>
-      GB Limo<br>
       trips<br>
       </li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
@@ -42,7 +36,6 @@
 
 <h2>Future Functionality:</h2>
   <ul>
-    <li>** Handle Great Bay Limo</li>
     <li>** Page to update values of things like WF, JH, House, Prudential, etc. all on one page (can update values for each account separately, now)</li>
     <li>Append Spending transactions to Google Sheets<br> -- https://www.phind.com/search?cache=f8twduhlg5g1fo4ca2bkrs7c</li>
     <li>Use tables (datatables?) that can sort & filter transactions</li>
