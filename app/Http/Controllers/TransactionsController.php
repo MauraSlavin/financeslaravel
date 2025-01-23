@@ -548,11 +548,8 @@ class TransactionsController extends Controller
 
     function calcSplitTotals($transactions) {
 
-        // get splits that might not be in transactions
+        // get splits that might not be in transactions & ids
         $splitKeys = array_column($transactions, 'total_keys');
-        // left off here
-        error_log("splitKeys:");
-        foreach($splitKeys as $splitKey) error_log($splitKey);
         $ids = array_column($transactions, 'id');
 
         $extraSplitTransactions = DB::table("transactions")
@@ -1533,6 +1530,35 @@ class TransactionsController extends Controller
 
     }   // end of function gblimo
 
+
+    // Prompt for new investment account balances
+    public function investmentsindex() {
+
+        // get investment accounts and relavent information
+        // left off here -- don't hard-code date
+        $twoMonthsAgo = "2024-11-30";
+
+        // paycheck date - one week since last one
+        $dbinvestments = DB::table('transactions')
+            ->where('toFrom', 'Value')
+            ->where('lastBalanced', '>=', $twoMonthsAgo)
+            ->orderBy('account', 'asc')
+            ->orderBy('lastBalanced', 'desc')
+            ->get()->toArray();
+
+        // only keep the most recent record for each account
+        $investments = [];
+        $accountsIncluded = [];
+        foreach($dbinvestments as $dbInv) {
+            if(!in_array($dbInv->account, $accountsIncluded)) {
+                $investments[] = $dbInv;
+                $accountsIncluded[] = $dbInv->account;
+            }
+        }
+
+        return view('investmentsindex', ['investments' => $investments]);
+
+    }   // end of function investmentsindex
 
     
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.

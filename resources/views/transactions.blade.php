@@ -1365,7 +1365,6 @@
 
                         // if MikeSpending, total is set to amtMike
                         } else if( thisRcdCategory == "MikeSpending") {
-                            // left off here
                             var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit').first();
                             $amtMikeEdit.val($input.val());
                             var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
@@ -1373,7 +1372,6 @@
 
                         // if MauraSpending, total is set to amtMaura
                         } else if( thisRcdCategory == "MauraSpending") {
-                            // left off here
                             var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
                             $amtMauraEdit.val($input.val());
                             var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit').first();
