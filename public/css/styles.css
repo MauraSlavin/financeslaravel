@@ -73,6 +73,10 @@ table th {
     margin: 20px;
 }
 
+#saveNewBalances {
+    margin: 20px;
+}
+
 /* make transactions just uploaded more visible */
 .newtransaction {
     color: red;

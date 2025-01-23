@@ -1346,7 +1346,7 @@ class TransactionsController extends Controller
         writeGBspending($request, "MauraSCU");
 
         // go back to accounts page, with reminder wrt transfer
-        $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts.";
+        $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts, and write transactions in checkbook.";
         return redirect()->route('accounts')->with('acctsMsg', $reminder);
     }   // end of writeGBLimo
     

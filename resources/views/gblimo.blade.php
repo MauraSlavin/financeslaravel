@@ -19,22 +19,24 @@
         <form action="{{ route('writegblimo') }}" method="POST">
             @csrf
 
+            <!-- step='0.01' allows up to 2 decimal places -->
+             
             <!-- Net paycheck amt -->
             <div class="form-row">
                 <label class="gbnetpaylabel" for="gbnetpay">Paycheck total (from checking): </label><br>
-                <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay" required>
+                <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay"  step="0.01" required>
             </div>
 
             <!-- Federal taxes -->
             <div class="form-row">
                 <label class="gbtaxwhlabel" for="gbtaxwh">Federal taxes withheld (from paystub): </label><br>
-                <input class="form-control gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh" value=0>
+                <input class="form-control gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh"  step="0.01" value=0>
             </div>
 
             <!-- Amt that Mike & Maura get for spending -->
             <div class="form-row">
                 <label class="gbspendinglabel" for="gbspending">M&M Spending (each, not total - from GB Limo Google Sheets): </label><br>
-                <input class="form-control gbspendinginput" type="number" id="gbspending" name="gbspending" required>
+                <input class="form-control gbspendinginput" type="number" id="gbspending" name="gbspending"  step="0.01" required>
             </div>
 
             <!-- Paycheck date -->
