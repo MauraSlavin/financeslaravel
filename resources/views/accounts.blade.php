@@ -13,6 +13,7 @@
     @endif
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
+    <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
 
         <table>
             <thead>
@@ -62,6 +63,15 @@
                     const url = '/accounts/gblimo';
                     window.location.href = url;
                 });
+
+                // Update Investments button
+                $('#investmentsindex').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/investmentsindex';
+                    window.location.href = url;
+                });
+
             });
 
         </script>

@@ -47,10 +47,6 @@ table th {
     margin: 20px;
 }
 
-#assets {
-    margin: 20px;
-}
-
 #gb {
     background-color: lightblue;
 }
@@ -61,6 +57,7 @@ table th {
 
 #gblimo {
     background-color: darkviolet;
+    border-color: darkviolet;
     color: white;
 }
 
@@ -72,7 +69,7 @@ table th {
     width: 300px;
 }
 
-#GBLimoButton {
+#gblimo, #investmentsindex, #assets {
     margin: 20px;
 }
 

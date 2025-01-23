@@ -4,10 +4,13 @@
     <li>go to url: <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: NONE</h2>
-<p>previous branch: 2025-01-22-total_key-bug</p>
+<h2>Working on branch: 2025-01-22-update-investment-balances</h2>
     <ul>
-      <li>(nothing in process)</li>
+      <li>Have page showing investments and balances</li>
+      <li>NEED: way to update balances w/dates (create new transaction with new balance)</li>
+      <li></li>
+      <li>** Assets</li>
+      <li> --- Include ability to set end date</li>
     </ul>
 
 <h2>BUGS</h2>
@@ -25,8 +28,6 @@
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>
-      <li>** Assets</li>
-      <li> --- Include ability to set end date</li>
       <li>Automate:<br>
       Spending<br>
       trips<br>
