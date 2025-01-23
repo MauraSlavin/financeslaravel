@@ -80,7 +80,6 @@
             });
             
             $(document).ready(function() {
-                // left off here (if needed)
 
                 // Pay period is the Monday - Sunday immediately preceding the paycheck date
                 function getPayPeriod() {

@@ -4,9 +4,10 @@
     <li>go to url: <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: nothing in progress - in MAIN branch</h2>
+<h2>Working on branch: NONE</h2>
+<p>previous branch: 2025-01-22-total_key-bug</p>
     <ul>
-      <li> (details go here)</li>
+      <li>(nothing in process)</li>
     </ul>
 
 <h2>BUGS</h2>

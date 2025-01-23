@@ -550,6 +550,9 @@ class TransactionsController extends Controller
 
         // get splits that might not be in transactions
         $splitKeys = array_column($transactions, 'total_keys');
+        // left off here
+        error_log("splitKeys:");
+        foreach($splitKeys as $splitKey) error_log($splitKey);
         $ids = array_column($transactions, 'id');
 
         $extraSplitTransactions = DB::table("transactions")
@@ -1105,8 +1108,8 @@ class TransactionsController extends Controller
                 ->insert($transaction);
             $recordId = DB::getPdo()->lastInsertId();
             
-            // if total_key is not numeric (it's a placeholder), update the total_key for all transactions with total_key matching current record
-            if(!is_numeric($transaction['total_key'])) {
+            // if total_key is not numeric (it's a placeholder) and not null, update the total_key for all transactions with total_key matching current record
+            if(!is_numeric($transaction['total_key']) && $transaction['total_key'] != null) {
                 // the new total_key is the id of the newly saved transaction
                 $newTotalKey = $recordId;
                 $response = DB::table('transactions')
