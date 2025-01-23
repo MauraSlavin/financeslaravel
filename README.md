@@ -6,11 +6,30 @@
 
 <h2>Working on branch: 2025-01-22-update-investment-balances</h2>
     <ul>
+      <li>READY to write AJAX call to insert new balance records</li>
       <li>Have page showing investments and balances</li>
       <li>NEED: way to update balances w/dates (create new transaction with new balance)</li>
       <li></li>
       <li>** Assets</li>
-      <li> --- Include ability to set end date</li>
+      <li> --- Include ability to update balances (& dates - stmtDate, lastBalanced)</li>
+      <li>New Balance records:<li>
+        <ul>
+          <li>trans_date: New Balance Date</li>
+          <li>clear_date: current date</li>
+          <li>account: invAcct</li>
+          <li>toFrom: "Value"</li>
+          <li>amount: New Balance</li>
+          <li>amtMike: 1/2 New Balance</li>
+          <li>amtMaura: 1/2 New Balance</li>
+          <li>amtMaura: 1/2 New Balance</li>
+          <li>method: null (can be omitted)</li>
+          <li>category: "Value"</li>
+          <li>tracking:  null (can be omitted)</li>
+          <li>stmtDate:  yy-MMM derived from New Date</li>
+          <li>total_amt, total_key, bucket:  null (can be omitted)</li>
+          <li>notes: "on mm-dd-yyyy" - current date</li>
+        </ul>
+      </li>
     </ul>
 
 <h2>BUGS</h2>
@@ -44,6 +63,9 @@
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
     <li>Spending?</li>
+    <li>Buckets (in Big Bills)</li>
+    <li>** Assets</li>
+    <li> --- Include ability to set end date</li>
     <li>Loans?</li>
     <li>App for Marina's Miles??</li>
   </ul>
