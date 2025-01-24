@@ -785,6 +785,7 @@ class TransactionsController extends Controller
     // Right now (10/2/24), $account has to be "disccc".  
     //      - modify so it can be anything in a new table (accounts?) that defines how the records are built for each account
     public function upload($accountName) {
+
         // convert mm/dd/yyyy to yyyy-mm-dd
         function reformatDate($date) {
             $dateParts = explode("/", $date);
@@ -1040,6 +1041,80 @@ class TransactionsController extends Controller
             // Re-throw the exception
             return response()->json([
                 'error' => 'Failed to update transaction'
+            ], 500);
+        }
+            
+    }
+
+
+    // update a investment account balances
+    public function updateInvBalances(Request $request)
+    {
+        // reformats $date as yy-Mon (where Mon is a 3 char month abbrev)
+        function formatStmtDate($date) {
+            $dateTime = new \DateTime($date);
+            $year = $dateTime->format('y');
+
+            $fullMonthName = $dateTime->format('F');
+            $abbrevMon = substr($fullMonthName, 0, 3);
+
+            return "$year-$abbrevMon";
+        }
+
+        // left off here
+        try {
+            // get account info to update from payload
+            $data = json_decode($request->getContent(), true);
+            $newBalancesInfo = $data['newBalancesInfo'];
+
+            // get today's date for the note in the database
+            date_default_timezone_set('America/New_York');
+            $today = date('Y-m-d');
+            $note = "on " . $today;
+
+            // set fields to be inserted that are the same for each record
+            $newBalanceRcd = [
+                'toFrom' => "Value",
+                'category' => "Value",
+                'notes' => $note,
+                'lastBalanced' => $today
+            ];
+
+            // init records that will be inserted
+            $recordsToInsert = [];
+
+            // change data to be inserted for each element in newBalanceInfo
+            foreach($newBalancesInfo as $idx=>$newBalanceInfo) {
+
+                $newBalanceRcd['account'] = $newBalanceInfo['account'];
+                $newBalanceRcd['trans_date'] = $newBalanceInfo['trans_date'];
+                $newBalanceRcd['clear_date'] = $today;
+                $newBalanceRcd['amount'] = $newBalanceInfo['amount'];
+                $newBalanceRcd['amtMike'] = $newBalanceInfo['amount'] / 2;
+                $newBalanceRcd['amtMaura'] = $newBalanceInfo['amount'] / 2;
+                $stmtDate = formatStmtDate( $newBalanceInfo['trans_date']);
+                $newBalanceRcd['stmtDate'] = $stmtDate;
+
+                // build array of records to be inserted
+                $recordsToInsert[] = $newBalanceRcd;
+            }
+
+            // insert the records
+            $response = DB::table("transactions")
+                ->insert($recordsToInsert);
+
+            return response()->json([
+                'message' => "Investment balances updated successfully"
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Log the error
+            logger()->error("Error inserting records to update investment balances: " . $e->getMessage());
+            error_log("Error inserting records to update investment balances: " . $e->getMessage());
+            
+            // Re-throw the exception
+            return response()->json([
+                'error' => 'Failed to update investment balances'
             ], 500);
         }
             

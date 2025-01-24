@@ -48,6 +48,7 @@ Route::get('/accounts/{acctsMSg?}', 'App\Http\Controllers\TransactionsController
 // ---- TRANSACTIONS  ROUTES ----
 Route::post('/transactions/delete/{id}', 'App\Http\Controllers\TransactionsController@delete');
 Route::put('/transactions/update', 'App\Http\Controllers\TransactionsController@update');
+Route::put('/transactions/updateInvBalances', 'App\Http\Controllers\TransactionsController@updateInvBalances');
 Route::post('/transactions/insertTrans', 'App\Http\Controllers\TransactionsController@insert');
 Route::post('/transactions/insertAlias/{origToFrom}/{newValue}', 'App\Http\Controllers\TransactionsController@insertAlias');
 Route::get('/transactions/totalKey/{total_key}', 'App\Http\Controllers\TransactionsController@totalKey');
