@@ -49,9 +49,6 @@
         });
 
         $(document).ready(function() {
-            // left off here  --  Need default New Balance Date and...
-            //    read and save new dates.
-
             // set default New Balance Date to last date of previous month
 
             // get last day of previous month
@@ -65,25 +62,23 @@
             const day = String(defaultNewBalanceDate.getDate()).padStart(2, '0');
             $(".newDate").val(`${year}-${month}-${day}`);
 
+            // when Save New Balances clicked...
             $("#saveNewBalances").on('click', function(e) {
                 e.preventDefault();
 
+                // init var to pass in ajax call
                 var newBalancesInfo = [];
-                // const today = new Date();
-                // const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-                // console.log(formattedDate);
 
-                // left off here  -  based on ajax call in transactions.blade.php line 582+
+                // build newBalancesInfo for each table record <tr> that has a newBalance value
                 $('tbody > tr').each(function() {
-                    console.log(" --- ");
+                    // get the newBalance value
                     const newBalance = $(this).find(".newBalance").val();
+
+                    // if it exists, capture data needed to pass to ajax
                     if(newBalance) {
                         const invAcct = $(this).find(".invAcct").text();
                         const newDate = $(this).find(".newDate").val();
                         const newAmt = $(this).find(".newBalance").val();
-                        console.log("invAcct: ", invAcct);
-                        console.log("newDate: ", newDate);
-                        console.log("newBalance: ", newBalance);
                         
                         var newBalanceInfo = {
                             "trans_date" : $(this).find(".newDate").val(),
@@ -91,14 +86,31 @@
                             "amount"     : newBalance
                         }
 
+                        // add new data to array
                         newBalancesInfo.push(newBalanceInfo);
 
                     }
                 });
 
-                console.log("----------------");
-                newBalancesInfo.forEach(newInfo => console.log(newInfo));
-
+                // if there is data to process, do ajax call to write new balance records to the db
+                if(newBalancesInfo.length > 0) {
+                    $.ajax({
+                        url: '/transactions/updateInvBalances',
+                        method: 'PUT',
+                        contentType: 'application/json',
+                        processData: false,
+                        data: JSON.stringify({
+                            _token: '{{ csrf_token() }}',
+                            newBalancesInfo: newBalancesInfo
+                        }),
+                        success: function(response) {
+                            console.log("response from updateInvBalances:");
+                            console.log(response);
+                            // left off here  -  update investements page with current data
+                            // maybe just reload the table?
+                        }
+                    })
+                }
 
             });
 
