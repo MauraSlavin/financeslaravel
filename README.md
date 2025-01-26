@@ -4,13 +4,12 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Previous branch: 2025-01-22-update-investment-balances</h2>
 <h2>Working on branch: 2025-01-26-buckets</h2>
     <ul>
       <li>Implement buckets...</li>
-      <li>See table with each bucket, balance, goal, goal dates, notes</li>
-      <li>Ability to move $ from one bucket to another</li>
-      <li>Verify that sum of buckets = Disc Savings balance</li>
+      <li>NEED: Ability to move $ from one bucket to another</li>
+      <li>Done: See table with each bucket, balance, goal, goal dates, notes</li>
+      <li>Done: Verify that sum of buckets = Disc Savings balance</li>
     </ul>
 
 <h2>BUGS</h2>

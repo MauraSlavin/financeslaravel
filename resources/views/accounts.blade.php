@@ -14,6 +14,7 @@
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
     <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
+    <button type="button" id="buckets" class="btn btn-success">Buckets</button>
 
         <table>
             <thead>
