@@ -1626,7 +1626,6 @@ class TransactionsController extends Controller
 
 
         // get investment accounts and relavent information
-        // left off here -- don't hard-code date
         $threeMonthsAgo = getThreeMonthsAgo();
 
         // retrieve the recent investment acct info from db

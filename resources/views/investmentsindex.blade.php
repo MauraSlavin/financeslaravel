@@ -90,7 +90,7 @@
                         newBalancesInfo.push(newBalanceInfo);
 
                     }
-                });
+                }); // end of each tr element
 
                 // if there is data to process, do ajax call to write new balance records to the db
                 if(newBalancesInfo.length > 0) {
@@ -104,10 +104,11 @@
                             newBalancesInfo: newBalancesInfo
                         }),
                         success: function(response) {
-                            console.log("response from updateInvBalances:");
-                            console.log(response);
-                            // left off here  -  update investements page with current data
-                            // maybe just reload the table?
+                            // let user know balances were updated
+                            alert("Investment balances have been updated.");
+
+                            // reload page with new balances
+                            location.reload();
                         }
                     })
                 }

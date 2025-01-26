@@ -4,13 +4,13 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-01-22-update-investment-balances</h2>
+<h2>Previous branch: 2025-01-22-update-investment-balances</h2>
+<h2>Working on branch: 2025-01-26-buckets</h2>
     <ul>
-      <li>NEED: update page with new balances when done (may just need to re-load the page)</li>
-      <li></li>
-      <li>DONE: don't hard code $twoMonthsAgo!!</li>
-      <li>DONE: wrote AJAX call to insert new balance records</li>
-      <li>DONE: page showing investments and balances</li>
+      <li>Implement buckets...</li>
+      <li>See table with each bucket, balance, goal, goal dates, notes</li>
+      <li>Ability to move $ from one bucket to another</li>
+      <li>Verify that sum of buckets = Disc Savings balance</li>
     </ul>
 
 <h2>BUGS</h2>
@@ -38,7 +38,6 @@
 
 <h2>Future Functionality:</h2>
   <ul>
-    <li>** Page to update values of things like WF, JH, House, Prudential, etc. all on one page (can update values for each account separately, now)</li>
     <li>Append Spending transactions to Google Sheets<br> -- https://www.phind.com/search?cache=f8twduhlg5g1fo4ca2bkrs7c</li>
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
