@@ -1061,7 +1061,6 @@ class TransactionsController extends Controller
             return "$year-$abbrevMon";
         }
 
-        // left off here
         try {
             // get account info to update from payload
             $data = json_decode($request->getContent(), true);
@@ -1609,14 +1608,32 @@ class TransactionsController extends Controller
     // Prompt for new investment account balances
     public function investmentsindex() {
 
+        function getThreeMonthsAgo() {
+            // Get current date/time
+            $currentDateTime = new \DateTime();
+
+            // Calculate three months ago
+            $threeMonthsAgo = clone $currentDateTime;
+            $threeMonthsAgo->modify('-3 months');
+
+            // Set to New York timezone
+            $nyTimezone = new \DateTimeZone('America/New_York');
+            $threeMonthsAgo->setTimezone($nyTimezone);
+
+            // Format and display the result
+            return $threeMonthsAgo->format('Y-m-d');
+        }
+
+
         // get investment accounts and relavent information
         // left off here -- don't hard-code date
-        $twoMonthsAgo = "2024-11-30";
+        $threeMonthsAgo = getThreeMonthsAgo();
 
-        // paycheck date - one week since last one
+        // retrieve the recent investment acct info from db
+        //  -- most recent first
         $dbinvestments = DB::table('transactions')
             ->where('toFrom', 'Value')
-            ->where('lastBalanced', '>=', $twoMonthsAgo)
+            ->where('lastBalanced', '>=', $threeMonthsAgo)
             ->orderBy('account', 'asc')
             ->orderBy('lastBalanced', 'desc')
             ->get()->toArray();
@@ -1626,7 +1643,16 @@ class TransactionsController extends Controller
         $accountsIncluded = [];
         foreach($dbinvestments as $dbInv) {
             if(!in_array($dbInv->account, $accountsIncluded)) {
+                // only keep date part of lastBalanced (not time)
+                $dbInv->lastBalanced = substr($dbInv->lastBalanced, 0, 10); // keep yyyy-mm-dd
+                // Balance only needs to go to 2 decimal places
+                $dbInv->amount = substr($dbInv->amount, 0, -2);
+
+                // add data to array to be displayed on page
                 $investments[] = $dbInv;
+
+                // remember that we have info for this account
+                // NOTE: data was sorted by most recent first, so the most recent data is saved.
                 $accountsIncluded[] = $dbInv->account;
             }
         }

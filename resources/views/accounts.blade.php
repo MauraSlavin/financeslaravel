@@ -30,8 +30,8 @@
                 @foreach($accounts as $account)
                     <tr>
                         <td>{{ $account->account }}</td>
-                        <td>{{ $account->cleared }}</td>
-                        <td>{{ $account->register }}</td>
+                        <td style="text-align: right;">{{ $account->cleared }}</td>
+                        <td style="text-align: right;">{{ $account->register }}</td>
                         <td>{{ $account->max_last_balanced }}</td>
                         <td>
                             <a href="{{ route('transactions',['accountName' => $account->account, 'beginDate' => 'null', 'endDate' => 'null', 'clearedBalance' => $account->cleared, 'registerBalance' => $account->register, 'lastBalanced' => $account->max_last_balanced]) }}" class="btn btn-primary btn-sm">Transactions</a>

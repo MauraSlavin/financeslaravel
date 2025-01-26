@@ -106,7 +106,7 @@
                             <td style="display: none;" class="accountId">{{ $newTransaction["accountId"] ?? "id"  }}</td>
                         @endif
                         <td class="toFrom">{{ $newTransaction["toFrom"] ?? NULL  }}</td>
-                        <td class="amount">{{ $newTransaction["amount"] ?? NULL  }}</td>
+                        <td class="amount" style="text-align: right;">{{ $newTransaction["amount"] ?? NULL  }}</td>
                         <td class="category">{{ $newTransaction["category"] ?? NULL  }}</td>
                         <td class="notes">{{ $newTransaction["notes"] ?? NULL  }}</td>
                         <td class="method">{{ $newTransaction["method"] ?? NULL  }}</td>
@@ -122,24 +122,24 @@
                             <button class="btn btn-danger deleteTransaction" data-id={{ $newTransaction["id"] }}>Delete</button>
                         </td>
                         <td class="stmtDate">{{ $newTransaction["stmtDate"] ?? NULL  }}</td>
-                        <td class="amtMike">{{ $newTransaction["amtMike"] ?? NULL  }}</td>
-                        <td class="amtMaura">{{ $newTransaction["amtMaura"] ?? NULL  }}</td>
-                        <td class="total_amt">{{ $newTransaction["total_amt"] ?? NULL  }}</td>
+                        <td class="amtMike" style="text-align: right;">{{ $newTransaction["amtMike"] ?? NULL  }}</td>
+                        <td class="amtMaura" style="text-align: right;">{{ $newTransaction["amtMaura"] ?? NULL  }}</td>
+                        <td class="total_amt" style="text-align: right;">{{ $newTransaction["total_amt"] ?? NULL  }}</td>
                         <td class="total_key">{{ $newTransaction["total_key"] ?? NULL  }}</td>
-                        <td class="split_total">{{ $newTransaction["split_total"] ?? NULL  }}</td>
+                        <td class="split_total" style="text-align: right;">{{ $newTransaction["split_total"] ?? NULL  }}</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $newTransaction["bucket"] ?? NULL  }}</td>
                         @endif
                         <td class="lastBalanced"></td>
-                        <td class="spent">@if(isset($newTransaction["spent"])){{ $newTransaction["spent"] }}
+                        <td class="spent" style="text-align: right;">@if(isset($newTransaction["spent"])){{ $newTransaction["spent"] }}
                                           @else - 
                                           @endif
                         </td>
-                        <td class="ytmBudget">@if(isset($newTransaction["ytmBudget"])){{ $newTransaction["ytmBudget"] }}
+                        <td class="ytmBudget" style="text-align: right;">@if(isset($newTransaction["ytmBudget"])){{ $newTransaction["ytmBudget"] }}
                                           @else - 
                                           @endif
                         </td>
-                        <td class="yearBudget">@if(isset($newTransaction["yearBudget"])){{ $newTransaction["yearBudget"] }}
+                        <td class="yearBudget" style="text-align: right;">@if(isset($newTransaction["yearBudget"])){{ $newTransaction["yearBudget"] }}
                                           @else - 
                                           @endif
                         </td>
@@ -193,7 +193,7 @@
                             <td style="display: none;" class="accountId">{{ $transaction->accountId }}</td>
                         @endif
                         <td class="toFrom">{{ $transaction->toFrom }}</td>
-                        <td class="amount">{{ $transaction->amount }}</td>
+                        <td class="amount" style="text-align: right;">{{ $transaction->amount }}</td>
                         <td class="category">{{ $transaction->category }}</td>
                         <td class="notes">{{ $transaction->notes }}</td>
                         <td class="method">{{ $transaction->method }}</td>
@@ -210,24 +210,24 @@
                             <button class="btn btn-danger deleteTransaction" data-id={{ $transaction->id }}>Delete</button>
                         </td> 
                         <td class="stmtDate">{{ $transaction->stmtDate }}</td>
-                        <td class="amtMike">{{ $transaction->amtMike }}</td>
-                        <td class="amtMaura">{{ $transaction->amtMaura }}</td>
-                        <td class="total_amt">{{ $transaction->total_amt }}</td>
+                        <td class="amtMike" style="text-align: right;">{{ $transaction->amtMike }}</td>
+                        <td class="amtMaura" style="text-align: right;">{{ $transaction->amtMaura }}</td>
+                        <td class="total_amt" style="text-align: right;">{{ $transaction->total_amt }}</td>
                         <td class="total_key">{{ $transaction->total_key }}</td>
-                        <td class="split_total">{{ $transaction->split_total }}</td>
+                        <td class="split_total" style="text-align: right;">{{ $transaction->split_total }}</td>
                         @if($accountName == 'DiscSavings' || $accountName == 'all')
                             <td class="bucket">{{ $transaction->bucket }}</td>
                         @endif
                         <td class="lastBalanced">{{ $transaction->lastBalanced ? substr($transaction->lastBalanced, 0, 10) : NULL }}</td>
-                        <td class="spent">@if(isset($transaction->spent)){{ $transaction->spent }}
+                        <td class="spent" style="text-align: right;">@if(isset($transaction->spent)){{ $transaction->spent }}
                                           @else - 
                                           @endif
                         </td>
-                        <td class="ytmBudget">@if(isset($transaction->ytmBudget)){{ $transaction->ytmBudget }}
+                        <td class="ytmBudget" style="text-align: right;">@if(isset($transaction->ytmBudget)){{ $transaction->ytmBudget }}
                                           @else - 
                                           @endif
                         </td>
-                        <td class="yearBudget">@if(isset($transaction->yearBudget)){{ $transaction->yearBudget }}
+                        <td class="yearBudget" style="text-align: right;">@if(isset($transaction->yearBudget)){{ $transaction->yearBudget }}
                                           @else - 
                                           @endif
                         </td>                      

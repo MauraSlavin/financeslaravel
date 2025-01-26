@@ -41,8 +41,8 @@ Route::get('/accounts/{accountName}/{beginDate}/{endDate}/{clearedBalance}/{regi
 // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
 //      includes line "all" for all transactions
 Route::get('/accounts/{acctsMSg?}', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
-// alternate way:
-// Route::get('/accounts', [TransactionsController::class, 'index']);
+// "Dashboard"
+Route::get('/', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
 
 
 // ---- TRANSACTIONS  ROUTES ----

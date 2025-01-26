@@ -1,12 +1,14 @@
 <h2>To start:</h2>
   <ul>
     <li><em>php artisan serve</em> (in VS Code)</li>
-    <li>go to url: <em>localhost:8000/accounts</em></li>
+    <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
 <h2>Working on branch: 2025-01-22-update-investment-balances</h2>
     <ul>
       <li>NEED: update page with new balances when done (may just need to re-load the page)</li>
+      <li></li>
+      <li>DONE: don't hard code $twoMonthsAgo!!</li>
       <li>DONE: wrote AJAX call to insert new balance records</li>
       <li>DONE: page showing investments and balances</li>
     </ul>
