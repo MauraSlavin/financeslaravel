@@ -1660,6 +1660,174 @@ class TransactionsController extends Controller
 
     }   // end of function investmentsindex
 
+
+    // See how much in each bucket and relevant info
+    public function buckets() {
+
+        // retrieve bucket info for goal dates in the past
+        function getPastGoalDateBuckets() {
+            DB::statement("SET sql_mode = ''");
+            $pastGoalDateBuckets = DB::table('bucketgoals')
+                ->leftJoin('transactions', function($join) {
+                    $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
+                })
+                ->where('goalDate', '<=', Carbon::now())
+                ->select(
+                    'bucketgoals.bucket',
+                    'bucketgoals.goalAmount',
+                    DB::raw('SUM(transactions.amount) as balance'),
+                    DB::raw('(bucketgoals.goalAmount - SUM(transactions.amount)) as NEEDED'),
+                    'bucketgoals.goalDate',
+                    'bucketgoals.notes'
+                )
+                ->groupBy('bucketgoals.bucket')
+                ->orderBy('goalDate')
+                ->get()->toArray();
+    
+            DB::statement("SET sql_mode=only_full_group_by");
+            // only keep 2 decimal places (should have 4)
+            foreach($pastGoalDateBuckets as $idx=>$bucket) {
+                $pastGoalDateBuckets[$idx]->balance = substr($bucket->balance, 0, -2);
+                $pastGoalDateBuckets[$idx]->NEEDED = substr($bucket->NEEDED, 0, -2);
+            }
+
+            return $pastGoalDateBuckets;
+        }
+
+        // retrieve bucket info for goal dates in the future
+        function getFutureGoalDateBuckets() {
+            DB::statement("SET sql_mode = ''");
+            $futureGoalDateBuckets = DB::table('bucketgoals')
+                ->leftJoin('transactions', function($join) {
+                    $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
+                })
+                ->whereDate('goalDate', '>', Carbon::today())
+                ->whereNotNull('goalDate')
+                ->whereYear('goalDate', '=', Carbon::now()->year)
+                ->select(
+                    'bucketgoals.bucket',
+                    'bucketgoals.goalAmount',
+                    DB::raw('SUM(transactions.amount) as balance'),
+                    DB::raw('(bucketgoals.goalAmount - SUM(transactions.amount)) as NEEDED'),
+                    'bucketgoals.goalDate',
+                    'bucketgoals.notes'
+                )
+                ->groupBy('bucketgoals.bucket')
+                ->orderBy('goalDate')
+                ->get()->toArray();
+    
+            DB::statement("SET sql_mode=only_full_group_by"); 
+            // only keep 2 decimal places (should have 4)
+            foreach($futureGoalDateBuckets as $idx=>$bucket) {
+                $futureGoalDateBuckets[$idx]->balance = substr($bucket->balance, 0, -2);
+                $futureGoalDateBuckets[$idx]->NEEDED = substr($bucket->NEEDED, 0, -2);
+            }
+
+            return $futureGoalDateBuckets;
+        }
+
+        // retrieve bucket info - no goal dates
+        function getNoGoalDateBuckets() {
+            DB::statement("SET sql_mode = ''");
+            $noGoalDateBuckets = DB::table('bucketgoals')
+                ->leftJoin('transactions', function($join) {
+                    $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
+                })
+                ->whereNull('goalDate')
+                ->select(
+                    'bucketgoals.bucket',
+                    'bucketgoals.goalAmount',
+                    DB::raw('SUM(transactions.amount) as balance'),
+                    DB::raw('(bucketgoals.goalAmount - SUM(transactions.amount)) as NEEDED'),
+                    'bucketgoals.goalDate',
+                    'bucketgoals.notes'
+                )
+                ->groupBy('bucketgoals.bucket')
+                ->orderBy('goalDate')
+                ->get()->toArray();
+    
+            DB::statement("SET sql_mode=only_full_group_by"); 
+            // only keep 2 decimal places (should have 4)
+            foreach($noGoalDateBuckets as $idx=>$bucket) {
+                $noGoalDateBuckets[$idx]->balance = substr($bucket->balance, 0, -2);
+                $noGoalDateBuckets[$idx]->NEEDED = substr($bucket->NEEDED, 0, -2);
+            }
+
+            return $noGoalDateBuckets;
+        }
+
+        // retrieve total bucket info for all goal dates (to compare with transactionsBucketBalance)
+        // sum of money in all the buckets
+        function getTotalBucketBalance() {
+
+            $totalBucketBalance = DB::table('bucketgoals')
+                ->leftJoin('transactions', function($join) {
+                    $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
+                })
+                ->select(
+                    DB::raw('SUM(transactions.amount) as balance'),
+                )
+                ->get()->toArray();
+
+            // only keep 2 decimal places (should have 4)
+            $totalBucketBalance = substr($totalBucketBalance[0]->balance, 0, -2);
+            
+            return $totalBucketBalance;
+        }
+
+
+        // retrieve balance in transactions for buckets (should match totalBucketBalance)
+        // sum of all transactions with buckets 
+        // NOTE: ONLY Disc Svgs transactions should have buckets, and ALL Disc Svgs transactions should have buckets.
+        function getTransactionsBucketBalance() {
+            $transactionsBucketBalance = DB::table('transactions')
+                ->where("account", "DiscSavings")
+                ->whereIn("bucket", [
+                    'BigItems', 'College', 'CC', 'Holiday', 'Insurance', 'LTC', 'Misc', 'PropertyTax', 'RetSavings', 'Vacation', 'Water'
+                ])
+                ->select(
+                    DB::raw('SUM(amount) as balance')
+                )
+                ->get()->toArray();
+
+            // only keep 2 decimal places (should have 4)
+            $transactionsBucketBalance = substr($transactionsBucketBalance[0]->balance, 0, -2);
+       
+            return $transactionsBucketBalance;
+        }
+
+
+        // retrieve bucket info for goal dates in the past
+        $pastGoalDateBuckets = getPastGoalDateBuckets();
+        
+        // retrieve bucket info for goal dates in the future
+        $futureGoalDateBuckets = getFutureGoalDateBuckets();
+
+        // retrieve bucket info - no goal dates
+        $noGoalDateBuckets = getNoGoalDateBuckets();
+
+        // retrieve total bucket info for all goal dates (to compare with transactionsBucketBalance)
+        // sum of money in all the buckets
+        $totalBucketBalance = getTotalBucketBalance();
+        
+        // retrieve balance in transactions for buckets (should match totalBucketBalance)
+        // sum of all transactions with buckets 
+        // NOTE: ONLY Disc Svgs transactions should have buckets, and ALL Disc Svgs transactions should have buckets.
+        $transactionsBucketBalance = getTransactionsBucketBalance();
+
+        // show page with buckets and amounts; shows warning if totals don't match
+        return view('buckets', 
+            [
+                'pastGoalDateBuckets' => $pastGoalDateBuckets, 
+                'futureGoalDateBuckets' => $futureGoalDateBuckets, 
+                'noGoalDateBuckets' => $noGoalDateBuckets, 
+                'totalBucketBalance' => $totalBucketBalance, 
+                'transactionsBucketBalance' => $transactionsBucketBalance
+            ]
+        );
+
+    }   // end of function buckets
+
     
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
     // transactions table was altered to no longer allow "MMSpending" as a category.

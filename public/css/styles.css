@@ -24,6 +24,10 @@ table th {
     color: skyblue;
 }
 
+h5, h6 {
+    margin-left: 10px;
+}
+
 #errorMsg {
     color: red;
     font-size: 20px;
@@ -69,12 +73,12 @@ table th {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets {
-    margin: 20px;
+#gblimo, #investmentsindex, #assets, #buckets {
+    margin: 10px;
 }
 
 #saveNewBalances {
-    margin: 20px;
+    margin: 10px;
 }
 
 /* make transactions just uploaded more visible */
