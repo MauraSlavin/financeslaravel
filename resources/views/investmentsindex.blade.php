@@ -24,7 +24,7 @@
             @foreach($investments as $investment)
                 <tr>
                     <td class="invAcct" style="width: 130px;">{{ $investment->account }}</td>
-                    <td style="width: 140px;">{{ $investment->amount }}</td>
+                    <td style="width: 140px; text-align: right;">{{ $investment->amount }}</td>
                     <td style="width: 80px;">{{ $investment->stmtDate }}</td>
                     <td style="width: 300px;">{{ $investment->lastBalanced }}</td>
                     <td>

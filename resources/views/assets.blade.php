@@ -25,7 +25,7 @@
                     @if($account->account != null)
                         <tr>
                             <td>{{ $account->account }}</td>
-                            <td>{{ $account->amount }}</td>
+                            <td style="text-align: right;">{{ $account->amount }}</td>
                             <td>{{ $account->max_last_balanced }}</td>
                             <td>{{ $account->type }}</td>
                         </tr>
