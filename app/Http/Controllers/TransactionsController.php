@@ -1828,7 +1828,78 @@ class TransactionsController extends Controller
 
     }   // end of function buckets
 
+
+    // Init view to move funds between buckets
+    public function moveBuckets() {
+
+        // show page with buckets and amounts; shows warning if totals don't match
+        return view('moveBuckets');
+
+    }   // end of function moveBuckets
+
+
+    // Write the transaction records to move the funds between the buckets
+    public function moveFundsBetweenBuckets(Request $request) {
+
+        // info needed from request
+        $fromBucket = $request->input("fromBucket");
+        $toBucket = $request->input("toBucket");
+        $moveAmount = $request->input("moveBucketAmount");
+
+        // other calc'd data needed
+        $today = date('Y-m-d');
+        $stmtDate = substr($today, 2, 2) . "-" . date('M');
+        $halfAmt = .5 * $moveAmount;
+        $note = "move from " . $fromBucket . " to " . $toBucket;
+
+        // create from transaction
+        $fromTransaction = [];
+        $fromTransaction['trans_date'] = $today;
+        $fromTransaction['clear_date'] = $today;
+        $fromTransaction['account'] = "DiscSavings";
+        $fromTransaction['toFrom'] = "Move Between Buckets";
+        $fromTransaction['amount'] = -$moveAmount;
+        $fromTransaction['amtMike'] = -$halfAmt;
+        $fromTransaction['amtMaura'] = -$halfAmt;
+        $fromTransaction['category'] = "BucketMove";
+        $fromTransaction['stmtDate'] = $stmtDate;
+        $fromTransaction['total_amt'] = 0;
+        $fromTransaction['total_key'] = "move";
+        $fromTransaction['bucket'] = $fromBucket;
+        $fromTransaction['notes'] = $note;
+
+        // write from transaction
+        $newId = DB::table('transactions')->insertGetId($fromTransaction);
+        // update total_key with newId
+        DB::table('transactions')
+            ->where('id', $newId)
+            ->update(['total_key' => $newId]);
+
+        // creat to transaction
+        $toTransaction = [];
+        $toTransaction['trans_date'] = $today;
+        $toTransaction['clear_date'] = $today;
+        $toTransaction['account'] = "DiscSavings";
+        $toTransaction['toFrom'] = "Move Between Buckets";
+        $toTransaction['amount'] = $moveAmount;
+        $toTransaction['amtMike'] = $halfAmt;
+        $toTransaction['amtMaura'] = $halfAmt;
+        $toTransaction['category'] = "BucketMove";
+        $toTransaction['stmtDate'] = $stmtDate;
+        $toTransaction['total_amt'] = 0;
+        $toTransaction['total_key'] = $newId;
+        $toTransaction['bucket'] = $toBucket;
+        $toTransaction['notes'] = "move from " . $fromBucket . " to " . $toBucket;
+
+        // write the "to" transaction
+        $result = DB::table('transactions')->insert($toTransaction);
+
+        // reload buckets page
+        return redirect()->route('buckets');
+
+    }   // end of function moveFUndsBetweenBuckets
     
+
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
     // transactions table was altered to no longer allow "MMSpending" as a category.
     // split each MMSpending transaction into a MauraSpending and MikeSpending
