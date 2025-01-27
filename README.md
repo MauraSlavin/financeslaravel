@@ -4,12 +4,10 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-01-26-buckets</h2>
+<h2>Old branch: 2025-01-26-buckets</h2>
+<h2>Working on branch: (nothing in progress)</h2>
     <ul>
-      <li>Implement buckets...</li>
-      <li>NEED: Ability to move $ from one bucket to another</li>
-      <li>Done: See table with each bucket, balance, goal, goal dates, notes</li>
-      <li>Done: Verify that sum of buckets = Disc Savings balance</li>
+      <li></li>
     </ul>
 
 <h2>BUGS</h2>
@@ -42,7 +40,6 @@
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
     <li>Spending?</li>
-    <li>Buckets (in Big Bills)</li>
     <li>** Assets</li>
     <li> --- Include ability to set end date</li>
     <li>Loans?</li>

@@ -73,6 +73,14 @@
                     window.location.href = url;
                 });
 
+                // See Buckets and balances, etc.
+                $('#buckets').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/buckets';
+                    window.location.href = url;
+                });
+
             });
 
         </script>

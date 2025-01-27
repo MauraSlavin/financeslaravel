@@ -31,6 +31,10 @@ Route::get('/accounts/gblimo', 'App\Http\Controllers\TransactionsController@gbli
 Route::get('/accounts/investmentsindex', 'App\Http\Controllers\TransactionsController@investmentsindex')->name('investmentsindex');
 // see buckets (in Dsc Svg )
 Route::get('/accounts/buckets', 'App\Http\Controllers\TransactionsController@buckets')->name('buckets');
+// screen to initiate moving money between buckets
+Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController@moveBuckets')->name('moveBuckets');
+// write records to move the funds betwen buckets
+Route::post('/accounts/moveFundsBetweenBuckets', 'App\Http\Controllers\TransactionsController@moveFundsBetweenBuckets')->name('moveFundsBetweenBuckets');
 // process GB Limo paycheck - write the records to the database
 Route::post('/accounts/writegblimo', 'App\Http\Controllers\TransactionsController@writeGBLimo')->name("writegblimo");
 // set lastBalanced value to today's date for all cleared transactions for this account

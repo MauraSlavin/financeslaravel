@@ -13,6 +13,7 @@
     @if( $totalBucketBalance != $transactionsBucketBalance )
         <h6 style="color: red;">These numbers should match!<br>Could non-Disc Svgs transactions have a bucket?<br>Or a Disc Svgs transaction be missing a Bucket?</h6>
     @endif
+    <button type="button" id="moveBuckets" class="btn btn-warning">Move Funds Between Buckets</button>
 
     <table>
         <thead>
@@ -158,6 +159,15 @@
             }
             // How much needed or extra
             $("#diff").text(goalBalance - goalTotal);
+
+
+            // Listener for moveBuckets
+            $('#moveBuckets').on('click', function(e) {
+                e.preventDefault();
+
+                const url = '/accounts/moveBuckets';
+                window.location.href = url;
+            });
         });
 
     </script>
