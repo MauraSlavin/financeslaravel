@@ -1900,6 +1900,64 @@ class TransactionsController extends Controller
     }   // end of function moveFUndsBetweenBuckets
     
 
+    // See budget info
+    public function budget() {
+
+        // get default begin & end dates
+        function getDefaultDates() {
+            // default begin date - the first of this year
+            $thisYear = date('Y');
+            $beginDate = sprintf('%04d-%02d-%02d', $thisYear, 1, 1);
+
+            // default end date - the last day of this year
+            $endDate = clone new \DateTime("$thisYear-01-01");
+            $endDate->modify('+1 year');
+            $endDate = $endDate->format("Y-m-d");
+            
+            // today
+            $today = date("Y-m-d");
+
+            return [$beginDate, $endDate, $thisYear, $today];
+        }
+
+        function getCategories($IorE) {
+            $categories = DB::table('categories')
+                ->where('ie', '=', $IorE)
+                ->select('name')
+                ->get()->toArray();
+
+                $categories = array_column($categories, "name");
+
+            return $categories;
+        }
+        
+        // get default begin & end dates
+        [$beginDate, $endDate, $thisYear, $today] = getDefaultDates();
+        // left off here - for testing
+        $thisYear = "2024";
+
+        // get income & expense categories
+        $incomeCategories = getCategories("I");
+        $expenseCategories = getCategories("E");
+
+        // get budget data
+        $budgetData = DB::table("budget")
+            ->where("year", $thisYear)
+            ->get()->toArray();
+
+        // budget page
+        return view('budget', 
+            [
+                'thisYear' => $thisYear, 
+                'incomeCategories' => $incomeCategories, 
+                'expenseCategories' => $expenseCategories,
+                'budgetData' => $budgetData
+            ]
+        );
+
+    }   // end of function budget
+
+
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
     // transactions table was altered to no longer allow "MMSpending" as a category.
     // split each MMSpending transaction into a MauraSpending and MikeSpending
