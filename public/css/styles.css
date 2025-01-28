@@ -24,6 +24,15 @@ table th {
     color: skyblue;
 }
 
+#actualsTable tr:nth-child(even) {
+    background-color: #baedb2; /* light green */
+}
+  
+#actualsTable tr:nth-child(odd) {
+    background-color: #dbedd8; /* lighter green */
+}
+
+  
 h5, h6 {
     margin-left: 10px;
 }
@@ -73,7 +82,7 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets {
+#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals {
     margin: 10px;
 }
 

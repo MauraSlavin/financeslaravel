@@ -9,6 +9,7 @@
     <body>
     <h1>Budget</h1>
     <h6>Year: {{ $thisYear }}</h6>
+    <button type="button" id="actuals" class="btn btn-primary">Actuals</button>
 
     <!-- hidden fields -->
     <input type="hidden" id="budgetData"  name="budgetData"  value={{ json_encode($budgetData) }}>
@@ -94,7 +95,7 @@
 
             <!-- expense -->
             <tr style="background-color: blue; color: white;">
-                <td>Expense</td>
+                <td>Expenses</td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -275,13 +276,16 @@
             var total = expenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#ExpenseTotal").text(total);
             
-            console.log("incomeTotal: ", incomeTotal);
-            console.log("expenseTotal: ", expenseTotal);
-            console.log("Total: ", (incomeTotal + expenseTotal));
             var total = (incomeTotal + expenseTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#grandTotal").text(total);
 
+            // listener for actuals button
+            $('#actuals').on('click', function(e) {
+                e.preventDefault();
 
+                const url = '/accounts/actuals';
+                window.location.href = url;
+            });
         });
 
     </script>

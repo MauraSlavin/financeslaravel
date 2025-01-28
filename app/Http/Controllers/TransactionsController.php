@@ -1898,53 +1898,42 @@ class TransactionsController extends Controller
         return redirect()->route('buckets');
 
     }   // end of function moveFUndsBetweenBuckets
-    
+
+
+    // get budget categories from categories table
+    // IorE:
+    //  "I" for income categories
+    //  "E" for expense categories
+    function getCategories($IorE) {
+        $categories = DB::table('categories')
+            ->where('ie', '=', $IorE)
+            ->select('name')
+            ->orderBy('name')
+            ->get()->toArray();
+
+            $categories = array_column($categories, "name");
+
+        return $categories;
+    }
+
 
     // See budget info
     public function budget() {
-
-        // get default begin & end dates
-        function getDefaultDates() {
-            // default begin date - the first of this year
-            $thisYear = date('Y');
-            $beginDate = sprintf('%04d-%02d-%02d', $thisYear, 1, 1);
-
-            // default end date - the last day of this year
-            $endDate = clone new \DateTime("$thisYear-01-01");
-            $endDate->modify('+1 year');
-            $endDate = $endDate->format("Y-m-d");
-            
-            // today
-            $today = date("Y-m-d");
-
-            return [$beginDate, $endDate, $thisYear, $today];
-        }
-
-        function getCategories($IorE) {
-            $categories = DB::table('categories')
-                ->where('ie', '=', $IorE)
-                ->select('name')
-                ->get()->toArray();
-
-                $categories = array_column($categories, "name");
-
-            return $categories;
-        }
         
-        // get default begin & end dates
-        [$beginDate, $endDate, $thisYear, $today] = getDefaultDates();
+        // get default year
+        $thisYear = date('Y');
         // left off here - for testing
         $thisYear = "2024";
 
         // get income & expense categories
-        $incomeCategories = getCategories("I");
-        $expenseCategories = getCategories("E");
+        $incomeCategories = $this->getCategories("I");
+        $expenseCategories = $this->getCategories("E");
 
         // get budget data
         $budgetData = DB::table("budget")
             ->where("year", $thisYear)
             ->get()->toArray();
-
+        
         // budget page
         return view('budget', 
             [
@@ -1956,6 +1945,156 @@ class TransactionsController extends Controller
         );
 
     }   // end of function budget
+
+
+    // See actuals info
+    public function actuals() {
+
+        // get default year
+        $thisYear = date('Y');
+        // left off here - for testing
+        $thisYear = "2024";
+
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
+
+        // get income & expense categories
+        $incomeCategories = $this->getCategories("I");
+        $expenseCategories = $this->getCategories("E");
+
+        // get budget data
+        $actualsTransactions = DB::table("transactions")
+            ->whereBetween("trans_date", [$thisYear . "-01-01", $thisYear . "-12-31"])
+            ->get()->toArray();
+
+        // init actual income and expense data
+        $actualIncomeData = [];
+        foreach($incomeCategories as $category) {
+            $actualIncomeData[$category] = [
+                "january" => 0,
+                "february" => 0,
+                "march" => 0,
+                "april" => 0,
+                "may" => 0,
+                "june" => 0,
+                "july" => 0,
+                "august" => 0,
+                "september" => 0,
+                "october" => 0,
+                "november" => 0,
+                "december" => 0,
+                "total" => 0
+            ];
+        }
+
+        $actualExpenseData = [];
+        foreach($expenseCategories as $category) {
+            $actualExpenseData[$category] = [
+                "january" => 0,
+                "february" => 0,
+                "march" => 0,
+                "april" => 0,
+                "may" => 0,
+                "june" => 0,
+                "july" => 0,
+                "august" => 0,
+                "september" => 0,
+                "october" => 0,
+                "november" => 0,
+                "december" => 0,
+                "total" => 0
+            ];
+        }
+
+        // left off here
+        // sum actuals by month and category
+        foreach($actualsTransactions as $actualsTransaction) {
+            $thisTransMonth = substr($actualsTransaction->trans_date, 5, 2);
+            $thisMonth = $months[(int)$thisTransMonth-1];
+            if(in_array($actualsTransaction->category, $incomeCategories)) {
+                $actualIncomeData[$actualsTransaction->category][$thisMonth] += $actualsTransaction->amount;
+                $actualIncomeData[$actualsTransaction->category]['total'] += $actualsTransaction->amount;
+            } else if(in_array($actualsTransaction->category, $expenseCategories)) {
+                $actualExpenseData[$actualsTransaction->category][$thisMonth] += $actualsTransaction->amount;                
+                $actualExpenseData[$actualsTransaction->category]['total'] += $actualsTransaction->amount;                
+            }
+        }
+
+        // calc incomeTotals, expenseTotals, grandTotals
+        foreach ($actualIncomeData as $category => $catMonths) {
+            foreach ($catMonths as $month => $amount) {
+                if (!isset($incomeTotals[$month])) {
+                    $incomeTotals[$month] = 0;
+                }
+                // remove commas before converting string to float
+                $incomeTotals[$month] += (float)(str_replace(',', '', $amount));
+            }
+        }
+        foreach ($actualExpenseData as $category => $catMonths) {
+            foreach ($catMonths as $month => $amount) {
+                if (!isset($expenseTotals[$month])) {
+                    $expenseTotals[$month] = 0;
+                }
+                // remove commas before converting string to float
+                $expenseTotals[$month] += (float)(str_replace(',', '', $amount));
+            }
+        }
+
+        // calc grand totals for each month
+        foreach ($months as $monthIdx => $catMonth) {
+            $grandTotals[$catMonth] = $incomeTotals[$catMonth] + $expenseTotals[$catMonth];
+            // remove commas before converting string to float
+            $grandTotals[$catMonth] = number_format($grandTotals[$catMonth], 2);
+        }
+        // calc total grand total
+        $grandTotals['total'] = $incomeTotals['total'] + $expenseTotals['total'];
+        // ...and format
+        $grandTotals['total'] = number_format($grandTotals['total'], 2);
+
+
+        // format all number to 2 decimal places
+        foreach($actualIncomeData as $categoryKey=>$category) {
+            foreach($months as $month) {
+                $actualIncomeData[$categoryKey][$month] = number_format($actualIncomeData[$categoryKey][$month], 2);
+            }
+            $actualIncomeData[$categoryKey]['total'] = number_format($actualIncomeData[$categoryKey]['total'], 2);
+        }
+        foreach($actualExpenseData as $categoryKey=>$category) {
+            foreach($months as $month) {
+                $actualExpenseData[$categoryKey][$month] = number_format($actualExpenseData[$categoryKey][$month], 2);
+            }
+            $actualExpenseData[$categoryKey]['total'] = number_format($actualExpenseData[$categoryKey]['total'], 2);
+        }
+        foreach($incomeTotals as $idx=>$total) $incomeTotals[$idx] = number_format($total, 2);
+        foreach($expenseTotals as $idx=>$total) $expenseTotals[$idx] = number_format($total, 2);
+
+        // actuals page
+        return view('actuals', 
+            [
+                'thisYear' => $thisYear, 
+                'incomeCategories' => $incomeCategories, 
+                'expenseCategories' => $expenseCategories,
+                'actualIncomeData' => $actualIncomeData,
+                'actualExpenseData' => $actualExpenseData,
+                'incomeTotals' => $incomeTotals,
+                'expenseTotals' => $expenseTotals,
+                'grandTotals' => $grandTotals
+            ]
+        );
+
+    }   // end of function actuals
 
 
     // This was used to eliminate MMSpending transactions, so shouldn't be needed again.
