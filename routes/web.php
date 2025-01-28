@@ -31,6 +31,8 @@ Route::get('/accounts/gblimo', 'App\Http\Controllers\TransactionsController@gbli
 Route::get('/accounts/investmentsindex', 'App\Http\Controllers\TransactionsController@investmentsindex')->name('investmentsindex');
 // see buckets (in Dsc Svg )
 Route::get('/accounts/buckets', 'App\Http\Controllers\TransactionsController@buckets')->name('buckets');
+// see budget
+Route::get('/accounts/budget', 'App\Http\Controllers\TransactionsController@budget')->name('budget');
 // screen to initiate moving money between buckets
 Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController@moveBuckets')->name('moveBuckets');
 // write records to move the funds betwen buckets

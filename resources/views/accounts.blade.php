@@ -15,6 +15,7 @@
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
     <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
     <button type="button" id="buckets" class="btn btn-success">Buckets</button>
+    <button type="button" id="budget" class="btn btn-danger">Budget</button>
 
         <table>
             <thead>
@@ -78,6 +79,14 @@
                     e.preventDefault();
 
                     const url = '/accounts/buckets';
+                    window.location.href = url;
+                });
+
+                // Budget page
+                $('#budget').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/budget';
                     window.location.href = url;
                 });
 

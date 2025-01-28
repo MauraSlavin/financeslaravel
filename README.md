@@ -4,10 +4,15 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Old branch: 2025-01-26-buckets</h2>
-<h2>Working on branch: (nothing in progress)</h2>
+<h2>Working on branch: 2025-01-27-budget</h2>
     <ul>
+      <li>Button to show actuals</li>
+      <li>Button to show budget AND actuals (and diff?)<br>
+      &nbsp&nbsp&nbsp&nbsp&nbspNOTE: use trans_date for actuals</li>
+      <li>Make year enterable (and route needs optional year parameter)</li>
       <li></li>
+      <li>?? Compare budget to spending (input dates) -- income and expenses</li>
+      <li>Update budget for current year</li>
     </ul>
 
 <h2>BUGS</h2>
