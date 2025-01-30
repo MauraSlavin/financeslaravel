@@ -13,20 +13,24 @@
         <table>
             <thead>
                 <tr>
-                    <th>Account</th>
-                    <th>Amount</th>
-                    <th>Last Balanced</th>
-                    <th>Invest or Trans</th>
+                    <th style="width: 80px;">Account</th>
+                    <th style="width: 100px;">Amount</th>
+                    <th style="width: 200px;">Last Balanced</th>
+                    <th style="width: 50px;">Invest or Trans</th>
                 </tr>
             </thead>
           
             <tbody>
                 @foreach($accounts as $account)
                     @if($account->account != null)
-                        <tr>
+                        @if($account->account == 'Total')
+                            <tr style="background-color: blue; color: lightblue;">
+                        @else
+                            <tr>
+                        @endif
                             <td>{{ $account->account }}</td>
-                            <td style="text-align: right;">{{ $account->amount }}</td>
-                            <td>{{ $account->max_last_balanced }}</td>
+                            <td class="text-end">{{ $account->amount }}</td>
+                            <td class="text-center">{{ $account->max_last_balanced }}</td>
                             <td>{{ $account->type }}</td>
                         </tr>
                     @endif

@@ -541,7 +541,15 @@ class TransactionsController extends Controller
             $all->register += $account->register;
             $all->max_last_balanced = max($all->max_last_balanced, $account->max_last_balanced);
         }
+
+        // add too array to be written to the page
         $accounts[] = $all;
+
+        // format $ amounts  for each account (& all)
+        foreach($accounts as $acctIdx=>$account) {
+            $accounts[$acctIdx]->cleared = number_format($account->cleared, 2);
+            $accounts[$acctIdx]->register = number_format($account->register, 2);
+        }
 
         return view('accounts', ['accounts' => $accounts, 'acctsMsg' => $acctsMsg]);
     }
@@ -1536,7 +1544,6 @@ class TransactionsController extends Controller
             ->groupBy('account')
             ->get()
             ->toArray();
-
         
         // order trans accounts alphabetically
         usort($transAccounts, function($a, $b) {
@@ -1560,19 +1567,24 @@ class TransactionsController extends Controller
             ->get()
             ->toArray();
 
+        // get transaction with latest clear_date for each account
+        $invAccounts = getLatest($invAccounts, $invAccountNames);
+
         // order inv accounts alphabetically
         usort($invAccounts, function($a, $b) {
             return strcmp(strtolower($a->account), strtolower($b->account));
         });
-
-        // get transaction with latest clear_date for each account
-        $invAccounts = getLatest($invAccounts, $invAccountNames);
 
         // merge the accounts arrays
         $accounts = array_merge($transAccounts, $invAccounts);
 
         // add Total line to $accounts
         $accounts[] = getTotalAssets($accounts);
+
+        // format $ amounts  for each account
+        foreach($accounts as $acctIdx=>$account) {
+            $accounts[$acctIdx]->amount = number_format($account->amount, 2);
+        }
 
         return view('assets', ['accounts' => $accounts]);
     }   // end of function assets
@@ -1923,7 +1935,7 @@ class TransactionsController extends Controller
         // get default year
         $thisYear = date('Y');
         // left off here - for testing
-        $thisYear = "2024";
+        // $thisYear = "2024";
 
         // get income & expense categories
         $incomeCategories = $this->getCategories("I");
@@ -1953,7 +1965,7 @@ class TransactionsController extends Controller
         // get default year
         $thisYear = date('Y');
         // left off here - for testing
-        $thisYear = "2024";
+        // $thisYear = "2024";
 
         $months = [
             'january',
