@@ -6,14 +6,13 @@
 
 <h2>Working on branch: 2025-01-27-budget</h2>
     <ul>
-      <li>MOVE retirement savings to NEW disc account, and include in this</li>
-      <li></li>
       <li>Button to show budget AND actuals (and diff?)<br>
       &nbsp&nbsp&nbsp&nbsp&nbspNOTE: use trans_date for actuals</li>
       <li>Make year enterable (and route needs optional year parameter)</li>
       <li></li>
       <li>?? Compare budget to spending -- income and expenses</li>
       <li>Ability to update budget for current year</li>
+      <li>Click on a Budget or Actual box to see the transactions included</li>
     </ul>
 
 <h2>BUGS</h2>
