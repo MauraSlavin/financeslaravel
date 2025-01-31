@@ -9,10 +9,14 @@
     <body>
     <h1>Actuals</h1>
     <h6>Year: {{ $thisYear }}</h6>
+    <button type="button" id="budget" class="btn btn-success">Budget</button>
+    <button type="button" id="budgetactuals" class="btn btn-warning">Budget vs Actuals</button>
 
     <!-- hidden fields -->
-    <!-- <input type="hidden" id="incomeCategories"  name="incomeCategories"  value={{ json_encode($incomeCategories) }}> -->
-    <!-- <input type="hidden" id="expenseCategories"  name="expenseCategories"  value={{ json_encode($expenseCategories) }}> -->
+    <input type="hidden" id="incomeCategories"  name="incomeCategories"  value={{ json_encode($incomeCategories) }}>
+    <input type="hidden" id="expenseCategories"  name="expenseCategories"  value={{ json_encode($expenseCategories) }}>
+    <input type="hidden" id="actualIncomeData"  name="actualIncomeData"  value={{ json_encode($actualIncomeData) }}>
+    <input type="hidden" id="actualExpenseData"  name="actualExpenseData"  value={{ json_encode($actualExpenseData) }}>
 
     <table id="actualsTable">
         <thead>
@@ -192,9 +196,13 @@
 
             // calculate totals and subtotals
             // get hidden fields
-            // - budgetData
-            var budgetData = $("#budgetData").val();
-            budgetData = JSON.parse(budgetData);
+            // - actualIncomeData
+            var actualIncomeData = $("#actualIncomeData").val();
+            actualIncomeData = JSON.parse(actualIncomeData);
+            
+            // - actualExpenseData
+            var actualExpenseData = $("#actualExpenseData").val();
+            actualExpenseData = JSON.parse(actualExpenseData);
 
             // - incomeCategories
             var incomeCategories = $("#incomeCategories").val();
@@ -239,18 +247,24 @@
             };
 
             // calc income and expense totals for each month
-            actualIncomeData.forEach(data => {
+            for (let category in actualIncomeData) {
                 months.forEach(month => {
-                    incomeTotals[month] += parseFloat(data[month]);
-                    incomeTotal += parseFloat(data[month]);
+                    var amt = actualIncomeData[category][month];
+                    // remove commas and convert to float
+                    amt = parseFloat(amt.split(',').join(''));
+                    incomeTotals[month] += amt;
+                    incomeTotal += amt;
                 });
-            }
-            actualExpenseData.forEach(data => {
+            };
+            for (let category in actualExpenseData) {
                 months.forEach(month => {
-                    expenseTotals[month] += parseFloat(data[month]);
-                    expenseTotal += parseFloat(data[month]);
+                    var amt = actualExpenseData[category][month];
+                    // remove commas and convert to float
+                    amt = parseFloat(amt.split(',').join(''));
+                    expenseTotals[month] += amt;
+                    expenseTotal += amt;
                 });
-            });
+            };
 
             // put monthly income and expense totals on the page
             months.forEach( month => {
@@ -272,11 +286,19 @@
             var total = (incomeTotal + expenseTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#grandTotal").text(total);
 
-            // listener for actuals button
-            $('#actuals').on('click', function(e) {
+            // listener for budget button
+            $('#budget').on('click', function(e) {
                 e.preventDefault();
 
-                const url = '/accounts/actuals';
+                const url = '/accounts/budget';
+                window.location.href = url;
+            });
+
+            // listener for budget vs actuals button
+            $('#budgetactuals').on('click', function(e) {
+                e.preventDefault();
+
+                const url = '/accounts/budgetactuals';
                 window.location.href = url;
             });
         });

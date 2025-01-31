@@ -1,13 +1,11 @@
 body {
     background-color: lightblue;
-    /* background-color: lightblue; */
 }
 
 table {
     background-color: skyblue;
     width: 100%;
     border-color: darkblue;
-
 }
 
 table tr:nth-child(even) {
@@ -32,7 +30,24 @@ table th {
     background-color: #dbedd8; /* lighter green */
 }
 
-  
+.budget {
+    width: 100px;
+    text-align: right;
+    background-color: lightblue;
+}  
+
+.actual {
+    width: 100px;
+    text-align: right;
+    background-color: #baedb2;
+}
+
+.diff {
+    width: 100px;
+    text-align: right;
+    background-color: palegoldenrod;   
+}
+
 h5, h6 {
     margin-left: 10px;
 }
@@ -82,7 +97,7 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals {
+#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals {
     margin: 10px;
 }
 
