@@ -1929,22 +1929,29 @@ class TransactionsController extends Controller
     }
 
 
+    public function getBudgetData($thisYear) {
+        $budgetData = DB::table("budget")
+            ->where("year", $thisYear)
+            ->get()->toArray();
+
+        return $budgetData;
+    }   // end function getBudgetData
+
+
     // See budget info
     public function budget() {
         
         // get default year
         $thisYear = date('Y');
         // left off here - for testing
-        // $thisYear = "2024";
+        $thisYear = "2024";
 
         // get income & expense categories
         $incomeCategories = $this->getCategories("I");
         $expenseCategories = $this->getCategories("E");
 
         // get budget data
-        $budgetData = DB::table("budget")
-            ->where("year", $thisYear)
-            ->get()->toArray();
+        $budgetData = $this->getBudgetData($thisYear);
         
         // budget page
         return view('budget', 
@@ -1959,13 +1966,13 @@ class TransactionsController extends Controller
     }   // end of function budget
 
 
-    // See actuals info
-    public function actuals() {
-
+    // See budget info
+    public function budgetactuals() {
+        
         // get default year
         $thisYear = date('Y');
         // left off here - for testing
-        // $thisYear = "2024";
+        $thisYear = "2024";
 
         $months = [
             'january',
@@ -1987,6 +1994,32 @@ class TransactionsController extends Controller
         $expenseCategories = $this->getCategories("E");
 
         // get budget data
+        $budgetData = $this->getBudgetData($thisYear);
+
+        // get actuals data
+        [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals] =
+            $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
+
+        // budgetactuals page
+        return view('budgetactuals', 
+            [
+                'thisYear' => $thisYear, 
+                'incomeCategories' => $incomeCategories, 
+                'expenseCategories' => $expenseCategories,
+                'budgetData' => $budgetData,
+                'actualIncomeData' => $actualIncomeData,
+                'actualExpenseData' => $actualExpenseData,
+                'incomeTotals' => $incomeTotals,
+                'expenseTotals' => $expenseTotals,
+                'grandTotals' => $grandTotals
+            ]
+        );
+
+    }   // end of function budgetactuals
+
+
+    public function getActualsData($thisYear, $months, $incomeCategories, $expenseCategories) {
+
         $actualsTransactions = DB::table("transactions")
             ->whereBetween("trans_date", [$thisYear . "-01-01", $thisYear . "-12-31"])
             ->get()->toArray();
@@ -2091,6 +2124,41 @@ class TransactionsController extends Controller
         }
         foreach($incomeTotals as $idx=>$total) $incomeTotals[$idx] = number_format($total, 2);
         foreach($expenseTotals as $idx=>$total) $expenseTotals[$idx] = number_format($total, 2);
+
+        return [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals];
+    }
+
+
+    // See actuals info
+    public function actuals() {
+
+        // get default year
+        $thisYear = date('Y');
+        // left off here - for testing
+        $thisYear = "2024";
+
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
+
+        // get income & expense categories
+        $incomeCategories = $this->getCategories("I");
+        $expenseCategories = $this->getCategories("E");
+
+        // get actuals data
+        [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals] =
+            $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
 
         // actuals page
         return view('actuals', 

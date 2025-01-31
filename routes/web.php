@@ -33,6 +33,8 @@ Route::get('/accounts/investmentsindex', 'App\Http\Controllers\TransactionsContr
 Route::get('/accounts/buckets', 'App\Http\Controllers\TransactionsController@buckets')->name('buckets');
 // see budget
 Route::get('/accounts/budget', 'App\Http\Controllers\TransactionsController@budget')->name('budget');
+// see budget & actuals (& diff)
+Route::get('/accounts/budgetactuals', 'App\Http\Controllers\TransactionsController@budgetactuals')->name('budgetactuals');
 // see actuals
 Route::get('/accounts/actuals', 'App\Http\Controllers\TransactionsController@actuals')->name('actuals');
 // screen to initiate moving money between buckets

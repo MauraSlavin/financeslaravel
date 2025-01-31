@@ -7,10 +7,10 @@
     </head>
 
     <body>
-    <h1>Budget</h1>
+    <h1>Budget vs Actuals</h1>
     <h6>Year: {{ $thisYear }}</h6>
+    <button type="button" id="budget" class="btn btn-success">Budget</button>
     <button type="button" id="actuals" class="btn btn-primary">Actuals</button>
-    <button type="button" id="budgetactuals" class="btn btn-warning">Budget vs Actuals</button>
 
     <!-- hidden fields -->
     <input type="hidden" id="budgetData"  name="budgetData"  value={{ json_encode($budgetData) }}>
@@ -55,23 +55,39 @@
                 <td></td>
                 <td></td>
             </tr>
-            @foreach($budgetData as $category)
+            @foreach($budgetData as $catIdx=>$category)
                 @if(in_array($category->category, $incomeCategories))
                     <tr>
-                        <td class="text-end" style="width: 100px;">{{ $category->category }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->january }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->february }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->march }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->april }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->may }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->june }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->july }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->august }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->september }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->october }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->november }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->december }}</td>
-                        <td class="text-end" style="width: 100px;" id="totalIncome">{{ $category->total }}</td>
+                        <td class="budget">{{ $category->category }}</td>
+                        <td class="budget">{{ $category->january }}</td>
+                        <td class="budget">{{ $category->february }}</td>
+                        <td class="budget">{{ $category->march }}</td>
+                        <td class="budget">{{ $category->april }}</td>
+                        <td class="budget">{{ $category->may }}</td>
+                        <td class="budget">{{ $category->june }}</td>
+                        <td class="budget">{{ $category->july }}</td>
+                        <td class="budget">{{ $category->august }}</td>
+                        <td class="budget">{{ $category->september }}</td>
+                        <td class="budget">{{ $category->october }}</td>
+                        <td class="budget">{{ $category->november }}</td>
+                        <td class="budget">{{ $category->december }}</td>
+                        <td class="budget" id="totalIncome">{{ $category->total }}</td>
+                    </tr>
+                    <tr>
+                        <td class="actual">(actual)</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['january'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['february'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['march'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['april'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['may'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['june'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['july'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['august'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['september'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['october'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['november'] }}</td>
+                        <td class="actual">{{ $actualIncomeData[$category->category]['december'] }}</td>
+                        <td class="actual" id="totalIncome">{{ $actualIncomeData[$category->category]['total'] }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -128,6 +144,22 @@
                         <td class="text-end" style="width: 100px;">{{ $category->november }}</td>
                         <td class="text-end" style="width: 100px;">{{ $category->december }}</td> 
                         <td class="text-end" style="width: 100px;" id="totalExpense">{{ $category->total }}</td>
+                    </tr>
+                    <tr>
+                        <td class="actual">(actual)</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['january'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['february'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['march'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['april'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['may'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['june'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['july'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['august'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['september'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['october'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['november'] }}</td>
+                        <td class="actual">{{ $actualExpenseData[$category->category]['december'] }}</td>
+                        <td class="actual" id="totalExpense">{{ $actualExpenseData[$category->category]['total'] }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -280,6 +312,14 @@
             var total = (incomeTotal + expenseTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#grandTotal").text(total);
 
+            // listener for budget button
+            $('#budget').on('click', function(e) {
+                e.preventDefault();
+
+                const url = '/accounts/budget';
+                window.location.href = url;
+            });
+
             // listener for actuals button
             $('#actuals').on('click', function(e) {
                 e.preventDefault();
@@ -287,15 +327,6 @@
                 const url = '/accounts/actuals';
                 window.location.href = url;
             });
-
-            // listener for budget vs actuals button
-            $('#budgetactuals').on('click', function(e) {
-                e.preventDefault();
-
-                const url = '/accounts/budgetactuals';
-                window.location.href = url;
-            });
-
         });
 
     </script>
