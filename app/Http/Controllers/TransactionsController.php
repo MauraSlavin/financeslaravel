@@ -817,6 +817,7 @@ class TransactionsController extends Controller
             ->get()->toArray();
         // error_log("\naccounts: ");
         // foreach($accounts as $thisOne) error_log(" - " . json_encode($thisOne));
+        $accountIds = array_column($accounts, 'id');
 
         // get all previously used toFrom values
         $toFroms = DB::table("transactions")
@@ -835,6 +836,19 @@ class TransactionsController extends Controller
         // if accountName not in accounts, it's not a valid accountName
         if(!in_array($accountName, $accountNames)) {
             return response()->json(['error' => $accountName . ' is not a defined account'], 412);
+        }
+
+        // cut-off dates for a statement period, if not the end of the month
+        $allLastStmtDates = array_column($accounts, 'lastStmtDate');
+
+        $lastStmtDates = [];
+        foreach($accounts as $accountIdx=>$account) {
+            if($allLastStmtDates[$accountIdx] !== null) {
+                $lastStmtDates[] = [
+                    'accountName' => $accountNames[$accountIdx],
+                    'lastStmtDate' => $allLastStmtDates[$accountIdx]
+                ];
+            }
         }
 
         // get all defined categories
@@ -975,7 +989,7 @@ class TransactionsController extends Controller
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
         // error_log(json_encode($newCsvData));
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'toFromAliases' => $toFromAliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFromAliases' => $toFromAliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
     }
 
 
