@@ -149,22 +149,24 @@
             </tr>
             @foreach($budgetData as $category)
                 @if(in_array($category->category, $expenseCategories))
+                    <!-- Budget data -->
                     <tr>
-                        <td class="text-end" style="width: 100px;">{{ $category->category }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->january }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->february }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->march }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->april }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->may }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->june }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->july }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->august }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->september }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->october }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->november }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->december }}</td> 
-                        <td class="text-end" style="width: 100px;" id="totalExpense">{{ $category->total }}</td>
+                        <td class="budget">{{ $category->category }}</td>
+                        <td class="budget">{{ $category->january }}</td>
+                        <td class="budget">{{ $category->february }}</td>
+                        <td class="budget">{{ $category->march }}</td>
+                        <td class="budget">{{ $category->april }}</td>
+                        <td class="budget">{{ $category->may }}</td>
+                        <td class="budget">{{ $category->june }}</td>
+                        <td class="budget">{{ $category->july }}</td>
+                        <td class="budget">{{ $category->august }}</td>
+                        <td class="budget">{{ $category->september }}</td>
+                        <td class="budget">{{ $category->october }}</td>
+                        <td class="budget">{{ $category->november }}</td>
+                        <td class="budget">{{ $category->december }}</td> 
+                        <td class="budget" id="totalExpense">{{ $category->total }}</td>
                     </tr>
+                    <!-- actual data -->
                     <tr>
                         <td class="actual">actual</td>
                         <td class="actual">{{ $actualExpenseData[$category->category]['january'] }}</td>
@@ -181,6 +183,24 @@
                         <td class="actual">{{ $actualExpenseData[$category->category]['december'] }}</td>
                         <td class="actual" id="totalExpense">{{ $actualExpenseData[$category->category]['total'] }}</td>
                     </tr>
+                    <!-- difference -->
+                    <!-- NOTE: subtraction is reversed since the budget is a negative number, so + means $ left in the budget, and - means overspent -->
+                    <tr style="border-bottom-width: thick;">
+                        <td class="diff">difference</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['january']) - (float)str_replace(",", "", $category->january), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['february']) - (float)str_replace(",", "", $category->february), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['march']) - (float)str_replace(",", "", $category->march), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['april']) - (float)str_replace(",", "", $category->april), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['may']) - (float)str_replace(",", "", $category->may), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['june']) - (float)str_replace(",", "", $category->june), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['july']) - (float)str_replace(",", "", $category->july), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['august']) - (float)str_replace(",", "", $category->august), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['september']) - (float)str_replace(",", "", $category->september), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['october']) - (float)str_replace(",", "", $category->october), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['november']) - (float)str_replace(",", "", $category->november), 2) }}</td>
+                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['december']) - (float)str_replace(",", "", $category->december), 2) }}</td>
+                        <td class="diff" id="totalExpense">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category->category]['total']) - (float)str_replace(",", "", $category->total), 2) }}</td>
+                    </tr>                    
                 @endif
             @endforeach
 
