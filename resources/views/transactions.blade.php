@@ -517,6 +517,10 @@
 
                     // id has class transId for existing transactions, and newtransaction for just added transactions
                     var transId = $record.data('id');
+                    // if no existing id found in id data, look for it in the transId class.
+                    if(transId == null) {
+                        transId = $record.find(".transId").text();
+                    }
                     if(transId == 'null' || transId == null) newTransaction['id'] = null;
                     else newTransaction['id'] = Number(transId);
                     
