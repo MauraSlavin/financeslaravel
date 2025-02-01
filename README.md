@@ -7,7 +7,7 @@
 <h2>Working on branch: 2025-01-27-budget</h2>
     <ul>
       <li>Have budgetactuals page...<br>
-      NEED: add diff<br>
+      NEED: add diff (have diff for income only)<br>
       NEED: fix totals<br>
       &nbsp&nbsp&nbsp&nbsp&nbspNOTE: use trans_date for actuals</li>
       <li>Make year enterable (and route needs optional year parameter)</li>
