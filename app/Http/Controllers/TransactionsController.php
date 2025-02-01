@@ -2010,6 +2010,14 @@ class TransactionsController extends Controller
         // get budget data
         $budgetData = $this->getBudgetData($thisYear);
 
+        // format with commas and to 2 decimal places
+        foreach($budgetData as $budgetIdx=>$data) {
+            $budgetData[$budgetIdx]->total = number_format((float)$data->total, 2);
+            foreach($months as $month) {
+                $budgetData[$budgetIdx]->{$month} = number_format((float)$data->{$month}, 2);
+            }
+        }
+
         // get actuals data
         [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals] =
             $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
