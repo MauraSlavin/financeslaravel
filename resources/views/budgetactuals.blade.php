@@ -60,7 +60,7 @@
                 @if(in_array($category->category, $incomeCategories))
                     <!-- Budget data -->
                     <tr>
-                        <td class="budget">{{ $category->category }}</td>
+                        <td class="budget category">{{ $category->category }}</td>
                         <td class="budget">{{ $category->january }}</td>
                         <td class="budget">{{ $category->february }}</td>
                         <td class="budget">{{ $category->march }}</td>
@@ -115,19 +115,19 @@
             <!-- Income total line -->
             <tr  style="background-color: #0096FF; color: white;">
                 <td class="text-end" style="width: 100px;">Income Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberIncomeTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="IncomeTotal"></td>
+                <td class="text-end" style="width: 100px;" id="januaryIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="februaryIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="marchIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="aprilIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="mayIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="juneIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="julyIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="augustIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="septemberIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="octoberIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="novemberIncomeExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="decemberIncomeExpenseTotal"></td> 
+                <td class="text-end" style="width: 100px;" id="incomeExpenseTotal"></td>
             </tr>
 
             <!-- expense -->
@@ -151,7 +151,7 @@
                 @if(in_array($category->category, $expenseCategories))
                     <!-- Budget data -->
                     <tr>
-                        <td class="budget">{{ $category->category }}</td>
+                        <td class="budget category">{{ $category->category }}</td>
                         <td class="budget">{{ $category->january }}</td>
                         <td class="budget">{{ $category->february }}</td>
                         <td class="budget">{{ $category->march }}</td>
@@ -204,22 +204,58 @@
                 @endif
             @endforeach
 
-            <!-- Expense total line -->
+            <!-- Budget Expense total line -->
             <tr  style="background-color: #0096FF; color: white;">
-                <td class="text-end" style="width: 100px;">Expense Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberExpenseTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="ExpenseTotal"></td>
+                <td class="text-end category" style="width: 100px;">Budget Expense Total</td>
+                <td class="text-end" style="width: 100px;" id="januaryBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="februaryBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="marchBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="aprilBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="mayBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="juneBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="julyBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="augustBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="septemberBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="octoberBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="novemberBudgetExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="decemberBudgetExpenseTotal"></td> 
+                <td class="text-end" style="width: 100px;" id="budgetExpenseTotal"></td>
+            </tr>
+
+            <!-- Actual Expense total line -->
+            <tr  style="background-color: #0096FF; color: white;">
+                <td class="text-end" style="width: 100px;">Actual Expense Total</td>
+                <td class="text-end" style="width: 100px;" id="januaryActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="februaryActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="marchActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="aprilActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="mayActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="juneActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="julyActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="augustActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="septemberActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="octoberActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="novemberActualExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="decemberActualExpenseTotal"></td> 
+                <td class="text-end" style="width: 100px;" id="actualExpenseTotal"></td>
+            </tr>
+
+            <!-- diff Expense total line -->
+            <tr  style="background-color: #0096FF; color: white;">
+                <td class="text-end" style="width: 100px;">Diff Expense Total</td>
+                <td class="text-end" style="width: 100px;" id="januaryDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="februaryDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="marchDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="aprilDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="mayDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="juneDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="julyDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="augustDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="septemberDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="octoberDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="novemberDiffExpenseTotal"></td>
+                <td class="text-end" style="width: 100px;" id="decemberDiffExpenseTotal"></td> 
+                <td class="text-end" style="width: 100px;" id="diffExpenseTotal"></td>
             </tr>
 
             <!-- Grand total line -->
@@ -284,10 +320,10 @@
             expenseCategories = JSON.parse(expenseCategories);
 
             // init total vars
-            var incomeTotal = 0;
-            var expenseTotal = 0;
+            var incomeExpenseTotal = 0;
+            var budgetExpenseTotal = 0;
 
-            var incomeTotals = {
+            var incomeExpenseTotals = {
                 'january': 0,
                 'february': 0,
                 'march': 0,
@@ -302,7 +338,7 @@
                 'december': 0
             };
 
-            var expenseTotals = {
+            var budgetExpenseTotals = {
                 'january': 0,
                 'february': 0,
                 'march': 0,
@@ -319,37 +355,46 @@
 
             // calc income and expense totals for each month
             budgetData.forEach(data => {
+                console.log("----- category: " + data['category'] + " -----");
                 if(incomeCategories.includes(data['category'])) {
                     months.forEach(month => {
-                        incomeTotals[month] += parseFloat(data[month]);
-                        incomeTotal += parseFloat(data[month]);
+                        var amt = parseFloat(data[month].replace(",", ""));
+                        console.log(" - income for " + month + ": " + amt.toFixed(2));
+                        console.log(" - old " + month + " total: " + incomeExpenseTotals[month]);
+                        incomeExpenseTotals[month] += amt;
+                        incomeExpenseTotal += amt;
+                        console.log(" - new " + month + " total: " + incomeExpenseTotals[month]);
                     });
                 } else if(expenseCategories.includes(data['category'])) {
                     months.forEach(month => {
-                        expenseTotals[month] += parseFloat(data[month]);
-                        expenseTotal += parseFloat(data[month]);
+                        var amt = parseFloat(data[month].replace(",", ""));
+                        console.log(" - expense for " + month + ": " + amt.toFixed(2));
+                        console.log(" - old " + month + " total: " + budgetExpenseTotals[month]);
+                        budgetExpenseTotals[month] += amt;
+                        budgetExpenseTotal += amt;
+                        console.log(" - new " + month + " total: " + budgetExpenseTotals[month]);
                     });
                 }
             });
 
             // put monthly income and expense totals on the page
             months.forEach( month => {
-                var incomeTotal = incomeTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                $("#" + month + "IncomeTotal").text(incomeTotal);
-                var expenseTotal = expenseTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                $("#" + month + "ExpenseTotal").text(expenseTotal);
-                var total = (incomeTotals[month] + expenseTotals[month]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                var incomeExpenseTotal = incomeExpenseTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                $("#" + month + "IncomeExpenseTotal").text(incomeExpenseTotal);
+                var budgetExpenseTotal = budgetExpenseTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                $("#" + month + "BudgetExpenseTotal").text(budgetExpenseTotal);
+                var total = (incomeExpenseTotals[month] + budgetExpenseTotals[month]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 $("#" + month + "Total").text(total);
             });
 
             // put total income, expense and grand total on the page
-            var total = incomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            $("#IncomeTotal").text(total);
+            var total = incomeExpenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            $("#incomeExpenseTotal").text(total);
 
-            var total = expenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            $("#ExpenseTotal").text(total);
+            var total = budgetExpenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            $("#budgetExpenseTotal").text(total);
             
-            var total = (incomeTotal + expenseTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            var total = (incomeExpenseTotal + budgetExpenseTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#grandTotal").text(total);
 
             // listener for budget button

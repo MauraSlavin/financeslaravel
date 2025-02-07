@@ -7,7 +7,11 @@
 <h2>Working on branch: 2025-01-27-budget</h2>
     <ul>
       <li>Have budgetactuals page...<br>
-      NEED: fix totals (need total for budget, actual & total; income & expense)<br>
+      NEED: (partly done) fix totals (need total for budget, actual & total; income & expense)<br>
+      &nbsp&nbsp&nbsp&nbsp&nbsp- Budget Expense Total done<br>
+      &nbsp&nbsp&nbsp&nbsp&nbsp- Actual Expense Total html done, needs to be filled in<br>
+      &nbsp&nbsp&nbsp&nbsp&nbsp- Diff Expense Total html done, needs to be filled in<br>
+      &nbsp&nbsp&nbsp&nbsp&nbsp- Need to do for INCOME (income total on page is budget)<br>
       &nbsp&nbsp&nbsp&nbsp&nbspNOTE: use trans_date for actuals</li>
       <li>Make year enterable (and route needs optional year parameter)</li>
       <li></li>

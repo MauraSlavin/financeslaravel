@@ -36,6 +36,10 @@ table th {
     background-color: lightblue;
 }  
 
+.category {
+    font-weight: bold;
+}
+
 .actual {
     width: 100px;
     text-align: right;

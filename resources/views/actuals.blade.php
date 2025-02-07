@@ -125,7 +125,7 @@
                     <td class="text-end" style="width: 100px;">{{ $category['october'] }}</td>
                     <td class="text-end" style="width: 100px;">{{ $category['november'] }}</td>
                     <td class="text-end" style="width: 100px;">{{ $category['december']}}</td> 
-                    <td class="text-end" style="width: 100px;" id="totalExpense">{{ $category['december'] }}</td>
+                    <td class="text-end" style="width: 100px;" id="totalExpense">{{ $category['total'] }}</td>
                 </tr>
             @endforeach
 
