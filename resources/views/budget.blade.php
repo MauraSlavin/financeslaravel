@@ -55,23 +55,23 @@
                 <td></td>
                 <td></td>
             </tr>
-            @foreach($budgetData as $category)
-                @if(in_array($category->category, $incomeCategories))
+            @foreach($budgetData as $category=>$budgetRecord)
+                @if(in_array($category, $incomeCategories))
                     <tr>
-                        <td class="text-end" style="width: 100px;">{{ $category->category }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->january }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->february }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->march }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->april }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->may }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->june }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->july }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->august }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->september }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->october }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->november }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->december }}</td>
-                        <td class="text-end" style="width: 100px;" id="totalIncome">{{ $category->total }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $category }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['january'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['february'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['march'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['april'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['may'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['june'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['july'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['august'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['september'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['october'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['november'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['december'] }}</td>
+                        <td class="text-end" style="width: 100px;" id="totalIncome">{{ $budgetRecord['total'] }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -111,23 +111,23 @@
                 <td></td>
                 <td></td>
             </tr>
-            @foreach($budgetData as $category)
-                @if(in_array($category->category, $expenseCategories))
+            @foreach($budgetData as $category=>$budgetRecord)
+                @if(in_array($category, $expenseCategories))
                     <tr>
-                        <td class="text-end" style="width: 100px;">{{ $category->category }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->january }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->february }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->march }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->april }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->may }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->june }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->july }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->august }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->september }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->october }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->november }}</td>
-                        <td class="text-end" style="width: 100px;">{{ $category->december }}</td> 
-                        <td class="text-end" style="width: 100px;" id="totalExpense">{{ $category->total }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $category }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['january'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['february'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['march'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['april'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['may'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['june'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['july'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['august'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['september'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['october'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['november'] }}</td>
+                        <td class="text-end" style="width: 100px;">{{ $budgetRecord['december'] }}</td> 
+                        <td class="text-end" style="width: 100px;" id="totalExpense">{{ $budgetRecord['total'] }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -246,19 +246,19 @@
             };
 
             // calc income and expense totals for each month
-            budgetData.forEach(data => {
-                if(incomeCategories.includes(data['category'])) {
+            for (const category in budgetData) {
+                if(incomeCategories.includes(category)) {
                     months.forEach(month => {
-                        incomeTotals[month] += parseFloat(data[month]);
-                        incomeTotal += parseFloat(data[month]);
+                        incomeTotals[month] += parseFloat(budgetData[category][month]);
+                        incomeTotal += parseFloat(budgetData[category][month]);
                     });
-                } else if(expenseCategories.includes(data['category'])) {
+                } else if(expenseCategories.includes(category)) {
                     months.forEach(month => {
-                        expenseTotals[month] += parseFloat(data[month]);
-                        expenseTotal += parseFloat(data[month]);
+                        expenseTotals[month] += parseFloat(budgetData[category][month]);
+                        expenseTotal += parseFloat(budgetData[category][month]);
                     });
                 }
-            });
+            };
 
             // put monthly income and expense totals on the page
             months.forEach( month => {

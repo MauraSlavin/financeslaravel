@@ -7,11 +7,7 @@
 <h2>Working on branch: 2025-01-27-budget</h2>
     <ul>
       <li>Have budgetactuals page...<br>
-      NEED: (partly done) fix totals (need total for budget, actual & total; income & expense)<br>
-      &nbsp&nbsp&nbsp&nbsp&nbsp- Budget Expense Total done<br>
-      &nbsp&nbsp&nbsp&nbsp&nbsp- Actual Expense Total html done, needs to be filled in<br>
-      &nbsp&nbsp&nbsp&nbsp&nbsp- Diff Expense Total html done, needs to be filled in<br>
-      &nbsp&nbsp&nbsp&nbsp&nbsp- Need to do for INCOME (income total on page is budget)<br>
+      NEED: (partly done) grand totals<br>
       &nbsp&nbsp&nbsp&nbsp&nbspNOTE: use trans_date for actuals</li>
       <li>Make year enterable (and route needs optional year parameter)</li>
       <li></li>
@@ -146,6 +142,63 @@
       <p>Multiple default tracking (& notes, I think) can be given for each split.  In this case, two records are created: the original from the csv download, and a duplicate with a category of "Bolt".  The original transaction gets tracking "CRZ", and the duplicate gets tracking "Bolt".  Both get notes "tolls".  Each gets 1/2 the total amount.</p>
   </ul>
 
+<h2>Variables Documentation - budgetactuals</h2>
+  <h3>budgetData</h3>
+  <p>Array where key is category (includes income and expense) with the monthly budget and yearly total budget for each. For example:<br>
+  Bolt:&nbsp&nbsp&nbsp{<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"january":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"february":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"march":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"april":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"may":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"june":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"july":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"august":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"september":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"october":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"november":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"december":"-165.00",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"total":"-1,980.00"<br>
+  &nbsp&nbsp&nbsp}<br>
+
+
+  <h3>actualIncomeData and actualExpenseData:</h3>
+  <p>One element for each income or expense category, with the total amount for each month and a total actual income or expense for the year. For Example:<br>
+  &nbsp&nbsp&nbspIncomeInterest:<br>
+  &nbsp&nbsp&nbsp&nbsp{<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"january":"264.93",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"february":"263.90",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"march":"279.04",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"april":"268.24",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"may":"250.13",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"june":"237.77",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"july":"242.99",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"august":"320.59",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"september":"362.30",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"october":"261.22",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"november":"250.41",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"december":"260.81",<br>
+  &nbsp&nbsp&nbsp&nbsp&nbsp"total":"3,262.33"<br>
+  &nbsp&nbsp&nbsp&nbsp}</p>
+
+  <h3>actualIncomeTotals, actualExpenseTotals, actualGrandTotals:</h3>
+  <p>(incomeTotals, expenseTotals, grandTotals in actuals blade)</p>
+  <p>Income, Expense or Grand (I + E) Total for each month, and for the year.  For example:<br>
+  &nbsp&nbsp{<br>
+  &nbsp&nbsp&nbsp"january":"23,604.49",<br>
+  &nbsp&nbsp&nbsp"february":"10,898.23",<br>
+  &nbsp&nbsp&nbsp"march":"12,006.59",<br>
+  &nbsp&nbsp&nbsp"april":"11,499.51",<br>
+  &nbsp&nbsp&nbsp"may":"9,326.36",<br>
+  &nbsp&nbsp&nbsp"june":"9,173.47",<br>
+  &nbsp&nbsp&nbsp"july":"10,659.22",<br>
+  &nbsp&nbsp&nbsp"august":"17,809.69",<br>
+  &nbsp&nbsp&nbsp"september":"11,008.01",<br>
+  &nbsp&nbsp&nbsp"october":"11,625.71",<br>
+  &nbsp&nbsp&nbsp"november":"12,020.77",<br>
+  &nbsp&nbsp&nbsp"december":"16,192.86",<br>
+  &nbsp&nbsp&nbsp"total":"155,824.91"<br>
+  &nbsp&nbsp}
 
 <h2>Database notes:</h2>
   <ul>

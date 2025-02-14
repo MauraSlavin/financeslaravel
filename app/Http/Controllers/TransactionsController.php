@@ -1944,9 +1944,16 @@ class TransactionsController extends Controller
 
 
     public function getBudgetData($thisYear) {
-        $budgetData = DB::table("budget")
+        $budgetRecords = DB::table("budget")
             ->where("year", $thisYear)
             ->get()->toArray();
+
+        $budgetData = [];
+        foreach($budgetRecords as $record) {
+            $arrayRecord = (array)$record;
+            $budgetData[$arrayRecord['category']] = 
+                array_diff_key($arrayRecord, array_flip(['id', 'year' , 'category']));            
+        }
 
         return $budgetData;
     }   // end function getBudgetData
@@ -2011,15 +2018,15 @@ class TransactionsController extends Controller
         $budgetData = $this->getBudgetData($thisYear);
 
         // format with commas and to 2 decimal places
-        foreach($budgetData as $budgetIdx=>$data) {
-            $budgetData[$budgetIdx]->total = number_format((float)$data->total, 2);
+        foreach($budgetData as $category=>$data) {
+            $budgetData[$category]['total'] = number_format((float)$data['total'], 2);
             foreach($months as $month) {
-                $budgetData[$budgetIdx]->{$month} = number_format((float)$data->{$month}, 2);
+                $budgetData[$category][$month] = number_format((float)$data[$month], 2);
             }
         }
 
         // get actuals data
-        [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals] =
+        [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals] =
             $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
 
         // budgetactuals page
@@ -2031,9 +2038,9 @@ class TransactionsController extends Controller
                 'budgetData' => $budgetData,
                 'actualIncomeData' => $actualIncomeData,
                 'actualExpenseData' => $actualExpenseData,
-                'incomeTotals' => $incomeTotals,
-                'expenseTotals' => $expenseTotals,
-                'grandTotals' => $grandTotals
+                'actualIncomeTotals' => $actualIncomeTotals,
+                'actualExpenseTotals' => $actualExpenseTotals,
+                'actualGrandTotals' => $actualGrandTotals
             ]
         );
 
@@ -2086,6 +2093,7 @@ class TransactionsController extends Controller
         }
 
         // left off here
+
         // sum actuals by month and category
         foreach($actualsTransactions as $actualsTransaction) {
             $thisTransMonth = substr($actualsTransaction->trans_date, 5, 2);
@@ -2099,36 +2107,35 @@ class TransactionsController extends Controller
             }
         }
 
-        // calc incomeTotals, expenseTotals, grandTotals
+        // calc actualIncomeTotals, actualExpenseTotals, actualGrandTotals
         foreach ($actualIncomeData as $category => $catMonths) {
             foreach ($catMonths as $month => $amount) {
-                if (!isset($incomeTotals[$month])) {
-                    $incomeTotals[$month] = 0;
-                }
+                // error_log(" - month: " . $month . "; amount: " . $amount);
+                if (!isset($actualIncomeTotals[$month])) $actualIncomeTotals[$month] = 0;
                 // remove commas before converting string to float
-                $incomeTotals[$month] += (float)(str_replace(',', '', $amount));
+                $actualIncomeTotals[$month] += (float)(str_replace(',', '', $amount));
             }
         }
         foreach ($actualExpenseData as $category => $catMonths) {
             foreach ($catMonths as $month => $amount) {
-                if (!isset($expenseTotals[$month])) {
-                    $expenseTotals[$month] = 0;
+                if (!isset($actualExpenseTotals[$month])) {
+                    $actualExpenseTotals[$month] = 0;
                 }
                 // remove commas before converting string to float
-                $expenseTotals[$month] += (float)(str_replace(',', '', $amount));
+                $actualExpenseTotals[$month] += (float)(str_replace(',', '', $amount));
             }
         }
 
         // calc grand totals for each month
         foreach ($months as $monthIdx => $catMonth) {
-            $grandTotals[$catMonth] = $incomeTotals[$catMonth] + $expenseTotals[$catMonth];
+            $actualGrandTotals[$catMonth] = $actualIncomeTotals[$catMonth] + $actualExpenseTotals[$catMonth];
             // remove commas before converting string to float
-            $grandTotals[$catMonth] = number_format($grandTotals[$catMonth], 2);
+            $actualGrandTotals[$catMonth] = number_format($actualGrandTotals[$catMonth], 2);
         }
         // calc total grand total
-        $grandTotals['total'] = $incomeTotals['total'] + $expenseTotals['total'];
+        $actualGrandTotals['total'] = $actualIncomeTotals['total'] + $actualExpenseTotals['total'];
         // ...and format
-        $grandTotals['total'] = number_format($grandTotals['total'], 2);
+        $actualGrandTotals['total'] = number_format($actualGrandTotals['total'], 2);
 
 
         // format all number to 2 decimal places
@@ -2138,16 +2145,19 @@ class TransactionsController extends Controller
             }
             $actualIncomeData[$categoryKey]['total'] = number_format($actualIncomeData[$categoryKey]['total'], 2);
         }
+
         foreach($actualExpenseData as $categoryKey=>$category) {
             foreach($months as $month) {
                 $actualExpenseData[$categoryKey][$month] = number_format($actualExpenseData[$categoryKey][$month], 2);
             }
             $actualExpenseData[$categoryKey]['total'] = number_format($actualExpenseData[$categoryKey]['total'], 2);
         }
-        foreach($incomeTotals as $idx=>$total) $incomeTotals[$idx] = number_format($total, 2);
-        foreach($expenseTotals as $idx=>$total) $expenseTotals[$idx] = number_format($total, 2);
 
-        return [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals];
+        foreach($actualIncomeTotals as $idx=>$total) $actualIncomeTotals[$idx] = number_format($total, 2);
+
+        foreach($actualExpenseTotals as $idx=>$total) $actualExpenseTotals[$idx] = number_format($total, 2);
+
+        return [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals];
     }
 
 
@@ -2179,7 +2189,7 @@ class TransactionsController extends Controller
         $expenseCategories = $this->getCategories("E");
 
         // get actuals data
-        [$actualIncomeData, $actualExpenseData, $incomeTotals, $expenseTotals, $grandTotals] =
+        [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals] =
             $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
 
         // actuals page
@@ -2190,9 +2200,9 @@ class TransactionsController extends Controller
                 'expenseCategories' => $expenseCategories,
                 'actualIncomeData' => $actualIncomeData,
                 'actualExpenseData' => $actualExpenseData,
-                'incomeTotals' => $incomeTotals,
-                'expenseTotals' => $expenseTotals,
-                'grandTotals' => $grandTotals
+                'incomeTotals' => $actualIncomeTotals,
+                'expenseTotals' => $actualExpenseTotals,
+                'grandTotals' => $actualGrandTotals
             ]
         );
 
