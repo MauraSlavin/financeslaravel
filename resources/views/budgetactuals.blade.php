@@ -78,7 +78,7 @@
                         <td class="budget">{{ $budgetRecord['october'] }}</td>
                         <td class="budget">{{ $budgetRecord['november'] }}</td>
                         <td class="budget">{{ $budgetRecord['december'] }}</td>
-                        <td class="budget" id="totalIncome">{{ $budgetRecord['total'] }}</td>
+                        <td class="budget" id="totalBudgetIncome">{{ $budgetRecord['total'] }}</td>
                     </tr>
                     <!-- actual data -->
                     <tr>
@@ -95,24 +95,24 @@
                         <td class="actual">{{ $actualIncomeData[$category]['october'] }}</td>
                         <td class="actual">{{ $actualIncomeData[$category]['november'] }}</td>
                         <td class="actual">{{ $actualIncomeData[$category]['december'] }}</td>
-                        <td class="actual" id="totalIncome">{{ $actualIncomeData[$category]['total'] }}</td>
+                        <td class="actual" id="totalActualIncome">{{ $actualIncomeData[$category]['total'] }}</td>
                     </tr>
                     <!-- difference -->
                     <tr style="border-bottom-width: thick;">
-                        <td class="diff">difference</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['january']) - (float)str_replace(",", "", $actualIncomeData[$category]['january']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['february']) - (float)str_replace(",", "", $actualIncomeData[$category]['february']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['march']) - (float)str_replace(",", "", $actualIncomeData[$category]['march']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['april']) - (float)str_replace(",", "", $actualIncomeData[$category]['april']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['may']) - (float)str_replace(",", "", $actualIncomeData[$category]['may']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['june']) - (float)str_replace(",", "", $actualIncomeData[$category]['june']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['july']) - (float)str_replace(",", "", $actualIncomeData[$category]['july']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['august']) - (float)str_replace(",", "", $actualIncomeData[$category]['august']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['september']) - (float)str_replace(",", "", $actualIncomeData[$category]['september']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['october']) - (float)str_replace(",", "", $actualIncomeData[$category]['october']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['november']) - (float)str_replace(",", "", $actualIncomeData[$category]['november']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $budgetRecord['december']) - (float)str_replace(",", "", $actualIncomeData[$category]['december']), 2) }}</td>
-                        <td class="diff" id="totalIncome">{{ number_format((float)str_replace(",", "", $budgetRecord['total']) - (float)str_replace(",", "", $actualIncomeData[$category]['total']), 2) }}</td>
+                        <td class="diff">difference<br>(+: made extra)</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['april']) - (float)str_replace(",", "", $budgetRecord['april']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['may']) - (float)str_replace(",", "", $budgetRecord['may']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['june']) - (float)str_replace(",", "", $budgetRecord['june']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['july']) - (float)str_replace(",", "", $budgetRecord['july']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['august']) - (float)str_replace(",", "", $budgetRecord['august']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['september']) - (float)str_replace(",", "", $budgetRecord['september']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['october']) - (float)str_replace(",", "", $budgetRecord['october']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
+                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
+                        <td class="diff" id="diffIncome">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['total']) - (float)str_replace(",", "", $budgetRecord['total']), 2) }}</td>
                     </tr>
                 @endif
             @endforeach
@@ -155,7 +155,7 @@
 
             <!-- diff Income total line -->
             <tr class="text-end" style="background-color: goldenrod; color: white;">
-                <td class="text-end" style="width: 100px;">Diff Income Total</td>
+                <td class="text-end" style="width: 100px;">Diff Income Total<br>(+: made extra)</td>
                 <td class="text-end" style="width: 100px;" id="januaryDiffIncomeTotal"></td>
                 <td class="text-end" style="width: 100px;" id="februaryDiffIncomeTotal"></td>
                 <td class="text-end" style="width: 100px;" id="marchDiffIncomeTotal"></td>
@@ -227,7 +227,7 @@
                     <!-- difference -->
                     <!-- NOTE: subtraction is reversed since the budget is a negative number, so + means $ left in the budget, and - means overspent -->
                     <tr style="border-bottom-width: thick;">
-                        <td class="diff">difference</td>
+                        <td class="diff">difference<br>(-: overspent)</td>
                         <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
                         <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
                         <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
@@ -283,7 +283,7 @@
 
             <!-- diff Expense total line -->
             <tr class="text-end" style="background-color: goldenrod; color: white; border-bottom-width: thick;">
-                <td class="text-end" style="width: 100px;">Diff Expense Total</td>
+                <td class="text-end" style="width: 100px;">Diff Expense Total<br>(-: overspent)</td>
                 <td class="text-end" style="width: 100px;" id="januaryDiffExpenseTotal"></td>
                 <td class="text-end" style="width: 100px;" id="februaryDiffExpenseTotal"></td>
                 <td class="text-end" style="width: 100px;" id="marchDiffExpenseTotal"></td>
@@ -408,14 +408,6 @@
             var budgetData = $("#budgetData").val();
             budgetData = JSON.parse(budgetData);           
 
-            // // - actualIncomeData
-            // var actualIncomeData = $("#actualIncomeData").val();
-            // actualIncomeData = JSON.parse(actualIncomeData);
-
-            // // - actualExpenseData
-            // var actualExpenseData = $("#actualExpenseData").val();
-            // actualExpenseData = JSON.parse(actualExpenseData);
-
             // - actualIncomeTotals
             var actualIncomeTotals = $("#actualIncomeTotals").val();
             actualIncomeTotals = JSON.parse(actualIncomeTotals);
@@ -453,19 +445,28 @@
                         var amt = parseFloat(budgetData[category][month].replace(",", ""));
                         budgetExpenseTotals[month] += amt;
                         budgetExpenseTotals['total'] += amt;
-                        diffExpenseTotals[month] = amt - actualExpenseTotals[month];
+                        // diffExpenseTotals[month] = amt - actualExpenseTotals[month];
                     });
                 }
             };
 
-            // put monthly income and expense totals on the page
+            // put monthly income, expense, and diff totals on the page
             months.forEach( month => {
+                // budget income, expense, total
                 var budgetIncomeTotal = budgetIncomeTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 $("#" + month + "BudgetIncomeTotal").text(budgetIncomeTotal);
                 var budgetExpenseTotal = budgetExpenseTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 $("#" + month + "BudgetExpenseTotal").text(budgetExpenseTotal);
                 var total = (budgetIncomeTotals[month] + budgetExpenseTotals[month]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 $("#" + month + "BudgetTotal").text(total);
+
+                // actual income, expense, total
+                var actualIncomeTotal = actualIncomeTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFracctionDigits: 2});
+                $("#" + month + "ActualIncomeTotal").text(actualIncomeTotal);
+                var actualExpenseTotal = actualExpenseTotals[month].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                $("#" + month + "ActualExpenseTotal").text(actualExpenseTotal);
+                var total = (parseFloat(actualIncomeTotals[month].replaceAll(",", "")) + parseFloat(actualExpenseTotals[month].replaceAll(",", ""))).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                $("#" + month + "ActualTotal").text(total);
 
                 // strip commas from string monthly totals
                 var incomeBudget = budgetIncomeTotal.replaceAll(",", "");
@@ -480,12 +481,17 @@
                 expenseActual = parseFloat(parseFloat(expenseActual).toFixed(2));
 
                 // get differences
-                var diffIncomeTotal = (incomeBudget - incomeActual).toFixed(2);
-                var diffExpenseTotal = (expenseBudget - expenseActual).toFixed(2);
+                var diffIncomeTotal = (incomeActual - incomeBudget);
+                var diffExpenseTotal = (expenseActual - expenseBudget);
+                var diffTotal = (diffIncomeTotal + diffExpenseTotal).toFixed(2);
+                // change diffIncomeTotal and diffExpenseTotal to strings
+                diffIncomeTotal = diffIncomeTotal.toFixed(2);
+                diffExpenseTotal = diffExpenseTotal.toFixed(2);
 
                 // put differences on page
                 $("#" + month + "DiffIncomeTotal").text(diffIncomeTotal);
                 $("#" + month + "DiffExpenseTotal").text(diffExpenseTotal);
+                $("#" + month + "DiffTotal").text(diffTotal);
             });
 
             // put totals on the page
@@ -501,21 +507,32 @@
             // total income difference
             var actual = actualIncomeTotals['total'].replaceAll(",", "");
             actual = parseFloat(actual).toFixed(2);
-            var total = (budgetIncomeTotals['total'] - actual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            var total = (actual - budgetIncomeTotals['total']).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#diffIncomeTotal").text(total);
 
             // total expense difference
             var actual = actualExpenseTotals['total'].replaceAll(",", "");
             actual = parseFloat(actual).toFixed(2);
-            var total = (budgetExpenseTotals['total'] - actual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            var total = (actual - budgetExpenseTotals['total']).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             $("#diffExpenseTotal").text(total);
 
             // total budget I+E
-            var total = (budgetIncomeTotals['total'] + budgetExpenseTotals['total']).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            $("#budgetGrandTotal").text(total);
+            var grandBudgetTotalNum = budgetIncomeTotals['total'] + budgetExpenseTotals['total'];
+            var grandBudgetTotal = grandBudgetTotalNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            $("#grandBudgetTotal").text(grandBudgetTotal);
 
-            // left off here
-            // need total actual I+E, total diff I+E
+            // total actual I+E
+            var actual = parseFloat(actualIncomeTotals["total"].replaceAll(",", ""));
+            var expense = parseFloat(actualExpenseTotals["total"].replaceAll(",", ""));
+            var grandActualTotalNum = actual + expense;
+            var grandActualTotal = grandActualTotalNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            $("#grandActualTotal").text(grandActualTotal);
+
+            // total diff I+E
+            var grandDiff = grandActualTotalNum - grandBudgetTotalNum;
+            grandDiff = grandDiff.toFixed(2);
+            $("#grandDiffTotal").text(grandDiff);
+
 
             // listener for budget button
             $('#budget').on('click', function(e) {
