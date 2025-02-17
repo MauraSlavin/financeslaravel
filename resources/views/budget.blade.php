@@ -8,7 +8,19 @@
 
     <body>
     <h1>Budget</h1>
-    <h6>Year: {{ $thisYear }}</h6>
+
+    <h2>Year: <span id="year">{{ $year }}</span> </h2>
+    <form action="{{ route('budget', $year ?? session('selected_year')) }}" method="GET">
+        <select name="year">
+            @foreach(range('2022', date('Y')) as $y)
+                <option value="{{ $y }}" {{ $y == ($year ?? session('selected_year')) ? 'selected' : '' }}>
+                    {{ $y }}
+                </option>
+            @endforeach
+        </select>
+        <button type="submit">Update</button>
+    </form>
+
     <button type="button" id="actuals" class="btn btn-primary">Actuals</button>
     <button type="button" id="budgetactuals" class="btn btn-warning">Budget vs Actuals</button>
 

@@ -1943,9 +1943,9 @@ class TransactionsController extends Controller
     }
 
 
-    public function getBudgetData($thisYear) {
+    public function getBudgetData($year) {
         $budgetRecords = DB::table("budget")
-            ->where("year", $thisYear)
+            ->where("year", $year)
             ->get()->toArray();
 
         $budgetData = [];
@@ -1960,24 +1960,23 @@ class TransactionsController extends Controller
 
 
     // See budget info
-    public function budget() {
+    public function budget(Request $request) {
         
-        // get default year
-        $thisYear = date('Y');
-        // left off here - for testing
-        $thisYear = "2024";
+        // get year from payload; default to current year if not in payload
+        $year = $request->year;
+        if($year == null) $year = date('Y');
 
         // get income & expense categories
         $incomeCategories = $this->getCategories("I");
         $expenseCategories = $this->getCategories("E");
 
         // get budget data
-        $budgetData = $this->getBudgetData($thisYear);
+        $budgetData = $this->getBudgetData($year);
         
         // budget page
         return view('budget', 
             [
-                'thisYear' => $thisYear, 
+                'year' => $year, 
                 'incomeCategories' => $incomeCategories, 
                 'expenseCategories' => $expenseCategories,
                 'budgetData' => $budgetData
@@ -1987,13 +1986,12 @@ class TransactionsController extends Controller
     }   // end of function budget
 
 
-    // See budget info
-    public function budgetactuals() {
+    // See budget vs actual info
+    public function budgetactuals(Request $request) {
         
-        // get default year
-        $thisYear = date('Y');
-        // left off here - for testing
-        $thisYear = "2024";
+        // get year from payload; default to current year if not in payload
+        $year = $request->year;
+        if($year == null) $year = date('Y');
 
         $months = [
             'january',
@@ -2015,7 +2013,7 @@ class TransactionsController extends Controller
         $expenseCategories = $this->getCategories("E");
 
         // get budget data
-        $budgetData = $this->getBudgetData($thisYear);
+        $budgetData = $this->getBudgetData($year);
 
         // format with commas and to 2 decimal places
         foreach($budgetData as $category=>$data) {
@@ -2027,12 +2025,12 @@ class TransactionsController extends Controller
 
         // get actuals data
         [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals] =
-            $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
+            $this->getActualsData($year, $months, $incomeCategories, $expenseCategories);
 
         // budgetactuals page
         return view('budgetactuals', 
             [
-                'thisYear' => $thisYear, 
+                'year' => $year, 
                 'incomeCategories' => $incomeCategories, 
                 'expenseCategories' => $expenseCategories,
                 'budgetData' => $budgetData,
@@ -2047,10 +2045,10 @@ class TransactionsController extends Controller
     }   // end of function budgetactuals
 
 
-    public function getActualsData($thisYear, $months, $incomeCategories, $expenseCategories) {
+    public function getActualsData($year, $months, $incomeCategories, $expenseCategories) {
 
         $actualsTransactions = DB::table("transactions")
-            ->whereBetween("trans_date", [$thisYear . "-01-01", $thisYear . "-12-31"])
+            ->whereBetween("trans_date", [$year . "-01-01", $year . "-12-31"])
             ->get()->toArray();
 
         // init actual income and expense data
@@ -2162,12 +2160,11 @@ class TransactionsController extends Controller
 
 
     // See actuals info
-    public function actuals() {
+    public function actuals(Request $request) {
 
-        // get default year
-        $thisYear = date('Y');
-        // left off here - for testing
-        $thisYear = "2024";
+        // get year from payload; default to current year if not in payload
+        $year = $request->year;
+        if($year == null) $year = date('Y');
 
         $months = [
             'january',
@@ -2190,12 +2187,12 @@ class TransactionsController extends Controller
 
         // get actuals data
         [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals] =
-            $this->getActualsData($thisYear, $months, $incomeCategories, $expenseCategories);
+            $this->getActualsData($year, $months, $incomeCategories, $expenseCategories);
 
         // actuals page
         return view('actuals', 
             [
-                'thisYear' => $thisYear, 
+                'year' => $year, 
                 'incomeCategories' => $incomeCategories, 
                 'expenseCategories' => $expenseCategories,
                 'actualIncomeData' => $actualIncomeData,
