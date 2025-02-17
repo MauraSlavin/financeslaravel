@@ -38,27 +38,27 @@
         <!-- Headers -->
         <thead>
             <tr>
-                <th style="width: 100px;">Category</th>
-                <th>Jan</th>
-                <th>Feb</th>
-                <th>Mar</th>
-                <th>Apr</th>
-                <th>May</th>
-                <th>Jun</th>
-                <th>Jul</th>
-                <th>Aug</th>
-                <th>Sep</th>
-                <th>Oct</th>
-                <th>Nov</th>
-                <th>Dec</th>
-                <th>Total</th>
+                <th style="width: 200px;">Category</th>
+                <th id="jan">Jan</th>
+                <th id="feb">Feb</th>
+                <th id="mar">Mar</th>
+                <th id="apr">Apr</th>
+                <th id="may">May</th>
+                <th id="jun">Jun</th>
+                <th id="jul">Jul</th>
+                <th id="aug">Aug</th>
+                <th id="sep">Sep</th>
+                <th id="oct">Oct</th>
+                <th id="nov">Nov</th>
+                <th id="dec">Dec</th>
+                <th id="total">Total</th>
             </tr>
         </thead>
         <tbody>
 
             <!-- income sub-header -->
             <tr style="background-color: blue; color: white; border-top-width: thick; border-bottom-width: medium;">
-                <td style="font-size: 1.3em;">Income</td>
+                <td id="income" style="font-size: 1.3em;">Income</td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -77,53 +77,53 @@
                 @if(in_array($category, $incomeCategories))
                     <!-- Budget data -->
                     <tr>
-                        <td class="budget category">{{ $category }}</td>
-                        <td class="budget">{{ $budgetRecord['january'] }}</td>
-                        <td class="budget">{{ $budgetRecord['february'] }}</td>
-                        <td class="budget">{{ $budgetRecord['march'] }}</td>
-                        <td class="budget">{{ $budgetRecord['april'] }}</td>
-                        <td class="budget">{{ $budgetRecord['may'] }}</td>
-                        <td class="budget">{{ $budgetRecord['june'] }}</td>
-                        <td class="budget">{{ $budgetRecord['july'] }}</td>
-                        <td class="budget">{{ $budgetRecord['august'] }}</td>
-                        <td class="budget">{{ $budgetRecord['september'] }}</td>
-                        <td class="budget">{{ $budgetRecord['october'] }}</td>
-                        <td class="budget">{{ $budgetRecord['november'] }}</td>
-                        <td class="budget">{{ $budgetRecord['december'] }}</td>
+                        <td class="budget category" id="{{$category}}Budget">{{ $category }} bdgt</td>
+                        <td class="budget" id="jan{{$category}}Budget">{{ $budgetRecord['january'] }}</td>
+                        <td class="budget" id="feb{{$category}}Budget">{{ $budgetRecord['february'] }}</td>
+                        <td class="budget" id="mar{{$category}}Budget">{{ $budgetRecord['march'] }}</td>
+                        <td class="budget" id="apr{{$category}}Budget">{{ $budgetRecord['april'] }}</td>
+                        <td class="budget" id="may{{$category}}Budget">{{ $budgetRecord['may'] }}</td>
+                        <td class="budget" id="jun{{$category}}Budget">{{ $budgetRecord['june'] }}</td>
+                        <td class="budget" id="jul{{$category}}Budget">{{ $budgetRecord['july'] }}</td>
+                        <td class="budget" id="aug{{$category}}Budget">{{ $budgetRecord['august'] }}</td>
+                        <td class="budget" id="sep{{$category}}Budget">{{ $budgetRecord['september'] }}</td>
+                        <td class="budget" id="oct{{$category}}Budget">{{ $budgetRecord['october'] }}</td>
+                        <td class="budget" id="nov{{$category}}Budget">{{ $budgetRecord['november'] }}</td>
+                        <td class="budget" id="dec{{$category}}Budget">{{ $budgetRecord['december'] }}</td>
                         <td class="budget" id="totalBudgetIncome">{{ $budgetRecord['total'] }}</td>
                     </tr>
                     <!-- actual data -->
                     <tr>
-                        <td class="actual">actual</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['january'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['february'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['march'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['april'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['may'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['june'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['july'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['august'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['september'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['october'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['november'] }}</td>
-                        <td class="actual">{{ $actualIncomeData[$category]['december'] }}</td>
+                        <td class="actual" id="{{$category}}Actual">actual</td>
+                        <td class="actual" id="jan{{$category}}Actual">{{ $actualIncomeData[$category]['january'] }}</td>
+                        <td class="actual" id="feb{{$category}}Actual">{{ $actualIncomeData[$category]['february'] }}</td>
+                        <td class="actual" id="mar{{$category}}Actual">{{ $actualIncomeData[$category]['march'] }}</td>
+                        <td class="actual" id="apr{{$category}}Actual">{{ $actualIncomeData[$category]['april'] }}</td>
+                        <td class="actual" id="may{{$category}}Actual">{{ $actualIncomeData[$category]['may'] }}</td>
+                        <td class="actual" id="jun{{$category}}Actual">{{ $actualIncomeData[$category]['june'] }}</td>
+                        <td class="actual" id="jul{{$category}}Actual">{{ $actualIncomeData[$category]['july'] }}</td>
+                        <td class="actual" id="aug{{$category}}Actual">{{ $actualIncomeData[$category]['august'] }}</td>
+                        <td class="actual" id="sep{{$category}}Actual">{{ $actualIncomeData[$category]['september'] }}</td>
+                        <td class="actual" id="oct{{$category}}Actual">{{ $actualIncomeData[$category]['october'] }}</td>
+                        <td class="actual" id="nov{{$category}}Actual">{{ $actualIncomeData[$category]['november'] }}</td>
+                        <td class="actual" id="dec{{$category}}Actual">{{ $actualIncomeData[$category]['december'] }}</td>
                         <td class="actual" id="totalActualIncome">{{ $actualIncomeData[$category]['total'] }}</td>
                     </tr>
                     <!-- difference -->
                     <tr style="border-bottom-width: thick;">
-                        <td class="diff">difference<br>(+: made extra)</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['april']) - (float)str_replace(",", "", $budgetRecord['april']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['may']) - (float)str_replace(",", "", $budgetRecord['may']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['june']) - (float)str_replace(",", "", $budgetRecord['june']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['july']) - (float)str_replace(",", "", $budgetRecord['july']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['august']) - (float)str_replace(",", "", $budgetRecord['august']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['september']) - (float)str_replace(",", "", $budgetRecord['september']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['october']) - (float)str_replace(",", "", $budgetRecord['october']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
-                        <td class="diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
+                        <td class="diff" id="{{$category}}Diff">difference<br>(+: made extra)</td>
+                        <td class="diff" id="jan{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
+                        <td class="diff" id="feb{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
+                        <td class="diff" id="mar{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
+                        <td class="diff" id="apr{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['april']) - (float)str_replace(",", "", $budgetRecord['april']), 2) }}</td>
+                        <td class="diff" id="may{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['may']) - (float)str_replace(",", "", $budgetRecord['may']), 2) }}</td>
+                        <td class="diff" id="jun{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['june']) - (float)str_replace(",", "", $budgetRecord['june']), 2) }}</td>
+                        <td class="diff" id="jul{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['july']) - (float)str_replace(",", "", $budgetRecord['july']), 2) }}</td>
+                        <td class="diff" id="aug{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['august']) - (float)str_replace(",", "", $budgetRecord['august']), 2) }}</td>
+                        <td class="diff" id="sep{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['september']) - (float)str_replace(",", "", $budgetRecord['september']), 2) }}</td>
+                        <td class="diff" id="oct{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['october']) - (float)str_replace(",", "", $budgetRecord['october']), 2) }}</td>
+                        <td class="diff" id="nov{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
+                        <td class="diff" id="dec{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
                         <td class="diff" id="diffIncome">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['total']) - (float)str_replace(",", "", $budgetRecord['total']), 2) }}</td>
                     </tr>
                 @endif
@@ -185,7 +185,7 @@
 
             <!-- expense -->
             <tr style="background-color: blue; color: white; border-top-width: thick; border-bottom-width: medium;">
-                <td style="font-size: 1.3em;">Expenses</td>
+                <td id="expense" style="font-size: 1.3em;">Expenses</td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -204,54 +204,54 @@
                 @if(in_array($category, $expenseCategories))
                     <!-- Budget data -->
                     <tr>
-                        <td class="budget category">{{ $category }}</td>
-                        <td class="budget">{{ $budgetRecord['january'] }}</td>
-                        <td class="budget">{{ $budgetRecord['february'] }}</td>
-                        <td class="budget">{{ $budgetRecord['march'] }}</td>
-                        <td class="budget">{{ $budgetRecord['april'] }}</td>
-                        <td class="budget">{{ $budgetRecord['may'] }}</td>
-                        <td class="budget">{{ $budgetRecord['june'] }}</td>
-                        <td class="budget">{{ $budgetRecord['july'] }}</td>
-                        <td class="budget">{{ $budgetRecord['august'] }}</td>
-                        <td class="budget">{{ $budgetRecord['september'] }}</td>
-                        <td class="budget">{{ $budgetRecord['october'] }}</td>
-                        <td class="budget">{{ $budgetRecord['november'] }}</td>
-                        <td class="budget">{{ $budgetRecord['december'] }}</td> 
+                        <td class="budget category">{{ $category }} bdgt</td>
+                        <td class="budget" id="jan{{$category}}Budget">{{ $budgetRecord['january'] }}</td>
+                        <td class="budget" id="feb{{$category}}Budget">{{ $budgetRecord['february'] }}</td>
+                        <td class="budget" id="mar{{$category}}Budget">{{ $budgetRecord['march'] }}</td>
+                        <td class="budget" id="apr{{$category}}Budget">{{ $budgetRecord['april'] }}</td>
+                        <td class="budget" id="may{{$category}}Budget">{{ $budgetRecord['may'] }}</td>
+                        <td class="budget" id="jun{{$category}}Budget">{{ $budgetRecord['june'] }}</td>
+                        <td class="budget" id="jul{{$category}}Budget">{{ $budgetRecord['july'] }}</td>
+                        <td class="budget" id="aug{{$category}}Budget">{{ $budgetRecord['august'] }}</td>
+                        <td class="budget" id="sep{{$category}}Budget">{{ $budgetRecord['september'] }}</td>
+                        <td class="budget" id="oct{{$category}}Budget">{{ $budgetRecord['october'] }}</td>
+                        <td class="budget" id="nov{{$category}}Budget">{{ $budgetRecord['november'] }}</td>
+                        <td class="budget" id="dec{{$category}}Budget">{{ $budgetRecord['december'] }}</td> 
                         <td class="budget" id="totalExpense">{{ $budgetRecord['total'] }}</td>
                     </tr>
                     <!-- actual data -->
                     <tr>
                         <td class="actual">actual</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['january'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['february'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['march'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['april'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['may'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['june'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['july'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['august'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['september'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['october'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['november'] }}</td>
-                        <td class="actual">{{ $actualExpenseData[$category]['december'] }}</td>
+                        <td class="actual" id="jan{{$category}}Actual">{{ $actualExpenseData[$category]['january'] }}</td>
+                        <td class="actual" id="feb{{$category}}Actual">{{ $actualExpenseData[$category]['february'] }}</td>
+                        <td class="actual" id="mar{{$category}}Actual">{{ $actualExpenseData[$category]['march'] }}</td>
+                        <td class="actual" id="apr{{$category}}Actual">{{ $actualExpenseData[$category]['april'] }}</td>
+                        <td class="actual" id="may{{$category}}Actual">{{ $actualExpenseData[$category]['may'] }}</td>
+                        <td class="actual" id="jun{{$category}}Actual">{{ $actualExpenseData[$category]['june'] }}</td>
+                        <td class="actual" id="jul{{$category}}Actual">{{ $actualExpenseData[$category]['july'] }}</td>
+                        <td class="actual" id="aug{{$category}}Actual">{{ $actualExpenseData[$category]['august'] }}</td>
+                        <td class="actual" id="sep{{$category}}Actual">{{ $actualExpenseData[$category]['september'] }}</td>
+                        <td class="actual" id="oct{{$category}}Actual">{{ $actualExpenseData[$category]['october'] }}</td>
+                        <td class="actual" id="nov{{$category}}Actual">{{ $actualExpenseData[$category]['november'] }}</td>
+                        <td class="actual" id="dec{{$category}}Actual">{{ $actualExpenseData[$category]['december'] }}</td>
                         <td class="actual" id="totalExpense">{{ $actualExpenseData[$category]['total'] }}</td>
                     </tr>
                     <!-- difference -->
                     <!-- NOTE: subtraction is reversed since the budget is a negative number, so + means $ left in the budget, and - means overspent -->
                     <tr style="border-bottom-width: thick;">
                         <td class="diff">difference<br>(-: overspent)</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['april']) - (float)str_replace(",", "", $budgetRecord['april']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['may']) - (float)str_replace(",", "", $budgetRecord['may']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['june']) - (float)str_replace(",", "", $budgetRecord['june']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['july']) - (float)str_replace(",", "", $budgetRecord['july']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['august']) - (float)str_replace(",", "", $budgetRecord['august']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['september']) - (float)str_replace(",", "", $budgetRecord['september']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['october']) - (float)str_replace(",", "", $budgetRecord['october']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
-                        <td class="diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
+                        <td class="diff" id="jan{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
+                        <td class="diff" id="feb{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
+                        <td class="diff" id="mar{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['march']) - (float)str_replace(",", "", $budgetRecord['march']), 2) }}</td>
+                        <td class="diff" id="apr{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['april']) - (float)str_replace(",", "", $budgetRecord['april']), 2) }}</td>
+                        <td class="diff" id="may{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['may']) - (float)str_replace(",", "", $budgetRecord['may']), 2) }}</td>
+                        <td class="diff" id="jun{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['june']) - (float)str_replace(",", "", $budgetRecord['june']), 2) }}</td>
+                        <td class="diff" id="jul{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['july']) - (float)str_replace(",", "", $budgetRecord['july']), 2) }}</td>
+                        <td class="diff" id="aug{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['august']) - (float)str_replace(",", "", $budgetRecord['august']), 2) }}</td>
+                        <td class="diff" id="sep{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['september']) - (float)str_replace(",", "", $budgetRecord['september']), 2) }}</td>
+                        <td class="diff" id="oct{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['october']) - (float)str_replace(",", "", $budgetRecord['october']), 2) }}</td>
+                        <td class="diff" id="nov{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
+                        <td class="diff" id="dec{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
                         <td class="diff" id="totalExpense">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['total']) - (float)str_replace(",", "", $budgetRecord['total']), 2) }}</td>
                     </tr>                    
                 @endif
@@ -544,6 +544,47 @@
             var grandDiff = grandActualTotalNum - grandBudgetTotalNum;
             grandDiff = grandDiff.toFixed(2);
             $("#grandDiffTotal").text(grandDiff);
+
+            // add ytd column
+            
+            // get current month
+            const date = new Date();
+            const monthIdx = date.getMonth();
+            const month = months[monthIdx];
+            const monthAbbr = (month.toLowerCase()).substring(0, 3);
+            
+            // skip this if it's december
+            if(monthAbbr != "dec") {
+                // add the new column header YTD
+                $("#" + monthAbbr).after('<th>YTD</th>');
+                // add another <tr> to the Income row
+                $("#income").after('<tr></tr>');
+                // add another <tr> to the Expense row
+                $("#expense").after('<tr></tr>');
+
+                // add another <tr> to each income row (budget, actual, and diff)
+                incomeCategories.forEach(category => {
+                    console.log("Income cat: ", category);
+                    ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
+                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">new' + category + typeOfData + '</td>');
+                    });
+                });
+                
+                // add another <tr> to each expense row (budget, actual, and diff)
+                expenseCategories.forEach(category => {
+                    console.log("Expense cat: ", category);
+                    ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
+                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">new' + category + typeOfData + '</td>');
+                    });
+                });
+                // left off here
+                // need to add td element for subtotals and totals
+                // need to fill in with real data
+
+
+
+            }   // skip YTD column for december
+
 
 
             // listener for budget button

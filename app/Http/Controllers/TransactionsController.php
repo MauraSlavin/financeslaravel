@@ -2090,8 +2090,6 @@ class TransactionsController extends Controller
             ];
         }
 
-        // left off here
-
         // sum actuals by month and category
         foreach($actualsTransactions as $actualsTransaction) {
             $thisTransMonth = substr($actualsTransaction->trans_date, 5, 2);
@@ -2108,7 +2106,6 @@ class TransactionsController extends Controller
         // calc actualIncomeTotals, actualExpenseTotals, actualGrandTotals
         foreach ($actualIncomeData as $category => $catMonths) {
             foreach ($catMonths as $month => $amount) {
-                // error_log(" - month: " . $month . "; amount: " . $amount);
                 if (!isset($actualIncomeTotals[$month])) $actualIncomeTotals[$month] = 0;
                 // remove commas before converting string to float
                 $actualIncomeTotals[$month] += (float)(str_replace(',', '', $amount));
