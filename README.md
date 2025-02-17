@@ -4,10 +4,8 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Previous branch: 2025-01-27-budget</h2>
 <h2>Working on branch: 2025-02-15-input-year</h2>
     <ul>
-      <li>Make year enterable (and route needs optional year parameter)</li>
       <li>Include YTD</li>
       <li></li>
       <li>Ability to update budget for current year</li>
