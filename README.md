@@ -4,9 +4,12 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-02-15-input-year</h2>
+<h2>Working on branch: 2025-02-16-ytd</h2>
     <ul>
       <li>Include YTD</li>
+      <li> - Have YTD td elements for details</li>
+      <li> - Need to insert td for subtotals and totals</li>
+      <li> - Need to fill in with actual numbers</li>
       <li></li>
       <li>Ability to update budget for current year</li>
       <li>Click on a Budget or Actual box to see the transactions included</li>
