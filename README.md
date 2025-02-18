@@ -7,8 +7,8 @@
 <h2>Working on branch: 2025-02-16-ytd</h2>
     <ul>
       <li>Include YTD</li>
-      <li> - Have YTD td elements for details</li>
-      <li> - Need to insert td for subtotals and totals</li>
+      <li> - Have new YTD td elements for details</li>
+      <li> - Have new ytd td for subtotals and totals</li>
       <li> - Need to fill in with actual numbers</li>
       <li></li>
       <li>Ability to update budget for current year</li>
