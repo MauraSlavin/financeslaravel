@@ -130,57 +130,57 @@
             @endforeach
 
             <!-- Income total line -->
-            <tr  style="background-color: #0096FF; color: white;">
-                <td class="text-end" style="width: 100px;">Budget Income Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberBudgetIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberBudgetIncomeTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="budgetIncomeTotal"></td>
+            <tr class="text-end" style="background-color: #0096FF; color: white;">
+                <td style="width: 100px;">Budget Income Total</td>
+                <td style="width: 100px;" id="januaryBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="februaryBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="marchBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="aprilBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="mayBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="juneBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="julyBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="augustBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="septemberBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="octoberBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="novemberBudgetIncomeTotal"></td>
+                <td style="width: 100px;" id="decemberBudgetIncomeTotal"></td> 
+                <td style="width: 100px;" id="budgetIncomeTotal"></td>
             </tr>
 
             <!-- Actual Income total line -->
-            <tr  style="background-color: #a2e897; color: white;">
-                <td class="text-end" style="width: 100px;">Actual Income Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryActualIncomeTotal">{{ $actualIncomeTotals['january'] }}</td>
-                <td class="text-end" style="width: 100px;" id="februaryActualIncomeTotal">{{ $actualIncomeTotals['february'] }}</td>
-                <td class="text-end" style="width: 100px;" id="marchActualIncomeTotal">{{ $actualIncomeTotals['march'] }}</td>
-                <td class="text-end" style="width: 100px;" id="aprilActualIncomeTotal">{{ $actualIncomeTotals['april'] }}</td>
-                <td class="text-end" style="width: 100px;" id="mayActualIncomeTotal">{{ $actualIncomeTotals['may'] }}</td>
-                <td class="text-end" style="width: 100px;" id="juneActualIncomeTotal">{{ $actualIncomeTotals['june'] }}</td>
-                <td class="text-end" style="width: 100px;" id="julyActualIncomeTotal">{{ $actualIncomeTotals['july'] }}</td>
-                <td class="text-end" style="width: 100px;" id="augustActualIncomeTotal">{{ $actualIncomeTotals['august'] }}</td>
-                <td class="text-end" style="width: 100px;" id="septemberActualIncomeTotal">{{ $actualIncomeTotals['september'] }}</td>
-                <td class="text-end" style="width: 100px;" id="octoberActualIncomeTotal">{{ $actualIncomeTotals['october'] }}</td>
-                <td class="text-end" style="width: 100px;" id="novemberActualIncomeTotal">{{ $actualIncomeTotals['november'] }}</td>
-                <td class="text-end" style="width: 100px;" id="decemberActualIncomeTotal">{{ $actualIncomeTotals['december'] }}</td> 
-                <td class="text-end" style="width: 100px;" id="actualIncomeTotal">{{ $actualIncomeTotals['total'] }}</td>
+            <tr class="text-end" style="background-color: #a2e897; color: white;">
+                <td style="width: 100px;">Actual Income Total</td>
+                <td style="width: 100px;" id="januaryActualIncomeTotal">{{ $actualIncomeTotals['january'] }}</td>
+                <td style="width: 100px;" id="februaryActualIncomeTotal">{{ $actualIncomeTotals['february'] }}</td>
+                <td style="width: 100px;" id="marchActualIncomeTotal">{{ $actualIncomeTotals['march'] }}</td>
+                <td style="width: 100px;" id="aprilActualIncomeTotal">{{ $actualIncomeTotals['april'] }}</td>
+                <td style="width: 100px;" id="mayActualIncomeTotal">{{ $actualIncomeTotals['may'] }}</td>
+                <td style="width: 100px;" id="juneActualIncomeTotal">{{ $actualIncomeTotals['june'] }}</td>
+                <td style="width: 100px;" id="julyActualIncomeTotal">{{ $actualIncomeTotals['july'] }}</td>
+                <td style="width: 100px;" id="augustActualIncomeTotal">{{ $actualIncomeTotals['august'] }}</td>
+                <td style="width: 100px;" id="septemberActualIncomeTotal">{{ $actualIncomeTotals['september'] }}</td>
+                <td style="width: 100px;" id="octoberActualIncomeTotal">{{ $actualIncomeTotals['october'] }}</td>
+                <td style="width: 100px;" id="novemberActualIncomeTotal">{{ $actualIncomeTotals['november'] }}</td>
+                <td style="width: 100px;" id="decemberActualIncomeTotal">{{ $actualIncomeTotals['december'] }}</td> 
+                <td style="width: 100px;" id="actualIncomeTotal">{{ $actualIncomeTotals['total'] }}</td>
             </tr>
 
             <!-- diff Income total line -->
             <tr class="text-end" style="background-color: goldenrod; color: white;">
-                <td class="text-end" style="width: 100px;">Diff Income Total<br>(+: made extra)</td>
-                <td class="text-end" style="width: 100px;" id="januaryDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberDiffIncomeTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberDiffIncomeTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="diffIncomeTotal"></td>
+                <td style="width: 100px;">Diff Income Total<br>(+: made extra)</td>
+                <td style="width: 100px;" id="januaryDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="februaryDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="marchDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="aprilDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="mayDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="juneDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="julyDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="augustDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="septemberDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="octoberDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="novemberDiffIncomeTotal"></td>
+                <td style="width: 100px;" id="decemberDiffIncomeTotal"></td> 
+                <td style="width: 100px;" id="diffIncomeTotal"></td>
             </tr>
 
             <!-- expense -->
@@ -258,111 +258,111 @@
             @endforeach
 
             <!-- Budget Expense total line -->
-            <tr  style="background-color: #0096FF; color: white;">
-                <td class="text-end" style="width: 100px;">Budget Expense Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberBudgetExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberBudgetExpenseTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="budgetExpenseTotal"></td>
+            <tr class="text-end" style="background-color: #0096FF; color: white;">
+                <td style="width: 100px;">Budget Expense Total</td>
+                <td style="width: 100px;" id="januaryBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="februaryBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="marchBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="aprilBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="mayBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="juneBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="julyBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="augustBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="septemberBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="octoberBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="novemberBudgetExpenseTotal"></td>
+                <td style="width: 100px;" id="decemberBudgetExpenseTotal"></td> 
+                <td style="width: 100px;" id="budgetExpenseTotal"></td>
             </tr>
 
             <!-- Actual Expense total line -->
-            <tr  style="background-color: #a2e897; color: white;">
-                <td class="text-end" style="width: 100px;">Actual Expense Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryActualExpenseTotal">{{ $actualExpenseTotals['january'] }}</td>
-                <td class="text-end" style="width: 100px;" id="februaryActualExpenseTotal">{{ $actualExpenseTotals['february'] }}</td>
-                <td class="text-end" style="width: 100px;" id="marchActualExpenseTotal">{{ $actualExpenseTotals['march'] }}</td>
-                <td class="text-end" style="width: 100px;" id="aprilActualExpenseTotal">{{ $actualExpenseTotals['april'] }}</td>
-                <td class="text-end" style="width: 100px;" id="mayActualExpenseTotal">{{ $actualExpenseTotals['may'] }}</td>
-                <td class="text-end" style="width: 100px;" id="juneActualExpenseTotal">{{ $actualExpenseTotals['june'] }}</td>
-                <td class="text-end" style="width: 100px;" id="julyActualExpenseTotal">{{ $actualExpenseTotals['july'] }}</td>
-                <td class="text-end" style="width: 100px;" id="augustActualExpenseTotal">{{ $actualExpenseTotals['august'] }}</td>
-                <td class="text-end" style="width: 100px;" id="septemberActualExpenseTotal">{{ $actualExpenseTotals['september'] }}</td>
-                <td class="text-end" style="width: 100px;" id="octoberActualExpenseTotal">{{ $actualExpenseTotals['october'] }}</td>
-                <td class="text-end" style="width: 100px;" id="novemberActualExpenseTotal">{{ $actualExpenseTotals['november'] }}</td>
-                <td class="text-end" style="width: 100px;" id="decemberActualExpenseTotal">{{ $actualExpenseTotals['december'] }}</td> 
-                <td class="text-end" style="width: 100px;" id="actualExpenseTotal">{{ $actualExpenseTotals['total'] }}</td>
+            <tr class="text-end" style="background-color: #a2e897; color: white;">
+                <td style="width: 100px;">Actual Expense Total</td>
+                <td style="width: 100px;" id="januaryActualExpenseTotal">{{ $actualExpenseTotals['january'] }}</td>
+                <td style="width: 100px;" id="februaryActualExpenseTotal">{{ $actualExpenseTotals['february'] }}</td>
+                <td style="width: 100px;" id="marchActualExpenseTotal">{{ $actualExpenseTotals['march'] }}</td>
+                <td style="width: 100px;" id="aprilActualExpenseTotal">{{ $actualExpenseTotals['april'] }}</td>
+                <td style="width: 100px;" id="mayActualExpenseTotal">{{ $actualExpenseTotals['may'] }}</td>
+                <td style="width: 100px;" id="juneActualExpenseTotal">{{ $actualExpenseTotals['june'] }}</td>
+                <td style="width: 100px;" id="julyActualExpenseTotal">{{ $actualExpenseTotals['july'] }}</td>
+                <td style="width: 100px;" id="augustActualExpenseTotal">{{ $actualExpenseTotals['august'] }}</td>
+                <td style="width: 100px;" id="septemberActualExpenseTotal">{{ $actualExpenseTotals['september'] }}</td>
+                <td style="width: 100px;" id="octoberActualExpenseTotal">{{ $actualExpenseTotals['october'] }}</td>
+                <td style="width: 100px;" id="novemberActualExpenseTotal">{{ $actualExpenseTotals['november'] }}</td>
+                <td style="width: 100px;" id="decemberActualExpenseTotal">{{ $actualExpenseTotals['december'] }}</td> 
+                <td style="width: 100px;" id="actualExpenseTotal">{{ $actualExpenseTotals['total'] }}</td>
             </tr>
 
             <!-- diff Expense total line -->
             <tr class="text-end" style="background-color: goldenrod; color: white; border-bottom-width: thick;">
-                <td class="text-end" style="width: 100px;">Diff Expense Total<br>(-: overspent)</td>
-                <td class="text-end" style="width: 100px;" id="januaryDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberDiffExpenseTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberDiffExpenseTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="diffExpenseTotal"></td>
+                <td style="width: 100px;">Diff Expense Total<br>(-: overspent)</td>
+                <td style="width: 100px;" id="januaryDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="februaryDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="marchDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="aprilDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="mayDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="juneDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="julyDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="augustDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="septemberDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="octoberDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="novemberDiffExpenseTotal"></td>
+                <td style="width: 100px;" id="decemberDiffExpenseTotal"></td> 
+                <td style="width: 100px;" id="diffExpenseTotal"></td>
             </tr>
 
             <!-- Budget Grand total line -->
-            <tr  style="background-color: blue; color: white; font-weight: bold;">
-                <td class="text-end" style="width: 100px;">Budget Grand Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberBudgetTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberBudgetTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="grandBudgetTotal"></td>
+            <tr class="text-end" style="background-color: blue; color: white; font-weight: bold;">
+                <td style="width: 100px;">Budget Grand Total</td>
+                <td style="width: 100px;" id="januaryBudgetTotal"></td>
+                <td style="width: 100px;" id="februaryBudgetTotal"></td>
+                <td style="width: 100px;" id="marchBudgetTotal"></td>
+                <td style="width: 100px;" id="aprilBudgetTotal"></td>
+                <td style="width: 100px;" id="mayBudgetTotal"></td>
+                <td style="width: 100px;" id="juneBudgetTotal"></td>
+                <td style="width: 100px;" id="julyBudgetTotal"></td>
+                <td style="width: 100px;" id="augustBudgetTotal"></td>
+                <td style="width: 100px;" id="septemberBudgetTotal"></td>
+                <td style="width: 100px;" id="octoberBudgetTotal"></td>
+                <td style="width: 100px;" id="novemberBudgetTotal"></td>
+                <td style="width: 100px;" id="decemberBudgetTotal"></td> 
+                <td style="width: 100px;" id="grandBudgetTotal"></td>
             </tr>
 
             <!-- Actual Grand total line -->
-            <tr  style="background-color: mediumspringgreen; color: white; font-weight: bold;">
-                <td class="text-end" style="width: 100px;">Actual Grand Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberActualTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberActualTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="grandActualTotal"></td>
+            <tr class="text-end" style="background-color: mediumspringgreen; color: white; font-weight: bold;">
+                <td style="width: 100px;">Actual Grand Total</td>
+                <td style="width: 100px;" id="januaryActualTotal"></td>
+                <td style="width: 100px;" id="februaryActualTotal"></td>
+                <td style="width: 100px;" id="marchActualTotal"></td>
+                <td style="width: 100px;" id="aprilActualTotal"></td>
+                <td style="width: 100px;" id="mayActualTotal"></td>
+                <td style="width: 100px;" id="juneActualTotal"></td>
+                <td style="width: 100px;" id="julyActualTotal"></td>
+                <td style="width: 100px;" id="augustActualTotal"></td>
+                <td style="width: 100px;" id="septemberActualTotal"></td>
+                <td style="width: 100px;" id="octoberActualTotal"></td>
+                <td style="width: 100px;" id="novemberActualTotal"></td>
+                <td style="width: 100px;" id="decemberActualTotal"></td> 
+                <td style="width: 100px;" id="grandActualTotal"></td>
             </tr>
 
             <!-- Diff Grand total line -->
-            <tr  style="background-color: darkorange; color: white; font-weight: bold;">
-                <td class="text-end" style="width: 100px;">Diff Grand Total</td>
-                <td class="text-end" style="width: 100px;" id="januaryDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="februaryDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="marchDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="aprilDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="mayDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="juneDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="julyDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="augustDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="septemberDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="octoberDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="novemberDiffTotal"></td>
-                <td class="text-end" style="width: 100px;" id="decemberDiffTotal"></td> 
-                <td class="text-end" style="width: 100px;" id="grandDiffTotal"></td>
+            <tr class="text-end" style="background-color: darkorange; color: white; font-weight: bold;">
+                <td style="width: 100px;">Diff Grand Total</td>
+                <td style="width: 100px;" id="januaryDiffTotal"></td>
+                <td style="width: 100px;" id="februaryDiffTotal"></td>
+                <td style="width: 100px;" id="marchDiffTotal"></td>
+                <td style="width: 100px;" id="aprilDiffTotal"></td>
+                <td style="width: 100px;" id="mayDiffTotal"></td>
+                <td style="width: 100px;" id="juneDiffTotal"></td>
+                <td style="width: 100px;" id="julyDiffTotal"></td>
+                <td style="width: 100px;" id="augustDiffTotal"></td>
+                <td style="width: 100px;" id="septemberDiffTotal"></td>
+                <td style="width: 100px;" id="octoberDiffTotal"></td>
+                <td style="width: 100px;" id="novemberDiffTotal"></td>
+                <td style="width: 100px;" id="decemberDiffTotal"></td> 
+                <td style="width: 100px;" id="grandDiffTotal"></td>
             </tr>
 
             
@@ -564,21 +564,36 @@
 
                 // add another <tr> to each income row (budget, actual, and diff)
                 incomeCategories.forEach(category => {
-                    console.log("Income cat: ", category);
                     ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
-                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">new' + category + typeOfData + '</td>');
+                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">ytd' + category + typeOfData + '</td>');
                     });
                 });
                 
                 // add another <tr> to each expense row (budget, actual, and diff)
                 expenseCategories.forEach(category => {
-                    console.log("Expense cat: ", category);
                     ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
-                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">new' + category + typeOfData + '</td>');
+                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">ytd' + category + typeOfData + '</td>');
                     });
                 });
+
                 // left off here
                 // need to add td element for subtotals and totals
+
+                // for income/expense, budget/actual/diff
+                //      add ytd cell
+                ["Budget", "Actual", "Diff"].forEach(typeOfData => {
+                    ["Income", "Expense"].forEach(IorE => {
+                        id = "ytd" + typeOfData + IorE + "Total";
+                        $("#" + month + typeOfData + IorE + "Total").after('<td id="' + id + '">ytd' + typeOfData + IorE + '</td>');
+                        // $("#" + month + typeOfData + IorE + "Total").after('<td id="tyd' + typeOfData + IorE + "Total" + '</td>');
+                    });
+
+                    // add grand total ytd cells
+                    id = "ytd" + typeOfData + "Total";
+                    $("#" + month + typeOfData + "Total").after('<td id="' + id + '">ytd' + typeOfData + 'Total</td>');
+
+                });
+
                 // need to fill in with real data
 
 
