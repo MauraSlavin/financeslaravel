@@ -414,6 +414,9 @@
                 'december'
             ];
 
+            // current year
+            var currYear = new Date().getFullYear();
+
             // calculate totals and subtotals
             // get hidden fields
             // - budgetData
@@ -545,61 +548,135 @@
             grandDiff = grandDiff.toFixed(2);
             $("#grandDiffTotal").text(grandDiff);
 
-            // add ytd column
+            // add ytd column, if current year
+            if( $("#year").text() == currYear) {
             
-            // get current month
-            const date = new Date();
-            const monthIdx = date.getMonth();
-            const month = months[monthIdx];
-            const monthAbbr = (month.toLowerCase()).substring(0, 3);
-            
-            // skip this if it's december
-            if(monthAbbr != "dec") {
-                // add the new column header YTD
-                $("#" + monthAbbr).after('<th>YTD</th>');
-                // add another <tr> to the Income row
-                $("#income").after('<tr></tr>');
-                // add another <tr> to the Expense row
-                $("#expense").after('<tr></tr>');
-
-                // add another <tr> to each income row (budget, actual, and diff)
-                incomeCategories.forEach(category => {
-                    ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
-                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">ytd' + category + typeOfData + '</td>');
-                    });
-                });
+                // get current month
+                const date = new Date();
+                const thisMonthIdx = date.getMonth();
+                const thisMonth = months[thisMonthIdx];
+                const monthAbbr = (thisMonth.toLowerCase()).substring(0, 3);
                 
-                // add another <tr> to each expense row (budget, actual, and diff)
-                expenseCategories.forEach(category => {
-                    ['Budget', 'Actual', 'Diff'].forEach( typeOfData => {
-                        $("#" + monthAbbr + category + typeOfData).after('<td id="ytd'+category+'Budget">ytd' + category + typeOfData + '</td>');
+                // skip this if it's december
+                if(monthAbbr != "dec") {
+
+                    // will need to do for Budget, Actual, and Diff(erence)
+                    var typeOfData = ['Budget', 'Actual', 'Diff'];
+
+                    // add the new column header YTD
+                    $("#" + monthAbbr).after('<th style="background-color:rgb(233, 189, 135); color: black">YTD</th>');
+                    // add another <tr> to the Income row
+                    $("#income").after('<tr></tr>');
+                    // add another <tr> to the Expense row
+                    $("#expense").after('<tr></tr>');
+
+                    // add another <tr> to each income row (budget, actual, and diff)
+                    incomeCategories.forEach(category => {
+                        typeOfData.forEach( typeOfDatum => {
+                            lcType = typeOfDatum.toLowerCase();
+                            $("#" + monthAbbr + category + typeOfDatum).after('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
+                        });
                     });
-                });
-
-                // left off here
-                // need to add td element for subtotals and totals
-
-                // for income/expense, budget/actual/diff
-                //      add ytd cell
-                ["Budget", "Actual", "Diff"].forEach(typeOfData => {
-                    ["Income", "Expense"].forEach(IorE => {
-                        id = "ytd" + typeOfData + IorE + "Total";
-                        $("#" + month + typeOfData + IorE + "Total").after('<td id="' + id + '">ytd' + typeOfData + IorE + '</td>');
-                        // $("#" + month + typeOfData + IorE + "Total").after('<td id="tyd' + typeOfData + IorE + "Total" + '</td>');
+                    
+                    // add another <tr> to each expense row (budget, actual, and diff)
+                    expenseCategories.forEach(category => {
+                        typeOfData.forEach( typeOfDatum => {
+                            $("#" + monthAbbr + category + typeOfDatum).after('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
+                        });
                     });
 
-                    // add grand total ytd cells
-                    id = "ytd" + typeOfData + "Total";
-                    $("#" + month + typeOfData + "Total").after('<td id="' + id + '">ytd' + typeOfData + 'Total</td>');
+                    // need to add td element for subtotals and totals
 
-                });
+                    // for income/expense, budget/actual/diff
+                    //      add ytd cell
+                    typeOfData.forEach(typeOfDatum => {
+                        ["Income", "Expense"].forEach(IorE => {
+                            id = "ytd" + typeOfDatum + IorE + "Total";
+                            $("#" + thisMonth + typeOfDatum + IorE + "Total").after('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + IorE + '</td>');
+                        });
 
-                // need to fill in with real data
+                        // add grand total ytd cells
+                        id = "ytd" + typeOfDatum + "Total";
+                        $("#" + thisMonth + typeOfDatum + "Total").after('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + 'Total</td>');
 
+                    });
 
+                    // need to fill in with real data
+                    // init ytd Totals
+                    var ytdTotals = [];
 
-            }   // skip YTD column for december
+                    // add up months to get ytd
+                    ytdMonths = months.slice(0, thisMonthIdx + 1);
 
+                    ytdMonths.forEach(month => {
+                        var monAbbrev = (month.toLowerCase()).substring(0, 3);
+
+                        var amt;
+                        // income details
+                        incomeCategories.forEach( category => {
+                            typeOfData.forEach( typeOfDatum => {
+                                var index = 'ytd' + category + typeOfDatum;
+                                amt = $('#' + monAbbrev + category + typeOfDatum).text();
+                                // remove commas
+                                amt = amt.replaceAll(",", "");
+                                // change to number
+                                amt = parseFloat(parseFloat(amt).toFixed(2));
+                                ytdTotals[index] = (ytdTotals[index] || 0) + amt;
+                            });
+                        });
+
+                        // expense details
+                        expenseCategories.forEach( category => {
+                            typeOfData.forEach( typeOfDatum => {
+                                var index = 'ytd' + category + typeOfDatum;
+                                amt = $('#' + monAbbrev + category + typeOfDatum).text();
+                                // remove commas
+                                amt = amt.replaceAll(",", "");
+                                // change to number
+                                amt = parseFloat(parseFloat(amt).toFixed(2));
+                                ytdTotals[index] = (ytdTotals[index] || 0) + amt;
+                            });
+                        });
+
+                        // income, expense, grand totals
+                        typeOfData.forEach( typeOfDatum => {
+                            // income totals
+                            amt = $('#' + month + typeOfDatum + 'IncomeTotal').text();
+                            // remove commas
+                            amt = amt.replaceAll(",", "");
+                            // change to number
+                            amt = parseFloat(parseFloat(amt).toFixed(2));
+                            ytdTotals['ytd' + typeOfDatum + 'IncomeTotal'] = (ytdTotals['ytd' + typeOfDatum + 'IncomeTotal'] || 0) + amt;
+
+                            // expense totals
+                            amt = $('#' + month + typeOfDatum + 'ExpenseTotal').text();
+                            // remove commas
+                            amt = amt.replaceAll(",", "");
+                            // change to number
+                            amt = parseFloat(parseFloat(amt).toFixed(2));
+                            ytdTotals['ytd' + typeOfDatum + 'ExpenseTotal'] = (ytdTotals['ytd' + typeOfDatum + 'ExpenseTotal'] || 0) + amt;
+
+                            // grand totals
+                            amt = $('#' + month + typeOfDatum + 'Total').text();
+                            // remove commas
+                            amt = amt.replaceAll(",", "");
+                            // change to number
+                            amt = parseFloat(parseFloat(amt).toFixed(2));
+                            ytdTotals['ytd' + typeOfDatum + 'Total'] = (ytdTotals['ytd' + typeOfDatum + 'Total'] || 0) + amt;
+                        });
+
+                        // ytdTotals.forEach( (total, key) => {
+                        for (const [selector, total] of Object.entries(ytdTotals)) {
+                            const formatted = total.toLocaleString('en', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            $('#' + selector).text(formatted);
+                        };
+                    });
+
+                }   // skip YTD column for december
+            } // end of if year on page == this year (currYear)
 
 
             // listener for budget button
