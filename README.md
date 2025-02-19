@@ -4,16 +4,9 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on branch: 2025-02-16-ytd</h2>
+<h2>WorkDone with branch: 2025-02-16-ytd</h2>
     <ul>
-      <li>Include YTD</li>
-      <li> - Have new YTD td elements for details</li>
-      <li> - Have new ytd td for subtotals and totals</li>
-      <li> - Need to fill in with actual numbers</li>
       <li></li>
-      <li>Ability to update budget for current year</li>
-      <li>Click on a Budget or Actual box to see the transactions included</li>
-      <li>Do I want to group these by category w/subtotals??</li>
     </ul>
 
 <h2>BUGS</h2>
@@ -26,6 +19,10 @@
 <h2>To do:</h2>
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
+      <li>budgetactuals page:<br>
+      &nbsp&nbsp&nbspAbility to update budget for current year<br>
+      &nbsp&nbsp&nbspClick on a Budget or Actual box to see the transactions included<br>
+      &nbsp&nbsp&nbspDo I want to group these by category w/subtotals??</li>
       <li>No category or amtMike (for Maura's) / amtMaura (for Mike's) when adding transactions to Mike/Maura Spending accounts.</li>
       <li>When editting transactions, when changing the amount for splits (total_key has a value), code needs to handle when some of the splits are NOT in edit mode.</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
