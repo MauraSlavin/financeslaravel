@@ -4,9 +4,9 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>WorkDone with branch: 2025-02-16-ytd</h2>
+<h2>No branch yet</h2>
     <ul>
-      <li></li>
+      <li>Spending ??</li>
     </ul>
 
 <h2>BUGS</h2>

@@ -564,7 +564,7 @@
                     var typeOfData = ['Budget', 'Actual', 'Diff'];
 
                     // add the new column header YTD
-                    $("#" + monthAbbr).after('<th style="background-color:rgb(233, 189, 135); color: black">YTD</th>');
+                    $("#" + monthAbbr).before('<th style="background-color:rgb(233, 189, 135); color: black">YTD</th>');
                     // add another <tr> to the Income row
                     $("#income").after('<tr></tr>');
                     // add another <tr> to the Expense row
@@ -574,14 +574,14 @@
                     incomeCategories.forEach(category => {
                         typeOfData.forEach( typeOfDatum => {
                             lcType = typeOfDatum.toLowerCase();
-                            $("#" + monthAbbr + category + typeOfDatum).after('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
+                            $("#" + monthAbbr + category + typeOfDatum).before('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
                         });
                     });
                     
                     // add another <tr> to each expense row (budget, actual, and diff)
                     expenseCategories.forEach(category => {
                         typeOfData.forEach( typeOfDatum => {
-                            $("#" + monthAbbr + category + typeOfDatum).after('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
+                            $("#" + monthAbbr + category + typeOfDatum).before('<td class=' + lcType + ' id="ytd' + category + typeOfDatum + '" style="background-color:rgb(233, 189, 135);">ytd' + category + typeOfDatum + '</td>');
                         });
                     });
 
@@ -592,12 +592,12 @@
                     typeOfData.forEach(typeOfDatum => {
                         ["Income", "Expense"].forEach(IorE => {
                             id = "ytd" + typeOfDatum + IorE + "Total";
-                            $("#" + thisMonth + typeOfDatum + IorE + "Total").after('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + IorE + '</td>');
+                            $("#" + thisMonth + typeOfDatum + IorE + "Total").before('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + IorE + '</td>');
                         });
 
                         // add grand total ytd cells
                         id = "ytd" + typeOfDatum + "Total";
-                        $("#" + thisMonth + typeOfDatum + "Total").after('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + 'Total</td>');
+                        $("#" + thisMonth + typeOfDatum + "Total").before('<td id="' + id + '" style="background-color:rgb(233, 189, 135);">ytd' + typeOfDatum + 'Total</td>');
 
                     });
 
@@ -606,7 +606,8 @@
                     var ytdTotals = [];
 
                     // add up months to get ytd
-                    ytdMonths = months.slice(0, thisMonthIdx + 1);
+                    ytdMonths = months.slice(0, thisMonthIdx);
+                    console.log("ytdMonths:", ytdMonths);
 
                     ytdMonths.forEach(month => {
                         var monAbbrev = (month.toLowerCase()).substring(0, 3);
