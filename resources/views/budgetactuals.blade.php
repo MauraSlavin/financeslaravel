@@ -34,7 +34,7 @@
     <input type="hidden" id="incomeCategories"  name="incomeCategories"  value={{ json_encode($incomeCategories) }}>
     <input type="hidden" id="expenseCategories"  name="expenseCategories"  value={{ json_encode($expenseCategories) }}>
 
-    <table>
+    <table style="border-collapse: collapse;">
         <!-- Headers -->
         <thead>
             <tr>
@@ -110,7 +110,7 @@
                         <td class="actual" id="totalActualIncome">{{ $actualIncomeData[$category]['total'] }}</td>
                     </tr>
                     <!-- difference -->
-                    <tr style="border-bottom-width: thick;">
+                    <tr>
                         <td class="diff" id="{{$category}}Diff">difference<br>(+: made extra)</td>
                         <td class="diff" id="jan{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
                         <td class="diff" id="feb{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
@@ -126,6 +126,20 @@
                         <td class="diff" id="dec{{$category}}Diff">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
                         <td class="diff" id="diffIncome">{{ number_format((float)str_replace(",", "", $actualIncomeData[$category]['total']) - (float)str_replace(",", "", $budgetRecord['total']), 2) }}</td>
                     </tr>
+
+                    <!-- notes --> 
+                    <!-- show note if there is one, in pink -->
+                    @if( isset($notes[$category]) )
+                    <tr style="background-color: pink; border-bottom-width: thick;">
+                        <td style="text-align: right; font-weight: bold;">NOTE:</td>
+                        <td colspan="14" style="text-align: left; white-space: nowrap;">{{ $notes[$category] }}</td>
+                    </tr>
+                    <!-- if no note, still want thick border -->
+                    @else
+                    <tr style="border-bottom-width: thick; height: 0px;">
+                    </tr>
+                    @endif
+
                 @endif
             @endforeach
 
@@ -238,7 +252,7 @@
                     </tr>
                     <!-- difference -->
                     <!-- NOTE: subtraction is reversed since the budget is a negative number, so + means $ left in the budget, and - means overspent -->
-                    <tr style="border-bottom-width: thick;">
+                    <tr>
                         <td class="diff">difference<br>(-: overspent)</td>
                         <td class="diff" id="jan{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['january']) - (float)str_replace(",", "", $budgetRecord['january']), 2) }}</td>
                         <td class="diff" id="feb{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['february']) - (float)str_replace(",", "", $budgetRecord['february']), 2) }}</td>
@@ -253,7 +267,21 @@
                         <td class="diff" id="nov{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['november']) - (float)str_replace(",", "", $budgetRecord['november']), 2) }}</td>
                         <td class="diff" id="dec{{$category}}Diff">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['december']) - (float)str_replace(",", "", $budgetRecord['december']), 2) }}</td>
                         <td class="diff" id="totalExpense">{{ number_format( (float)str_replace(",", "", $actualExpenseData[$category]['total']) - (float)str_replace(",", "", $budgetRecord['total']), 2) }}</td>
-                    </tr>                    
+                    </tr>   
+                    
+                                        <!-- notes --> 
+                    <!-- show note if there is one, in pink -->
+                    @if( isset($notes[$category]) )
+                    <tr style="background-color: pink; border-bottom-width: thick;">
+                        <td style="text-align: right; font-weight: bold;">NOTE:</td>
+                        <td colspan="14" style="text-align: left; white-space: nowrap;">{{ $notes[$category] }}</td>
+                    </tr>
+                    <!-- if no note, still want thick border -->
+                    @else
+                    <tr style="border-bottom-width: thick; height: 0px;">
+                    </tr>
+                    @endif
+
                 @endif
             @endforeach
 
@@ -607,7 +635,6 @@
 
                     // add up months to get ytd
                     ytdMonths = months.slice(0, thisMonthIdx);
-                    console.log("ytdMonths:", ytdMonths);
 
                     ytdMonths.forEach(month => {
                         var monAbbrev = (month.toLowerCase()).substring(0, 3);

@@ -4,8 +4,9 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>No branch yet</h2>
+<h2>Branch 2025-02-20-spending</h2>
     <ul>
+      <li>no changes (except this README) yet</li>
       <li>Spending ??</li>
     </ul>
 
@@ -19,6 +20,7 @@
 <h2>To do:</h2>
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
+      <li>Button to add or delete notes</li>
       <li>budgetactuals page:<br>
       &nbsp&nbsp&nbspAbility to update budget for current year<br>
       &nbsp&nbsp&nbspClick on a Budget or Actual box to see the transactions included<br>
@@ -96,25 +98,27 @@
   <p>account_ids are the ids of the accounts in the accounts table.  As of 1/8/25:</p>
   <ol>
     <li>Cash</li>
+    <li>ChargePoint</li>
     <li>Checking</li>
     <li>DiscCC</li>
+    <li>DiscRet</li>
     <li>DiscSavings</li>
-    <li>VISA</li>
-    <li>Mike</li>
-    <li>MauraSCU</li>
-    <li>MauraDisc</li>
+    <li>ElectrifyAmerica</li>
     <li>* EJ</li>
+    <li>Eversource</li>
+    <li>FSA</li>
+    <li>* House</li>
+    <li>IrregBig (Disc)</li>
+    <li>* JH</li>
+    <li>LTC (Disc)</li>
+    <li>MauraDisc</li>
+    <li>MauraSCU</li>
+    <li>Mike</li>
+    <li>* Prudential</li>
     <li>* TIAA</li>
+    <li>VISA</li>
     <li>* WF-Inv</li>
     <li>* WF-IRA</li>
-    <li>* JH</li>
-    <li>FSA</li>
-    <li>ChargePoint</li>
-    <li>ElectrifyAmerica</li>
-    <li>* House</li>
-    <li>* Prudential</li>
-    <li>Eversource</li>
-    <li>LTC</li>
   </ol>
   <p>* investment accounts (as opposed to transactional accounts).  A transactional account is something like a checking, savings, or cc; an investment account would be a CD or a retirement acct.
 

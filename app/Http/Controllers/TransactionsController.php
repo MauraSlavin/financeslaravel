@@ -1959,6 +1959,36 @@ class TransactionsController extends Controller
     }   // end function getBudgetData
 
 
+    public function getNotes($typeOfNote, $year) {
+
+        $notes = [];
+
+        $db_notes = DB::table("notes")
+            ->where("type_of_note", $typeOfNote)
+            ->whereBetween("trans_date", [$year . "-01-01", $year . "-12-31"])
+            ->get()->toArray();
+
+        foreach($db_notes as $note) {
+
+            // create new element for this category in notes, if needed
+            if(!array_key_exists($note->category, $notes)) {
+                $notes[$note->category] = '';
+            }
+
+            // create new element for current month, if needed
+            // get month
+            $noteMonth = date("M", strtotime($note->trans_date));
+           
+            // Append note to any existing notes
+            if($note->amount == null) $amountPhrase = '';
+            else $amountPhrase = " ($" . $note->amount . ")";
+            $notes[$note->category] .= $noteMonth . ": " . $note->note . $amountPhrase . ".  ";
+        }
+ 
+        return $notes;
+    }   // end function getBudgetData
+
+
     // See budget info
     public function budget(Request $request) {
         
@@ -2027,6 +2057,9 @@ class TransactionsController extends Controller
         [$actualIncomeData, $actualExpenseData, $actualIncomeTotals, $actualExpenseTotals, $actualGrandTotals] =
             $this->getActualsData($year, $months, $incomeCategories, $expenseCategories);
 
+        // get notes
+        $notes = $this->getNotes("b_vs_a", $year);
+
         // budgetactuals page
         return view('budgetactuals', 
             [
@@ -2038,7 +2071,8 @@ class TransactionsController extends Controller
                 'actualExpenseData' => $actualExpenseData,
                 'actualIncomeTotals' => $actualIncomeTotals,
                 'actualExpenseTotals' => $actualExpenseTotals,
-                'actualGrandTotals' => $actualGrandTotals
+                'actualGrandTotals' => $actualGrandTotals,
+                'notes' => $notes
             ]
         );
 
