@@ -21,6 +21,7 @@
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>Button to add or delete notes</li>
+      <li>Eliminate duplicate table (budget vs. newbudget)</li>
       <li>budgetactuals page:<br>
       &nbsp&nbsp&nbspAbility to update budget for current year<br>
       &nbsp&nbsp&nbspClick on a Budget or Actual box to see the transactions included<br>
@@ -36,6 +37,7 @@
       </li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
+      <li>Different users so Mike can have copy of the application?</li>
     </ul>
 
 <h2>Future Functionality:</h2>
@@ -72,7 +74,7 @@
   <p>uploadMatch determines how each field in the transactions table gets filled from the csv download.</p>
 
   <h3>account_id</h3>
-  <p>See account_id under "toFromAliases documentation" below.</p>
+  <p>See account_id under "tofromaliases documentation" below.</p>
 
   <h3>csvField</h3>
   <p>The field in the downloaded csv field from the financial institution.</p>
@@ -92,7 +94,7 @@
     <p>For example: "Description + Memo" is used to combine these two fields in the csv file into the toFrom column of the transactions table for the Checking account. A space is inserted between them, and the resulting string is trimmed.  Only 2 fields can be concatenated.</p>
   </ul>
 
-<h2>toFromAliases documentation</h2>
+<h2>tofromaliases documentation</h2>
 
   <h3>account_id</h3>
   <p>account_ids are the ids of the accounts in the accounts table.  As of 1/8/25:</p>
@@ -138,7 +140,7 @@
     <li>"notes":"text" or "tracking":"text"</li>
       <p>Sets the notes or the tracking to the text given.  Can use both. For example: {"notes":"charging","tracking":"Bolt"}</p>
     <li>{"splits":["MauraSpending","MikeSpending","Kids"]}</li>
-      <p>Creates duplicate transactions with different categories in addition to the default category.  The total_amt is divided equally among all the splits, and the total_key is the id of the original transaction. There's a limit of 10 transactions in the toFromAliases table (more can be created manually in the interface, if needed).</p>
+      <p>Creates duplicate transactions with different categories in addition to the default category.  The total_amt is divided equally among all the splits, and the total_key is the id of the original transaction. There's a limit of 10 transactions in the tofromaliases table (more can be created manually in the interface, if needed).</p>
     <li>{"splits":["Bolt"],"notes":"tolls","tracking":["CRZ","Bolt"]}</li>
       <p>Multiple default tracking (& notes, I think) can be given for each split.  In this case, two records are created: the original from the csv download, and a duplicate with a category of "Bolt".  The original transaction gets tracking "CRZ", and the duplicate gets tracking "Bolt".  Both get notes "tolls".  Each gets 1/2 the total amount.</p>
   </ul>
@@ -208,12 +210,12 @@
     <li>budget: is still used in Workbench, I think.</li>
 <br>
 <p>New tables</p>
-    <li><u>newBudget</u>:  has same info as budget, and is used in the application</li>
+    <li><u>newbudget</u>:  has same info as budget, and is used in the application</li>
     <li><u>accounts</u>: accountName, description & lastStmtDate (null for end of month) for each defined account</li>
     <li><u>uploadmatch</u>: maps csv to transaction fields for each account</li>
     <li><u>tofromaliases</u>: convert what's in bank download to my verbiage for toFrom field</li>
     <br>
-    <li>NOTE:  Delete budget table & rename newBudget to budget when done.</li>
+    <li>NOTE:  Delete budget table & rename newbudget to budget when done.</li>
   </ul>
 
 
@@ -231,7 +233,7 @@
     <br>- <u>http://localhost:8000/accounts/{accountName}/upload</u>
     <li>Delete a transaction by id
     <br>- <u>http://localhost:8000/transactions/delete/{id}</u>
-    <li>Insert a record to toFromAliases
+    <li>Insert a record to tofromaliases
     <br>- <u>http://localhost:8000/transactions/insertAlias/{origToFrom}/{newValue}</u>
   </ul>
 

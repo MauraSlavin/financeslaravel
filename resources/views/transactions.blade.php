@@ -32,7 +32,7 @@
         <input type="hidden" id="accountIds"  name="accountIds"  value={{ json_encode($accountIds) }}>
         <input type="hidden" id="lastStmtDates"  name="lastStmtDates"  value={{ json_encode($lastStmtDates) }}>
         <input type="hidden" id="toFroms"       name="toFroms"       value={{ $toFroms }}>
-        <input type="hidden" id="toFromAliases" name="toFromAliases" value={{ $toFromAliases }}>
+        <input type="hidden" id="tofromaliases" name="tofromaliases" value={{ $tofromaliases }}>
         <input type="hidden" id="categories"    name="categories"    value={{ $categories }}>
         <input type="hidden" id="trackings"     name="trackings"     value={{ $trackings }}>
         <input type="hidden" id="buckets"       name="buckets"       value={{ $buckets }}>
@@ -297,10 +297,10 @@
                 // console.log("toFroms: ", toFroms);
                 toFroms = JSON.parse(toFroms);
                 
-                var toFromAliases = $("#toFromAliases").val();
-                toFromAliases = toFromAliases.replaceAll("%20", " ");
-                // console.log("toFromAliases: ", toFromAliases);
-                toFromAliases = JSON.parse(toFromAliases);
+                var tofromaliases = $("#tofromaliases").val();
+                tofromaliases = tofromaliases.replaceAll("%20", " ");
+                // console.log("tofromaliases: ", tofromaliases);
+                tofromaliases = JSON.parse(tofromaliases);
 
                 var categories = $("#categories").val();
                 categories = categories.replaceAll("%20", " ");
@@ -712,7 +712,7 @@
                 // If a new toFrom is entered, make sure it's not a mistake;
                 // If the new toFrom isn't a previously used value, ask if it should be changed automatically.
                 // Returns isGood (true/false/newValue) and an error message (null or null string if isGood is true or newValue);
-                function handleToFrom(newValue, account, accountId, toFroms, toFromAliases, origToFrom) {
+                function handleToFrom(newValue, account, accountId, toFroms, tofromaliases, origToFrom) {
                     var isGood = true;
                     var errorMsg = ''; 
 
@@ -739,7 +739,7 @@
 
                     // is toFrom a new value (look at existing toFrom values, and toFroms in aliases)?
                     // If so, is it ok?
-                    var existingOrigToFroms = toFroms.concat(toFromAliases.map(obj => obj.origToFrom));
+                    var existingOrigToFroms = toFroms.concat(tofromaliases.map(obj => obj.origToFrom));
                     existingOrigToFroms = existingOrigToFroms.map(elt => elt.toLowerCase());
 
                     if(!existingOrigToFroms.includes(newValue.toLowerCase())) {     // new toFrom value
@@ -753,7 +753,7 @@
                     // If the new toFrom doesn't have an alias, should future examples be auto replaced in the future;
                     // If it DOES have an alias, if it should this case be changed.
                     // Account has to match, too.
-                    var foundToFrom = toFromAliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase() && alias.account_id == accountId);
+                    var foundToFrom = tofromaliases.find(alias => alias.origToFrom.toLowerCase() === newValue.toLowerCase() && alias.account_id == accountId);
 
                     // if no alias found... and origToFrom is not null... and newValue is changed from origToFrom
                     if( typeof foundToFrom === 'undefined' && origToFrom !== null && newValue.toLowerCase() != origToFrom.toLowerCase()) {
@@ -784,7 +784,7 @@
                                 },
 
                                 error: function(xhr, status, error) {
-                                    var errorMsg = "Error saving alias to table toFromAliases.";
+                                    var errorMsg = "Error saving alias to table tofromaliases.";
                                     console.error(errorMsg, xhr.responseJSON ? xhr.responseJSON.error : error);
                                     alert(errorMsg + ": " + (xhr.responseJSON ? xhr.responseJSON.details : error));
                                 }
@@ -1129,7 +1129,7 @@
                             accountId = $("#accountId").text();
                         }
 
-                        [isGood, errorMsg] = handleToFrom(newValue, account, accountId, toFroms, toFromAliases, origToFrom);
+                        [isGood, errorMsg] = handleToFrom(newValue, account, accountId, toFroms, tofromaliases, origToFrom);
                         if(isGood === false) {
                             $("#errorMsg").text(errorMsg);
                             $input.css("background-color", "yellow").val(origToFrom);
