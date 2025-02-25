@@ -156,7 +156,7 @@ class TransactionsController extends Controller
         }
 
         // get prefixes of toFrom's from banks to ignore
-        $ignore = DB::table("toFromAliases")
+        $ignore = DB::table("tofromaliases")
             ->where('transToFrom', 'IGNORE')
             ->pluck('origToFrom');
                     
@@ -252,7 +252,7 @@ class TransactionsController extends Controller
 
             // handle different length origToFrom values
             $toFrom = $newRecord->toFrom;
-            $toFromAlias = DB::table("toFromAliases")
+            $toFromAlias = DB::table("tofromaliases")
                 ->where('origToFrom', '=', DB::raw('LEFT(?, LENGTH(origToFrom))'))
                 ->setBindings([$toFrom])
                 // ->dumpRawSql()
@@ -625,12 +625,12 @@ class TransactionsController extends Controller
         $toFroms = array_column($toFroms, 'toFrom');
         $toFroms = str_replace(" ", "%20", json_encode($toFroms));
 
-        // get toFromAliases (auto converts what the "bank" uses to what's in the database)
-        $toFromAliases = DB::table("toFromAliases")
+        // get tofromaliases (auto converts what the "bank" uses to what's in the database)
+        $tofromaliases = DB::table("tofromaliases")
             ->get()->toArray();
-        $toFromAliases = str_replace(" ", "%20", json_encode($toFromAliases));
-        // error_log("\ntoFromAliases:");
-        // foreach($toFromAliases as $thisOne) error_log(" - " . json_encode($thisOne));
+        $tofromaliases = str_replace(" ", "%20", json_encode($tofromaliases));
+        // error_log("\ntofromaliases:");
+        // foreach($tofromaliases as $thisOne) error_log(" - " . json_encode($thisOne));
 
         // get all the defined account names
         $accountNames = array_column($accounts, 'accountName');
@@ -718,7 +718,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
-        $ytmBudgets = DB::table('newBudget')
+        $ytmBudgets = DB::table('newbudget')
             ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
             ->where('monthNum', '<=', $thisMonth)
             ->where('year', $thisYear)
@@ -727,7 +727,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get full year budgets by category
-        $yearBudgets = DB::table('newBudget')
+        $yearBudgets = DB::table('newbudget')
             ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
@@ -749,7 +749,7 @@ class TransactionsController extends Controller
             $transaction->accountId = $accountIds[$accountIdx];
         }
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFroms' => $toFroms, 'toFromAliases' => $toFromAliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFroms' => $toFroms, 'tofromaliases' => $tofromaliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
     }
 
 
@@ -825,10 +825,10 @@ class TransactionsController extends Controller
         $toFroms = array_column($toFroms, 'toFrom');
         $toFroms = str_replace(" ", "%20", json_encode($toFroms));
         
-        // get toFromAliases (auto converts what the "bank" uses to what's in the database)
-        $toFromAliases = DB::table("toFromAliases")
+        // get tofromaliases (auto converts what the "bank" uses to what's in the database)
+        $tofromaliases = DB::table("tofromaliases")
             ->get()->toArray();
-        $toFromAliases = str_replace(" ", "%20", json_encode($toFromAliases));
+        $tofromaliases = str_replace(" ", "%20", json_encode($tofromaliases));
 
         // get all the defined account names
         $accountNames = array_column($accounts, 'accountName');
@@ -898,7 +898,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
-        $ytmBudgets = DB::table('newBudget')
+        $ytmBudgets = DB::table('newbudget')
             ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
             ->where('monthNum', '<=', $thisMonth)
             ->where('year', $thisYear)
@@ -907,7 +907,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get full year budgets by category
-        $yearBudgets = DB::table('newBudget')
+        $yearBudgets = DB::table('newbudget')
             ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
@@ -989,7 +989,7 @@ class TransactionsController extends Controller
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
         // error_log(json_encode($newCsvData));
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFromAliases' => $toFromAliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
     }
 
 
@@ -1151,7 +1151,7 @@ class TransactionsController extends Controller
 
         try {
             
-            $response = DB::table('toFromAliases')
+            $response = DB::table('tofromaliases')
                 ->insert([
                     'origToFrom' => $origToFrom,
                     'transToFrom' => $newValue,
@@ -1163,9 +1163,9 @@ class TransactionsController extends Controller
                 // 'recordId' => $record->id
             ], 200);
         } catch(\Exception $e) {
-            error_log("\nProblem inserting toFromAliases record for origToFrom: " . $origToFrom . " and transToFrom: " . $newValue);
+            error_log("\nProblem inserting tofromaliases record for origToFrom: " . $origToFrom . " and transToFrom: " . $newValue);
             error_log(json_encode(['exception' => $e]));
-            \Log::error('Error inserting toFromAliases record.  ' . $e->getMessage());
+            \Log::error('Error inserting tofromaliases record.  ' . $e->getMessage());
             return response()->json([
                 'error' => 'An unexpected error occurred',
                 'details' => $e->getMessage(),
@@ -1242,14 +1242,14 @@ class TransactionsController extends Controller
             $accountId = $accountId[0];
             $lowerToFrom = strtolower($toFrom);
 
-            $defaults = DB::table('toFromAliases')
+            $defaults = DB::table('tofromaliases')
                 ->where('account_id', $accountId)
                 ->whereRaw("LOWER(transToFrom) = ?", [$lowerToFrom])
                 ->first();
 
             // if none found, look in origToFrom
             if($defaults == null) {
-                $defaults = DB::table('toFromAliases')
+                $defaults = DB::table('tofromaliases')
                 ->where('account_id', $accountId)
                 ->whereRaw("LOWER(origToFrom) = ?", [$lowerToFrom])
                 ->first();
@@ -1986,7 +1986,7 @@ class TransactionsController extends Controller
         }
  
         return $notes;
-    }   // end function getBudgetData
+    }   // end function getNotes
 
 
     // See budget info
