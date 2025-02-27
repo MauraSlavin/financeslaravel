@@ -132,7 +132,7 @@
                     @if( isset($notes[$category]) )
                     <tr style="background-color: pink; border-bottom-width: thick;">
                         <td style="text-align: right; font-weight: bold;">NOTE:</td>
-                        <td colspan="14" style="text-align: left; white-space: nowrap;">{{ $notes[$category] }}</td>
+                        <td colspan="14" style="text-align: left; white-space: wrap;">{{ $notes[$category] }}</td>
                     </tr>
                     <!-- if no note, still want thick border -->
                     @else
@@ -274,7 +274,7 @@
                     @if( isset($notes[$category]) )
                     <tr style="background-color: pink; border-bottom-width: thick;">
                         <td style="text-align: right; font-weight: bold;">NOTE:</td>
-                        <td colspan="14" style="text-align: left; white-space: nowrap;">{{ $notes[$category] }}</td>
+                        <td colspan="14" style="text-align: left; white-space: wrap;">{{ $notes[$category] }}</td>
                     </tr>
                     <!-- if no note, still want thick border -->
                     @else

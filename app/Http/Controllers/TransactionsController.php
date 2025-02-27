@@ -1989,6 +1989,139 @@ class TransactionsController extends Controller
     }   // end function getNotes
 
 
+    // see spending transactions
+    public function spending($who) {
+
+        // will need to identify month by number
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
+
+        // get transactions for the current year
+        $thisYear = date('Y');
+
+        // make sure who has only the first letter capitalized (to match database)
+        $who = strtoupper(substr($who, 0, 1)) . strtolower(substr($who, 1));
+      
+        // get category
+        $category = $who . "Spending";
+
+        // get spending transactions
+        // - include household transactions credited to the spending budget
+        // - and all transactions in/out of spending savings account
+        $spendingTransactions = DB::table("transactions")
+            ->select([
+                'trans_date',
+                DB::raw('YEAR(trans_date) as year'),
+                DB::raw('MONTH(trans_date) as month'),
+                'clear_date',
+                'account',
+                'toFrom',
+                'amount',
+                'total_amt',
+                'notes',
+                'category'
+            ])
+            ->where('trans_date', '>=', $thisYear . "-01-01")
+            ->where(function ($query) use ($category, $who) {
+                $query->where('category', $category)
+                        //  Mike has only account "Mike"
+                        //  Maura has "MauraSCU" and "MauraDisc"
+                      ->orWhere('account', 'like', $who . '%');
+            })
+            ->orderBy('trans_date')
+            ->orderBy('toFrom')
+            ->orderBy('amount')
+            ->get()
+            ->toArray();
+
+        // get spending budget
+        $monthlySpendingBudget = DB::table('budget')
+            ->where("year", $thisYear)
+            ->where("category", $category)
+            ->get()
+            ->toArray();
+
+        // add budget transaction at beginning of each month.  Use $month to see month change.
+        $month = '';
+
+        // keep track of spending left in budget
+        $remainingSpendingBudget = 0;
+
+        // new array to send to view (with monthly spending budget lines added)
+        $viewTransactions = [];
+
+        // insert lines to add budget; and keep running balance of spending budget remaining
+        foreach($spendingTransactions as $key=>$transaction) {
+
+            // get this transaction's month
+            $transactionMonthIdx = $transaction->month-1;
+            $transactionMonth = $months[$transactionMonthIdx];
+
+            // if month has changed, insert budget transaction
+            if($month != $transactionMonth) {
+                // change to new month
+                $month = $months[$transactionMonthIdx];
+
+                // calc remaining spending budget
+                // note: amt is neg in budget table.  Needs to be subtracted to ADD it to the balance.
+                $remainingSpendingBudget -= $monthlySpendingBudget[0]->$month;
+            
+                // build new budget record
+                $budgetRecord = (object)[
+                    "trans_date" => $thisYear . "-" . str_pad($transaction->month, 2, '0', STR_PAD_LEFT) . "-01",
+                    "year" => $thisYear,
+                    "month" => $transaction->month,
+                    "clear_date" => $thisYear . "-" . str_pad($transaction->month, 2, '0', STR_PAD_LEFT) . "-01",
+                    "account" => "budget",
+                    "toFrom" => $month . " budget",
+                    "amount" => $monthlySpendingBudget[0]->$month,
+                    "total_amt" => "",
+                    "notes" => $month . " budget",
+                    "category" => $category,
+                    "remainingSpendingBudget" => $remainingSpendingBudget
+                ];
+                $viewTransactions[] = $budgetRecord;
+            }
+
+            // update spending left, if appropriate
+            // and include balance in transaction for view
+            if($transaction->category == $category) {
+
+                // update remaining spending budget
+                $remainingSpendingBudget += $transaction->amount;
+
+                // append remaining spending budget to current transaction
+                $transaction->remainingSpendingBudget = $remainingSpendingBudget;
+            } else {
+                // append remaining spending budget to current transaction
+                // NOTE: value doesn't change if it's to/from Mike/Maura's savings acct (no category)
+                $transaction->remainingSpendingBudget = $remainingSpendingBudget;
+
+            }
+
+            // push transaction to viewTransactions
+            $viewTransactions[] = $transaction;
+
+        }
+
+        // return view to display spending records
+        return view('spending', ['who' => $who, 'spendingTransactions' => $viewTransactions]);
+    
+    }   // end function spending
+
+    
     // See budget info
     public function budget(Request $request) {
         

@@ -16,6 +16,8 @@
     <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
     <button type="button" id="buckets" class="btn btn-success">Buckets</button>
     <button type="button" id="budget" class="btn btn-danger">Budget</button>
+    <button type="button" id="mikeSpending" class="btn btn-primary mike">Mike Spending</button>
+    <button type="button" id="mauraSpending" class="btn btn-primary maura">Maura Spending</button>
 
         <table>
             <thead>
@@ -90,6 +92,21 @@
                     window.location.href = url;
                 });
 
+                // Mike Spending
+                $('#mikeSpending').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/spending/mike';
+                    window.location.href = url;
+                });
+
+                // Maura Spending
+                $('#mauraSpending').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/spending/maura';
+                    window.location.href = url;
+                });
             });
 
         </script>

@@ -41,6 +41,8 @@ Route::get('/accounts/actuals', 'App\Http\Controllers\TransactionsController@act
 Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController@moveBuckets')->name('moveBuckets');
 // write records to move the funds betwen buckets
 Route::post('/accounts/moveFundsBetweenBuckets', 'App\Http\Controllers\TransactionsController@moveFundsBetweenBuckets')->name('moveFundsBetweenBuckets');
+// see spending for Mike/Maura
+Route::get('/accounts/spending/{who}', 'App\Http\Controllers\TransactionsController@spending')->name('spending');
 // process GB Limo paycheck - write the records to the database
 Route::post('/accounts/writegblimo', 'App\Http\Controllers\TransactionsController@writeGBLimo')->name("writegblimo");
 // set lastBalanced value to today's date for all cleared transactions for this account
