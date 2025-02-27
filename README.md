@@ -4,10 +4,10 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Branch 2025-02-20-spending</h2>
+<h2>DONE with Branch 2025-02-20-spending</h2>
+<h2>Nothing in progress</h2>
     <ul>
-      <li>no changes (except this README) yet</li>
-      <li>Spending ??</li>
+      <li></li>
     </ul>
 
 <h2>BUGS</h2>
@@ -32,12 +32,13 @@
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>
       <li>Automate:<br>
-      Spending<br>
       trips<br>
       </li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
       <li>Different users so Mike can have copy of the application?</li>
+      <li>Ability to change year in Spending view?</li>
+      <li>Write transactions in Spending view to a file or Google sheet?</li>
     </ul>
 
 <h2>Future Functionality:</h2>
@@ -46,7 +47,6 @@
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
-    <li>Spending?</li>
     <li>** Assets</li>
     <li> --- Include ability to set end date</li>
     <li>Loans?</li>

@@ -56,6 +56,16 @@ h5, h6 {
     margin-left: 10px;
 }
 
+.mike {
+    background-color: lightgreen !important;
+    color: darkgreen !important;
+}
+
+.maura {
+    background-color: lightblue !important;
+    color: darkblue !important;
+}
+
 #errorMsg {
     color: red;
     font-size: 20px;
@@ -101,7 +111,7 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals {
+#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura {
     margin: 10px;
 }
 
