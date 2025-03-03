@@ -614,7 +614,6 @@
                             }),
                             dataType: 'json',
                             success: function(response) {
-                                console.log(response.message);
                                 // put new id on page where needed
                                 $record.find('.transId').text(response.recordId);
                                 $record.find('.transId').parent().attr('data-id', response.recordId);
@@ -623,24 +622,38 @@
                                 $record.find('.deleteTransaction').attr('data-id', response.recordId);
 
                                 // if the total_key was resolved response.newTotalKey has the new key), change that on the page
+                                var useEdit = true;
                                 if(response.newTotalKey !== false) {
-                                    var oldTotalKey = $record.find('.total_key').text();
-                                    $record.find('.total_key').text(response.newTotalKey);
+
+                                    var oldTotalKey = $record.find(".total_keyEdit").val();  
+                                    if(oldTotalKey == undefined) {
+                                        oldTotalKey = $record.find(".total_key").text();    // Why isn't this "xxx" ???
+                                        useEdit = false;
+                                    }
+
+                                    if(useEdit) {
+                                        $record.find('.total_keyEdit').val(response.newTotalKey);
+                                    } else {
+                                        $record.find('.total_key').text(response.newTotalKey);
+                                    }
 
                                     // change the total_key for other transactions with the same placeholder
                                     var rows = $("#editTransactionsTable tbody tr");
                                     rows.each(function(index, row) {
                                         var rowData = $(row);
 
-                                        // rows not in edit mode
-                                        if(rowData.find(".total_key").text() == oldTotalKey) {
-                                            rowData.find(".total_key").text(response.newTotalKey);
+                                        if(rowData.find(".total_keyEdit")) {
+                                            // rows in edit mode
+                                            if(rowData.find(".total_keyEdit").val() == oldTotalKey) {
+                                                rowData.find(".total_keyEdit").val(response.newTotalKey);
+                                            }
+                                        } else {
+                                            // rows not in edit mode
+                                            if(rowData.find(".total_key").text() == oldTotalKey) {
+                                                rowData.find(".total_key").text(response.newTotalKey);
+                                            }
                                         }
 
-                                        // rows in edit mode
-                                        if(rowData.find(".total_keyEdit").val() == oldTotalKey) {
-                                            rowData.find(".total_keyEdit").val(response.newTotalKey);
-                                        }
                                     });
 
                                 }
@@ -1867,8 +1880,6 @@
                 $('#addTransaction').on('click', function(e) {
                     e.preventDefault();
 
-                    // window.location.href = "/transactions/add";
-                    
                     // clone the first transaction
                     $firstTransaction = $("tbody").children(':first-child');
                     $newTransaction = $firstTransaction.clone();
@@ -2008,6 +2019,7 @@
                 $(document).on('click', '.saveTransaction', function(e) {
                     e.preventDefault();
                     
+                    console.log("in savetransaction");
                     // get the id
                     var id = $(this).data('id');
                     if(id == 'null') id = null;
@@ -2026,6 +2038,7 @@
                         if (account == '') account = "{{$accountName}}";
                         
                         // get needed data from record
+                        console.log("get needed vars");
                         var category = $record.find('.category').children(':first-child').val();
                         var amount = Number($record.find('.amount').children(':first-child').val());
                         var amtMike = Number($record.find('.amtMike').children(':first-child').val());
@@ -2119,23 +2132,69 @@
                     useEdit = '';
                     if(total_this_split == '') {
                         useEdit = "Edit";
-                        total_this_split = $(this).parent().parent().find(".amountEdit").val();
+                        total_this_split = $(this).parent().parent().find(".amount" + useEdit).val();
                     }
+                    console.log("useEdit: " + useEdit);
+                    console.log("total_this_split: " + total_this_split);
 
-                    if($(this).parent().parent().find(".total_keyEdit").val() != null) {
-                        // useEdit = "Edit";
-                        total_key = $(this).parent().parent().find(".total_keyEdit").val();
-                        total_all_splits = $(this).parent().parent().find(".total_amtEdit").val();
+                    // get total_key
+                    total_key = $(this).parent().parent().find(".total_key" + useEdit).val();
+                    console.log("total_key:", total_key);
+                    if(total_key == '') {
+                        console.log(" - null string total_key");
+                        total_key = $(this).parent().parent().attr("data-id");
+                        if(total_key == '' || total_key == "null") total_key = 'xxx';
+                        total_all_splits = total_this_split;
+                    } else if(total_key != null) {
+                        // total_key = $(this).parent().parent().find(".total_keyEdit").val();
+                        console.log(" - total_amt: ", $(this).parent().parent().find(".total_amt" + useEdit).val());
+                        total_all_splits = $(this).parent().parent().find(".total_amt" + useEdit).val();
                     } else {
-                        // useEdit = '';
+                        console.log(" - new total key:", $(this).data('id').toString());
                         total_key = $(this).data('id').toString();
                         total_all_splits = total_this_split;
                     }
+                    console.log("total_key: " + total_key);
+                    console.log("total_all_splits: " + total_all_splits);
+
+                    // set total_key and total_amt if not set, init in original transaction
+                    if(total_key == 'xxx') {
+                        $origTransaction.find(".total_key" + useEdit).text(total_key);
+                        $origTransaction.find(".total_key" + useEdit).val(total_key);
+                        $origTransaction.find(".total_amt" + useEdit).text(total_all_splits);
+                        $origTransaction.find(".total_amt" + useEdit).val(total_all_splits);
+                    }
+
+                    // // get total_key if there isn't one
+                    // if(total_key == '') {
+                    //     if( $origTransaction.attr("data-id") != null) {
+                    //         total_key = $origTransaction.attr("data-id");
+                    //     } else {
+                    //         total_key = "xxx";
+                    //     }
+                    // }
+
+                    // // if original has not total_key or total_all_splits, set them
+                    // if(total_key == '') {
+                    //     if( $origTransaction.attr("data-id") != null) {
+                    //         total_key = $origTransaction.attr("data-id");
+                    //     } else {
+                    //         total_key = "xxx";
+                    //     }
+                    //     if(useEdit == "Edit") {
+                    //         $origTransaction.find(".total_key").text(total_key);
+                    //         $origTransaction.find(".total_amt").text(total_all_splits);
+                    //     } else {
+                    //         $origTransaction.find(".total_key").text(total_key);
+                    //         $origTransaction.find(".total_amt").text(total_all_splits);
+                    //     }
+                    // }
 
                     // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
                     var newAmount = total_this_split / 2;
                     $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
                     $origTransaction.find(".amount" + useEdit).val(newAmount);  // change amount in original transaction
+                    console.log("newAmount: " + newAmount);
 
                     // var newAmtMike = $origTransaction.find('.amtMike' + useEdit).text();
                     // if(newAmtMike == '') {
@@ -2146,6 +2205,7 @@
                     $origTransaction.find(".amtMike" + useEdit).val(newAmt);                 // change amtMike in original transaction
                     $origTransaction.find(".amtMaura" + useEdit).text(newAmt);               // change amtMaura in original transaction
                     $origTransaction.find(".amtMaura" + useEdit).val(newAmt);               // change amtMaura in original transaction
+                    console.log("newAmt: " + newAmt);
 
                     // var newAmtMaura = $origTransaction.find('.amtMaura' + useEdit).text();
                     // if(newAmtMaura == '') {
@@ -2154,10 +2214,11 @@
 
                     // if total_amt is not null, 
                     //   set total_amt & total_key in original transaction, so update on page
-                    if($origTransaction.find(".total_").text() == '') {
-                        $origTransaction.find(".total_amt").text(total_all_splits);
-                        $origTransaction.find(".total_key").text(total_key);
-                    }
+                    // if($origTransaction.find(".total_").text() == '') {
+                    $origTransaction.find(".total_amt" + useEdit).text(total_all_splits);
+                    $origTransaction.find(".total_key" + useEdit).text(total_key);
+                    $origTransaction.find(".total_amt" + useEdit).val(total_all_splits);
+                    $origTransaction.find(".total_key" + useEdit).val(total_key);
                     
                     var origTransDate,
                         origClearDate,

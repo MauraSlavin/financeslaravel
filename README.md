@@ -4,10 +4,23 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>DONE with Branch 2025-02-20-spending</h2>
-<h2>Nothing in progress</h2>
+<h2>Branch 2025-03-01-fix-splitting</h2>
     <ul>
-      <li></li>
+      <li>Fix error splitting a transaction</li>
+      <br>
+      <li>Working on this:</li>
+      <p>Cash; Add Transaction; 3/1 $100 test category:Transfer<br>
+      Then "Split" (Before saving)<br>
+      Then save one transaction (works)<br>
+      Saving the second transaction fails
+      <br>
+      <li>Delete not worked for split transaction</li>
+      <br>
+      <li> - when in Edit mode (works for splitting a transaction multiple times)
+      <li> - when in Save mode
+      <li> - any other time?
+      <br>
+      <li>Remember to remove extraneous "console.log"s
     </ul>
 
 <h2>BUGS</h2>
@@ -20,6 +33,9 @@
 <h2>To do:</h2>
     <ul>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
+      <li>button to go to Accounts from any page</li>
+      <li>button to switch Mike/Maura on Spending page</li>
+      <li>fix saving new aliases</li>
       <li>Button to add or delete notes</li>
       <li>Eliminate duplicate table (budget vs. newbudget)</li>
       <li>budgetactuals page:<br>

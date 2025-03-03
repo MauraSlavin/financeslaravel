@@ -1048,8 +1048,6 @@ class TransactionsController extends Controller
             $response = DB::table("transactions")
                 ->where('id', $id)
                 ->update($dataToUpdate);
-            error_log("response after update (id: " . $id . "): ");
-            error_log(json_encode($response));
 
             return response()->json([
                 'message' => "Transaction updated successfully"
