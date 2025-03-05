@@ -997,13 +997,21 @@ class TransactionsController extends Controller
     public function delete($id)
     {
         try {
-            $transaction = DB::table('transactions')
+            $response = DB::table('transactions')
                 ->where("id", $id)
                 ->delete();
-            return response()->json([
-                'message' => 'Record deleted successfully',
-                'status' => 'success'
-            ]);
+
+            if($response == 1) {
+                return response()->json([
+                    'message' => 'Number records deleted: ' . $response,
+                    'status' => 'success'
+                ]);
+            } else {
+                return response()->json([
+                    'message' => 'Unexpected number of records deleted: ' . $response,
+                    'status' => 'error'
+                ]);
+            }
 
         } catch(\Exception $e) {
             error_log("\nProblem deleting transaction for id: " . $id);
