@@ -14,8 +14,6 @@
       Then save one transaction (works)<br>
       Saving the second transaction fails
       <br>
-      <li>Delete not worked for split transaction</li>
-      <br>
       <li> - when in Edit mode (works for splitting a transaction multiple times)
       <li> - when in Save mode
       <li> - any other time?

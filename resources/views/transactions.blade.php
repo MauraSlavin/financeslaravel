@@ -2019,7 +2019,6 @@
                 $(document).on('click', '.saveTransaction', function(e) {
                     e.preventDefault();
                     
-                    console.log("in savetransaction");
                     // get the id
                     var id = $(this).data('id');
                     if(id == 'null') id = null;
@@ -2038,7 +2037,6 @@
                         if (account == '') account = "{{$accountName}}";
                         
                         // get needed data from record
-                        console.log("get needed vars");
                         var category = $record.find('.category').children(':first-child').val();
                         var amount = Number($record.find('.amount').children(':first-child').val());
                         var amtMike = Number($record.find('.amtMike').children(':first-child').val());
@@ -2134,28 +2132,19 @@
                         useEdit = "Edit";
                         total_this_split = $(this).parent().parent().find(".amount" + useEdit).val();
                     }
-                    console.log("useEdit: " + useEdit);
-                    console.log("total_this_split: " + total_this_split);
 
                     // get total_key
                     total_key = $(this).parent().parent().find(".total_key" + useEdit).val();
-                    console.log("total_key:", total_key);
                     if(total_key == '') {
-                        console.log(" - null string total_key");
                         total_key = $(this).parent().parent().attr("data-id");
                         if(total_key == '' || total_key == "null") total_key = 'xxx';
                         total_all_splits = total_this_split;
                     } else if(total_key != null) {
-                        // total_key = $(this).parent().parent().find(".total_keyEdit").val();
-                        console.log(" - total_amt: ", $(this).parent().parent().find(".total_amt" + useEdit).val());
                         total_all_splits = $(this).parent().parent().find(".total_amt" + useEdit).val();
                     } else {
-                        console.log(" - new total key:", $(this).data('id').toString());
                         total_key = $(this).data('id').toString();
                         total_all_splits = total_this_split;
                     }
-                    console.log("total_key: " + total_key);
-                    console.log("total_all_splits: " + total_all_splits);
 
                     // set total_key and total_amt if not set, init in original transaction
                     if(total_key == 'xxx') {
@@ -2165,56 +2154,19 @@
                         $origTransaction.find(".total_amt" + useEdit).val(total_all_splits);
                     }
 
-                    // // get total_key if there isn't one
-                    // if(total_key == '') {
-                    //     if( $origTransaction.attr("data-id") != null) {
-                    //         total_key = $origTransaction.attr("data-id");
-                    //     } else {
-                    //         total_key = "xxx";
-                    //     }
-                    // }
-
-                    // // if original has not total_key or total_all_splits, set them
-                    // if(total_key == '') {
-                    //     if( $origTransaction.attr("data-id") != null) {
-                    //         total_key = $origTransaction.attr("data-id");
-                    //     } else {
-                    //         total_key = "xxx";
-                    //     }
-                    //     if(useEdit == "Edit") {
-                    //         $origTransaction.find(".total_key").text(total_key);
-                    //         $origTransaction.find(".total_amt").text(total_all_splits);
-                    //     } else {
-                    //         $origTransaction.find(".total_key").text(total_key);
-                    //         $origTransaction.find(".total_amt").text(total_all_splits);
-                    //     }
-                    // }
-
                     // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
                     var newAmount = total_this_split / 2;
                     $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
                     $origTransaction.find(".amount" + useEdit).val(newAmount);  // change amount in original transaction
-                    console.log("newAmount: " + newAmount);
 
-                    // var newAmtMike = $origTransaction.find('.amtMike' + useEdit).text();
-                    // if(newAmtMike == '') {
-                        // newAmtMike = $origTransaction.find('.amtMike' + useEdit).val();
-                    // }
                     newAmt = total_this_split / 4;
                     $origTransaction.find(".amtMike" + useEdit).text(newAmt);                 // change amtMike in original transaction
                     $origTransaction.find(".amtMike" + useEdit).val(newAmt);                 // change amtMike in original transaction
                     $origTransaction.find(".amtMaura" + useEdit).text(newAmt);               // change amtMaura in original transaction
                     $origTransaction.find(".amtMaura" + useEdit).val(newAmt);               // change amtMaura in original transaction
-                    console.log("newAmt: " + newAmt);
-
-                    // var newAmtMaura = $origTransaction.find('.amtMaura' + useEdit).text();
-                    // if(newAmtMaura == '') {
-                    //     newAmtMaura = $origTransaction.find('.amtMaura' + useEdit).val();
-                    // }
 
                     // if total_amt is not null, 
                     //   set total_amt & total_key in original transaction, so update on page
-                    // if($origTransaction.find(".total_").text() == '') {
                     $origTransaction.find(".total_amt" + useEdit).text(total_all_splits);
                     $origTransaction.find(".total_key" + useEdit).text(total_key);
                     $origTransaction.find(".total_amt" + useEdit).val(total_all_splits);
@@ -2271,14 +2223,22 @@
                 // listen for "Delete" being clicked
                 $(document).on('click', '.deleteTransaction', function(e) {
                     e.preventDefault();
-                    
+
+                    // get id and row to be deleted
                     var $row = $(this).closest('tr');
-                    var id = $row.data('id');
+                    var id = $(this).data('id');
+                    // if id not found on button, look in tr element ($row)
+                    if(id == null) {
+                        id = $row.data('id');
+                    }
+
+                    // get other info to identify transaction being deleted
                     var trans_date = $row.find('td:nth-child(2)').text();
                     var account = $row.find('td:nth-child(4)').text();
                     var toFrom = $row.find('td:nth-child(5)').text();
                     var amount = $row.find('td:nth-child(6)').text();
 
+                    // check with user
                     if (confirm("Are you sure you want to delete this transaction?"
                         + "\n - Id: " + id
                         + "\n - Trans date: " + trans_date
@@ -2286,7 +2246,7 @@
                         + "\n - toFrom: " + toFrom
                         + "\n - Amount: " + amount
                     )) {
-                    
+
                         // handle delete a transaction
                         $.ajax({
                             url: '/transactions/delete/' + id,
