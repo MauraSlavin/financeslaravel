@@ -4,44 +4,35 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Branch 2025-03-01-fix-splitting</h2>
+<h2>Old branch 2025-03-01-fix-splitting</h2>
+<h2>Nothing being worked on - need new branch</h2>
     <ul>
-      <li>Fix error splitting a transaction</li>
-      <br>
-      <li>Working on this:</li>
-      <p>Cash; Add Transaction; 3/1 $100 test category:Transfer<br>
-      Then "Split" (Before saving)<br>
-      Then save one transaction (works)<br>
-      Saving the second transaction fails
-      <br>
-      <li> - when in Edit mode (works for splitting a transaction multiple times)
-      <li> - when in Save mode
-      <li> - any other time?
-      <br>
-      <li>Remember to remove extraneous "console.log"s
+      <li>
+      </li>
     </ul>
 
 <h2>BUGS</h2>
   <ul>
     <li>Error msg: The GET method is not supported for route transactions/insertTrans. Supported methods: POST.<br>
     GET /transactions/insertTrans</li>
-    <li>When splitting a transaction that was already saved (?), saving the original + all split (so get duplicate transactions - splits and original not split).</li>
   </ul>
     
 <h2>To do:</h2>
     <ul>
+      <li>fix saving new aliases</li>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
-      <li>fix saving new aliases</li>
       <li>Button to add or delete notes</li>
       <li>Eliminate duplicate table (budget vs. newbudget)</li>
+      <li>Update account totals at top on page for specific account when transaction added/deleted (Cleared balance; Register balance)
+      <br>
+      Maybe include unsaved changes as well as saved changes?  Unsaved in grey??</li>
       <li>budgetactuals page:<br>
       &nbsp&nbsp&nbspAbility to update budget for current year<br>
       &nbsp&nbsp&nbspClick on a Budget or Actual box to see the transactions included<br>
       &nbsp&nbsp&nbspDo I want to group these by category w/subtotals??</li>
       <li>No category or amtMike (for Maura's) / amtMaura (for Mike's) when adding transactions to Mike/Maura Spending accounts.</li>
-      <li>When editting transactions, when changing the amount for splits (total_key has a value), code needs to handle when some of the splits are NOT in edit mode.</li>
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>

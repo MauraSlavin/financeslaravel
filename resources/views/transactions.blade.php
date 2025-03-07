@@ -1396,24 +1396,42 @@
                         }
 
 
-                        // NOTE:  This doesn't handle the transactions that are NOT in edit mode
-
-
                         // if there is a total_key, adjust total_amt for all records with that key
-                        // if any of the records are not in edit mode, put them in edit mode.  Throw an alert.
-                        var totalKey = $input.parent().parent().find(".total_keyEdit").val();
+                        //      include those in Edit mode and those NOT in Edit mode
+                        var totalKeyEditElmts, totalKeyElmts;  // will hold transaction elements in Edit mode and those NOT in Edit mode separately
+                        var newTotalAmt = 0;  // total amounts with the same total_key (w or w/out Edit)
 
+                        // get those in Edit mode first
+                        var totalKey = $input.parent().parent().find(".total_keyEdit").val();   // total key to search for in calculating the total
+
+                        // if there are any total_key's in edit mode (.total_keyEdit), sum the total for those
                         if($input.parent().parent().find(".total_keyEdit").val() != '') {
                             // get all the total_key input values
-                            var totalKeyElmts = $input.parent().parent().parent().find('.total_keyEdit');
+                            totalKeyEditElmts = $input.parent().parent().parent().find('.total_keyEdit');
 
                             // get new total amount (sum of current amounts)
-                            var newTotalAmt = 0;
-                            var amount;
-                            totalKeyElmts.each( (index, totalKeyElt) => {
+                            totalKeyEditElmts.each( (index, totalKeyElt) => {
                                 if($(totalKeyElt).val() == totalKey) {
                                     // get amount for this transaction (with matching totalKey)
-                                    amount = $(totalKeyElt).parent().parent().find('.amountEdit').val();
+                                    var amount = $(totalKeyElt).parent().parent().find('.amountEdit').val();
+                                    // add to total amount
+                                    newTotalAmt += Number(amount);
+                                }
+                            });
+
+                        }
+
+                        // get those NOT in Edit mode
+                        // if there are any transactions NOT in Edit mode (.total_key's), add those to the newTotalAmt sum
+                        if($input.parent().parent().parent().find(".total_key").text() != '') {
+                            // get all the total_key input values
+                            var totalKeyElmts = $input.parent().parent().parent().find('.total_key');
+
+                            // get new total amount, and add to total (newTotalAmt)
+                            totalKeyElmts.each( (index, totalKeyElt) => {
+                                if($(totalKeyElt).text() == totalKey) {
+                                    // get amount for this transaction (with matching totalKey)
+                                    var amount = $(totalKeyElt).parent().find('.amount').text();
                                     // add to total amount
                                     newTotalAmt += Number(amount);
                                 }
@@ -1421,13 +1439,24 @@
 
                             // update total amount for each transaction with the matching total_key
                             totalKeyElmts.each( (index, totalKeyElt) => {
+                                if($(totalKeyElt).text() == totalKey) {
+                                    $(totalKeyElt).parent().find('.total_amt').text(newTotalAmt);
+                                }
+                            });
+                        }
+                                               
+                        // go back and update total amount for each transaction with the matching total_keyEdit, if there are any transactions in Edit mode
+                        // couldn't do this in if for transactions in Edit mode because we didn't have the complete newTotalAmt value.
+                        if(totalKeyEditElmts) {
+                            totalKeyEditElmts.each( (index, totalKeyElt) => {
                                 if($(totalKeyElt).val() == totalKey) {
                                     $(totalKeyElt).parent().parent().find('.total_amtEdit').val(newTotalAmt);
                                 }
                             });
                         }
-                                               
+
                     });
+
 
                     // amtMike
                     $("#editTransactionsTable").off('change', '.amtMikeEdit').on('change', '.amtMikeEdit', function(e) {
@@ -2127,14 +2156,12 @@
                     var total_key, total_this_split, total_all_splits, useEdit;
 
                     total_this_split = $(this).parent().parent().find(".amount").text();
-                    // console.log("total_this_split:", total_this_split);
                     useEdit = false;
                     // if(total_this_split == '') {
                     if($(this).parent().parent().find(".transDateEdit").prop("tagName") == "INPUT") {
                         useEdit = true;
                         total_this_split = $(this).parent().parent().find(".amountEdit").val();
                     }
-                    // console.log("useEdit:", useEdit);
 
                     // get total_key
                     if(useEdit) {
@@ -2142,35 +2169,24 @@
                     } else {
                         total_key = $(this).parent().parent().find(".total_key").text();
                     }
-                    // console.log("init total_key:", total_key);
                     
                     if(total_key == '') {
-                        // console.log("total_key is ''");
                         total_key = $(this).parent().parent().attr("data-id");
-                        // console.log("updated 1 total_key:", total_key);
                         if(total_key == '' || total_key == "null") total_key = 'xxx';
-                        // console.log("updated 2 total_key:", total_key);
                         total_all_splits = total_this_split;
-                        // console.log("total_all_splits:", total_all_splits);
                     } else if(total_key != null) {
-                        console.log("total_key is not null");
                         if(useEdit) {
                             total_all_splits = $(this).parent().parent().find(".total_amtEdit").val();
                         } else {
                             total_all_splits = $(this).parent().parent().find(".total_amt").text();
                         }
-                        // console.log("total_all_splits:", total_all_splits);
                     } else {
-                        // console.log("total_key has value");
                         total_key = $(this).data('id').toString();
-                        // console.log("updated total_key:", total_key);
                         total_all_splits = total_this_split;
-                        // console.log("total_all_splits:", total_all_splits);
                     }
 
                     // set total_key and total_amt if not set, init in original transaction
                     if(total_key == 'xxx') {
-                        // console.log("total_key is xxx - update total_key and total_amt on page");
                         if(useEdit) {
                             $origTransaction.find(".total_keyEdit").val(total_key);
                             $origTransaction.find(".total_amtEdit").val(total_all_splits);
@@ -2182,7 +2198,6 @@
 
                     // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
                     var newAmount = total_this_split / 2;
-                    // console.log("change .amount to newAmount:", newAmount);
                     $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
                     if(useEdit) {
                         $origTransaction.find(".amountEdit").val(newAmount);  // change amount in original transaction
@@ -2191,7 +2206,6 @@
                     }
 
                     newAmt = total_this_split / 4;
-                    // console.log("change .amtMike and .amtMaura to newAmt:", newAmt);
                     if(useEdit) {
                         $origTransaction.find(".amtMikeEdit").val(newAmt);                 // change amtMike in original transaction
                         $origTransaction.find(".amtMauraEdit").val(newAmt);               // change amtMaura in original transaction
@@ -2203,11 +2217,9 @@
                     // if total_amt is not null, 
                     //   set total_amt & total_key in original transaction, so update on page
                     if(useEdit) {
-                        // console.log("set .total_amtEdit and .total_keyEdit to total_all_splits:" + total_all_splits + " and total_key:" + total_key);
                         $origTransaction.find(".total_amtEdit").val(total_all_splits);
                         $origTransaction.find(".total_keyEdit").val(total_key);
                     } else {
-                        // console.log("set .total_amt and .total_key to total_all_splits:" + total_all_splits + " and total_key:" + total_key);
                         $origTransaction.find(".total_amt").text(total_all_splits);
                         $origTransaction.find(".total_key").text(total_key);
                     }
