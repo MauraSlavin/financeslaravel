@@ -4,11 +4,17 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Old branch 2025-03-01-fix-splitting</h2>
-<h2>Nothing being worked on - need new branch</h2>
+<h2>Branch 2025-03-09-elim-dup-budget-table</h2>
+<h2>Eliminate duplicate table (budget vs. newbudget)</h2>
     <ul>
-      <li>
-      </li>
+      <li>Keep budget</li>
+      <li> - just need to verify numbers in TRANSACTIONS view</li>
+      <li> - AND in BUD VS ACT view</li>
+      <li> - AND delete newbudget table</li>
+      <br>
+      <li> - make sure budget has most recent data (DONE)</li>
+      <li> - find where newbudget is being used (DONE)</li>
+      <li> - get data from budget instead (in format expected) (DONE)</li>
     </ul>
 
 <h2>BUGS</h2>
@@ -19,13 +25,13 @@
     
 <h2>To do:</h2>
     <ul>
+      <li>splitting Spending transaction may still not be working correctly</li>
       <li>fix saving new aliases</li>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
       <li>Button to add or delete notes</li>
-      <li>Eliminate duplicate table (budget vs. newbudget)</li>
-      <li>Update account totals at top on page for specific account when transaction added/deleted (Cleared balance; Register balance)
+      <li>Update account totals at top on page for specific account when transaction added/deleted (Cleared balance; Register balance)</li>
       <br>
       Maybe include unsaved changes as well as saved changes?  Unsaved in grey??</li>
       <li>budgetactuals page:<br>

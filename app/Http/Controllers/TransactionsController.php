@@ -707,6 +707,7 @@ class TransactionsController extends Controller
         // Get today's date (for next few queries)
         $thisMonth = date('m');
         $thisYear = date('Y');
+        error_log("thisMonth: " . $thisMonth . "; thisYear: " . $thisYear);
         $firstDay = $thisYear . "-01-01";
 
         // get amount spent for this category this year
@@ -718,21 +719,39 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
-        $ytmBudgets = DB::table('newbudget')
-            ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
-            ->where('monthNum', '<=', $thisMonth)
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
+
+        // months to use to get YTM budget
+        $selectedMonths = array_slice($months, 0, $thisMonth);
+        
+        $ytmBudgets = DB::table('budget')
+            ->selectRaw("year, category, " . implode(' + ', array_map(fn($m) => "COALESCE($m, 0)", $selectedMonths)) . " as total_budget")
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
-            ->get()
-            ->toArray();
+            ->get()->toArray();
+        // error_log("new var: \n" . json_encode($ytmBudgets));
 
         // get full year budgets by category
-        $yearBudgets = DB::table('newbudget')
-            ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
+        $yearBudgets = DB::table('budget')
+            ->select('year', 'category', 'total as total_budget')
             ->where('year', $thisYear)
-            ->groupBy('year', 'category')
+            ->groupBy()
             ->get()
             ->toArray();
+        // error_log("new yearBudgets: \n" . json_encode($yearBudgets));
 
         // add ytd spent, budget through current month, full year budget to transactions variable for each transaction
         // and fill in accountId
@@ -898,21 +917,39 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
-        $ytmBudgets = DB::table('newbudget')
-            ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
-            ->where('monthNum', '<=', $thisMonth)
-            ->where('year', $thisYear)
-            ->groupBy('year', 'category')
-            ->get()
-            ->toArray();
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
 
-        // get full year budgets by category
-        $yearBudgets = DB::table('newbudget')
-            ->selectRaw('year, category, SUM(budgetAmount) as total_budget')
+        // months to sum budgets to get YTM budget
+        $selectedMonths = array_slice($months, 0, $thisMonth);
+        
+        $ytmBudgets = DB::table('budget')
+            ->selectRaw("year, category, " . implode(' + ', array_map(fn($m) => "COALESCE($m, 0)", $selectedMonths)) . " as total_budget")
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
+            ->get()->toArray();
+        // error_log("new var: \n" . json_encode($ytmBudgets));
+    
+        // get full year budgets by category
+        $yearBudgets = DB::table('budget')
+            ->select('year', 'category', 'total as total_budget')
+            ->where('year', $thisYear)
+            ->groupBy()
             ->get()
             ->toArray();
+        // error_log("new yearBudgets: \n" . json_encode($yearBudgets));
 
         // add ytd spent, budget through current month, full year budget to transactions variable for each transaction
         foreach($transactions as $transaction) {
