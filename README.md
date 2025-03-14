@@ -4,8 +4,24 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Branch 2025-03-09-elim-dup-budget-table</h2>
+<h2>Branch 2025-03-13-trips</h2>
+  <ul>
+    <li>Get tolls for this trip</li>
+    <li>Dates of trip</li>
+    <li>Trips table</li>
+    <li>Write info to Trips table</li>
+    <li>Gas / charging</li>
+    <li>Include gas/charing done en route</li>
+    <li>Maintenance</li>
+    <li>Insurance</li>
+    <li>Cost of purchase price of car</li>
+    <li>Do something to avoid duplicate tolls records??</li>
+    <br>
+    <li>DONE - Writes tolls to tolls table</li>
+  </ul>
+
 <h2>Eliminate duplicate table (budget vs. newbudget)</h2>
+<p>Branch 2025-03-09-elim-dup-budget-table</p>
     <ul>
       <li>Keep budget</li>
       <li> - just need to verify numbers in TRANSACTIONS view</li>

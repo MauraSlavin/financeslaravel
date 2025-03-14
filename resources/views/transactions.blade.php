@@ -1161,7 +1161,6 @@
                             dataType: 'json',
                             data: {
                                 _token: "{{ csrf_token() }}"
-                                // totalKey: total_key
                             },
                             success: function(response) {
 

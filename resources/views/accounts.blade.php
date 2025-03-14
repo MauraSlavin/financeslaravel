@@ -18,6 +18,7 @@
     <button type="button" id="budget" class="btn btn-danger">Budget</button>
     <button type="button" id="mikeSpending" class="btn btn-primary mike">Mike Spending</button>
     <button type="button" id="mauraSpending" class="btn btn-primary maura">Maura Spending</button>
+    <button type="button" id="trips" class="btn btn-info trips">Trips</button>
 
         <table>
             <thead>
@@ -105,6 +106,14 @@
                     e.preventDefault();
 
                     const url = '/accounts/spending/maura';
+                    window.location.href = url;
+                });
+
+                // Trips
+                $('#trips').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/trips';
                     window.location.href = url;
                 });
             });
