@@ -81,6 +81,64 @@ class TransactionsController extends Controller
         return $newCsvData;
     }   // end function readUploadCsv
 
+
+    // get tolls from csv file
+    public function readTollCsv() {
+
+        // csv files are expected to be in the public/uploadFiles folder.
+        $fullFilePath = public_path('uploadFiles/tolls.csv');
+
+        // does the csv file exist?
+        if (!file_exists($fullFilePath)) {
+            return response()->json(['error' => 'File ' . $fullFilePath . ' not found'], 404);
+        }
+
+        // open the file
+        $handle = fopen($fullFilePath, 'r');
+
+        // get header row
+        $headers = fgetcsv($handle, 1000, ',');
+
+        // make sure headers exist
+        if($headers === FALSE) {
+            return response()->json(['error' => 'File ' . $fullFilePath . ' has no headers'], 411);
+        }
+
+        // init transactions array
+        $tollData = [];
+
+        // read each record
+        // keep these values for tolls table
+        $dataHdrsToKeep = [
+            "Agency",
+            "Transponder/Plate",
+            "Transaction Date",
+            "Transaction Time",
+            "Entry Plaza",
+            "Exit Plaza",
+            "Exit Lane",
+            "Outgoing",
+            "Car",
+            "Trip"
+        ];
+
+        // build tollData array
+        $rowNumber = 0;
+        while (($row = fgetcsv($handle, 1000, ',')) !== FALSE) {
+            $rowNumber++;
+            foreach($headers as $hdrIdx=>$header) {
+                if(in_array($header, $dataHdrsToKeep)) {
+                    $tollData[$rowNumber][$header] = $row[$hdrIdx];
+                }
+            }
+        }
+
+        // close the csv file
+        fclose($handle);
+
+        return $tollData;
+    }   // end function readTollCSV
+
     
     // tweak records for Checking to make import more helpful
     public function modifyCsvForChecking($newCsvData) {
@@ -808,9 +866,7 @@ class TransactionsController extends Controller
     }
 
 
-    // reads the csv file, messages, and writes to transactions database
-    // Right now (10/2/24), $account has to be "disccc".  
-    //      - modify so it can be anything in a new table (accounts?) that defines how the records are built for each account
+    // reads the csv file, massages, and writes to transactions table
     public function upload($accountName) {
 
         // convert mm/dd/yyyy to yyyy-mm-dd
@@ -1025,8 +1081,39 @@ class TransactionsController extends Controller
 
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
-        // error_log(json_encode($newCsvData));
         return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
+    }
+
+
+    // reads the csv file, massages, and writes to tolls table
+    // tolls to upload should be in public/uploadFiles/tolls
+    public function uploadtolls() {
+
+        // READ toll records from csv file (only keeping what is needed)
+        $tollRcds = $this->readTollCsv();
+
+        // Write toll records to tolls table
+        // DB::beginTransaction();
+        // try {
+            $result = DB::table('tolls')
+                ->insert($tollRcds);
+        //     DB::commit();
+        // } catch (\Exception $e) {
+        //     DB::rollback();
+        //     throw $e;
+        // }
+
+        if($result) {
+            return response()->json([
+                'message' => 'Tolls successfully written to tolls table.',
+                'status' => 'success'
+            ]);
+        } else {
+            return response()->json([
+                'message' => 'Unexpected error writing tolls to tolls table.',
+                'status' => 'error'
+            ]);
+        }
     }
 
 
@@ -1307,6 +1394,8 @@ class TransactionsController extends Controller
             return response()->json(['error' => 'An unexpected error occurred'], 500);
         }
     }
+
+
     // get total_key transactions
     public function totalKey($totalKey): JsonResponse
     {
@@ -1488,6 +1577,19 @@ class TransactionsController extends Controller
         $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts, and write transactions in checkbook.";
         return redirect()->route('accounts')->with('acctsMsg', $reminder);
     }   // end of writeGBLimo
+
+
+    // calc values & write transactions for cost of car for a trip
+    // 2 transactions total (in & out of household checking) -- from MxxxSpending to IncomeMisc categories
+    // - one from Spending (MikeSpending and/or MauraSpending) category (to charge who used the car)
+    // - second to Checking with category IncomeMisc (because money never really left the ckg account)
+    public function recordTrip(Request $request) {
+
+        $msg = "recordTrip done.";
+
+        // go back to accounts page, with reminder wrt transfer
+        return redirect()->route('accounts')->with('acctsMsg', $msg);
+    }   // end of recordTrip
     
 
     // Show assets and current values
@@ -2163,6 +2265,16 @@ class TransactionsController extends Controller
         return view('spending', ['who' => $who, 'spendingTransactions' => $viewTransactions]);
     
     }   // end function spending
+
+
+    // calc cost to use car for a trip
+    // and write corresponding records to transactions table
+    public function trips() {
+
+        // return view to get info to calc cost to use car for a trip
+        return view('trips');
+    
+    }   // end function trips
 
     
     // See budget info

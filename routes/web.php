@@ -43,12 +43,19 @@ Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController
 Route::post('/accounts/moveFundsBetweenBuckets', 'App\Http\Controllers\TransactionsController@moveFundsBetweenBuckets')->name('moveFundsBetweenBuckets');
 // see spending for Mike/Maura
 Route::get('/accounts/spending/{who}', 'App\Http\Controllers\TransactionsController@spending')->name('spending');
+// calc cost for a trip
+Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
+// sum tolls for a specific trip, using records in tolls table
+Route::get('/accounts/uploadtolls', 'App\Http\Controllers\TransactionsController@uploadtolls');
+// write transactions to transactions table
+Route::post('/accounts/recordTrip', 'App\Http\Controllers\TransactionsController@recordTrip')->name('recordTrip');
 // process GB Limo paycheck - write the records to the database
 Route::post('/accounts/writegblimo', 'App\Http\Controllers\TransactionsController@writeGBLimo')->name("writegblimo");
 // set lastBalanced value to today's date for all cleared transactions for this account
 Route::get('/accounts/{accountName}/balances', 'App\Http\Controllers\TransactionsController@balances')->name('balances');
-// Transactions for account accountName with trans_dates in the date range given
+// upload transactions from a csv file (downloaded from bank's website) to transactions table
 Route::get('/accounts/{accountName}/upload', 'App\Http\Controllers\TransactionsController@upload');
+// Transactions for account accountName with trans_dates in the date range given
 Route::get('/accounts/{accountName}/{beginDate}/{endDate}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');
 // All this year's transactions (looking at trans_date) for account accountName
 Route::get('/accounts/{accountName}/{beginDate}/{endDate}/{clearedBalance}/{registerBalance}/{lastBalanced}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');

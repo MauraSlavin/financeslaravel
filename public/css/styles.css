@@ -111,7 +111,7 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura {
+#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura, #mauraSpending, #mikeSpending, #trips {
     margin: 10px;
 }
 
@@ -140,9 +140,33 @@ h5, h6 {
     width: 100%;
 }
 
+.tripInput, .tripInput:focus, .tripInput:valid, .tripInput:invalid, input:required, input:required:invalid {
+    background-color: rgb(232, 200, 241) !important;
+    /* border-color: rgb(232, 200, 241) !important; */
+    border-color: none !important;
+    border-radius: 6px !important;
+    border-style: none !important;
+    padding: 6px 12px !important;
+}
+
 .newtranslabel {
     width: 100px;
     font-weight: bold;
+}
+
+.tripLabel {
+    width: 500px;
+    font-weight: bold;
+}
+
+.processTrip {
+    margin: 20px;
+}
+
+.uploadTollsButton {
+    height: 23px;
+    font-size: 15px !important;
+    padding: 2px !important;
 }
 
 /* transactions that may be duplicates have a yellow background color */
