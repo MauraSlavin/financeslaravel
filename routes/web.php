@@ -46,6 +46,8 @@ Route::get('/accounts/spending/{who}', 'App\Http\Controllers\TransactionsControl
 // calc cost for a trip
 Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
 // sum tolls for a specific trip, using records in tolls table
+Route::post('/accounts/tallytolls', 'App\Http\Controllers\TransactionsController@tallytolls');
+// write tolls from csv file to tolls table
 Route::get('/accounts/uploadtolls', 'App\Http\Controllers\TransactionsController@uploadtolls');
 // write transactions to transactions table
 Route::post('/accounts/recordTrip', 'App\Http\Controllers\TransactionsController@recordTrip')->name('recordTrip');

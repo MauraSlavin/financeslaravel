@@ -6,18 +6,38 @@
 
 <h2>Branch 2025-03-13-trips</h2>
   <ul>
-    <li>Get tolls for this trip</li>
-    <li>Dates of trip</li>
-    <li>Trips table</li>
-    <li>Write info to Trips table</li>
+    <li>table for info needed to calc cost of car<br>
+      - insurance (payment, begin/end dates, expected mileage)<br>
+      - purchase price (purchase price, expected mileage)<br>
+      - solar cost<br>
+      <ul>
+        <li>carcostdetails (table name)</li>
+        <li>1 - car</li>
+        <li>2 - key</li>
+        <li>3 - value</li>
+      </ul>
+      <ul>
+        <li>KEYS</li>
+        <li>Purchase - purchase price of the car</li>
+        <li>ExpMiles - expected total miles for the car to last</li>
+        <li>InsPaymmyy - Insurance payment (mmyy is the month and year of payment)</li>
+        <li>InsPaymmyyBegin - date insurance coverage begins</li>
+        <li>InsPaymmyyEnd - date insurance coverage end</li>
+        <li>InsPaymmyyMiles - expected mileage during this insurance term</li>
+        <li>Solar - home cost per KwH</li>
+      </ul>
+    <li>Cost of purchase price of car</li>
     <li>Gas / charging</li>
-    <li>Include gas/charing done en route</li>
+    <li>Include gas/charging done en route</li>
     <li>Maintenance</li>
     <li>Insurance</li>
-    <li>Cost of purchase price of car</li>
+    <li>Write info to Trips table</li>
     <li>Do something to avoid duplicate tolls records??</li>
     <br>
-    <li>DONE - Writes tolls to tolls table</li>
+    <li>DONE - Tally tolls for this trip (Tally Tolls button)</li>
+    <li>DONE - Trips table (copied rcds for begin of 2025)</li>
+    <li>DONE - Writes tolls to tolls table (Update Tolls button)</li>
+    <li>DONE - prompt for dates of trip</li>
   </ul>
 
 <h2>Eliminate duplicate table (budget vs. newbudget)</h2>
@@ -234,19 +254,20 @@
   <ul>
     <li>transactions: has each transaction</li>
     <li>bucketgoals:  goals for each bucket in Discover Savings account.</li>
-    <li>budget: is still used in Workbench, I think.</li>
+    <li>budget: has one record for each year/category combination w/budget for each month in that year. Total is automatically calculated (defined in table)</li>
 <br>
 <p>New tables</p>
-    <li><u>newbudget</u>:  has same info as budget, and is used in the application</li>
     <li><u>accounts</u>: accountName, description & lastStmtDate (null for end of month) for each defined account</li>
-    <li><u>uploadmatch</u>: maps csv to transaction fields for each account</li>
+    <li><u>categories</u>: is this used??</li>
+    <li><u>notes</u>: where notes on budget vs. actual are stored</li>
     <li><u>tofromaliases</u>: convert what's in bank download to my verbiage for toFrom field</li>
-    <br>
-    <li>NOTE:  Delete budget table & rename newbudget to budget when done.</li>
+    <li><u>tolls</u>: copied (after massaging) from download from EZPass website</li>
+    <li><u>trips</u>: calculated cost broken down to use car for Spending trips</li>
+    <li><u>uploadmatch</u>: maps csv to transaction fields for each account</li>
   </ul>
 
 
-<h2>routes: (am I missing some?)</h2>
+<h2>routes: (needs updating)</h2>
   <ul>
     <li>Default Laravel welcome page
     <br>- <u>http://localhost:8000</u></li>

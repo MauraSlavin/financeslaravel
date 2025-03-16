@@ -15,13 +15,23 @@
         @csrf
 
             <div class="form-row">
-                <label class="tripLabel" for="tripName">Abbreviation for this trip (25 char max):</label>
+                <label class="tripLabel" for="tripName">Trip name (25 char max):</label>
                 <br>
                 <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="25">
             </div>
             
             <div class="form-row">
-                <label class="tripLabel" for="tripName">Who used the car:</label>
+                <label class="tripLabel" for="tripBegin">Trip Began on:</label>
+                <input class="tripInput" type="date" id="tripBegin" name="tripBegin" class="form-control" required>
+            </div>
+            
+            <div class="form-row">
+                <label class="tripLabel" for="tripEnd">Trip Ended on:</label>
+                <input class="tripInput" type="date" id="tripEnd" name="tripEnd" class="form-control" required>
+            </div>
+
+            <div class="form-row">
+                <label class="tripLabel" for="tripWho">Who used the car:</label>
                 <select name="tripWho" class="form-control tripInput" required>
                     <option value="">Who used the car</option>
                     <option value="Mike" {{ old('tripWho') == 'Mike' ? 'selected' : '' }}>Mike</option>
@@ -31,7 +41,7 @@
             </div>
 
             <div class="form-row">
-                <label class="tripLabel" for="tripName">Which car was used:</label>
+                <label class="tripLabel" for="tripCar">Which car was used:</label>
                 <select name="tripCar" class="form-control tripInput" required>
                     <option value="">Which car was used</option>
                     <option value="Bolt" {{ old('tripCar') == 'Bolt' ? 'selected' : '' }}>Bolt</option>
@@ -45,12 +55,9 @@
                 <input class="tripInput" type="number" id="tripmiles" name="tripmiles" class="form-control" required>
             </div>
 
-            <!-- <div class="form-row">
-                <label class="tripLabel" for="tripTolls">Click button to upload & tally tolls</label>
-                <input class="tripInput" type="text" id="tripTolls" name="tripTolls" class="form-control" disabled>
-            </div> -->
             <div class="form-row d-flex align-items-center" style="margin-bottom:0;">
                 <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label>
+                <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
                 <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
             </div>
             <div class="form-row" style="margin-top:0;">
@@ -70,7 +77,7 @@
 
             $(document).ready(function() {
 
-                // Upload Tolls button
+                // Upload Tolls button clicked
                 $('.uploadTollsButton').on('click', function(e) {
                     e.preventDefault();
 
@@ -93,8 +100,44 @@
                         }
                     });
 
-                });
+                }); // end of listener for uploadTollsButton
 
+
+                // Tally Tolls button clicked
+                $('.tallyTollsButton').on('click', function(e) {
+                    e.preventDefault();
+
+                    // get name of trip from the page
+                    var trip = $('#tripName').val();
+
+                    // if it's blank, ask user to enter a trip name
+                    if(trip == undefined || trip == '') {
+                        alert("Please enter a trip name.");
+                    } else {
+
+                        // tally tolls for this trip & put on page
+                        $.ajax({
+                            url: '/accounts/tallytolls',
+                            type: 'POST',
+                            contentType: 'application/json',
+                            dataType: 'json',
+                            data: JSON.stringify({
+                                _token: "{{ csrf_token() }}",
+                                trip: trip
+                            }),
+                            success: function(response) {
+                                // write tally to page
+                                $("#tripTolls").val(response['tolls']);
+                            },
+                            error: function(xhr, status, error) {
+                                var errorMsg = "Error tallying tolls.";
+                                console.log(errorMsg, error);
+                                alert(errorMsg, error);
+                            }
+                        });
+                    }
+
+                }); // end of listener for tallyTollsButton
 
             });
 
