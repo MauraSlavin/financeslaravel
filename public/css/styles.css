@@ -140,7 +140,7 @@ h5, h6 {
     width: 100%;
 }
 
-.tripInput, .tripInput:focus, .tripInput:valid, .tripInput:invalid, input:required, input:required:invalid {
+.tripInput {
     background-color: rgb(232, 200, 241) !important;
     /* border-color: rgb(232, 200, 241) !important; */
     border-color: none !important;
@@ -163,10 +163,11 @@ h5, h6 {
     margin: 20px;
 }
 
-.uploadTollsButton {
+.uploadTollsButton, .tallyTollsButton {
     height: 23px;
     font-size: 15px !important;
     padding: 2px !important;
+    margin-right: 10px;
 }
 
 /* transactions that may be duplicates have a yellow background color */

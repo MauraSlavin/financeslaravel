@@ -1082,7 +1082,7 @@ class TransactionsController extends Controller
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
         return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
-    }
+    }   // end of function upload
 
 
     // reads the csv file, massages, and writes to tolls table
@@ -1114,7 +1114,38 @@ class TransactionsController extends Controller
                 'status' => 'error'
             ]);
         }
-    }
+    }   // end of function uploadtolls
+
+
+    // sums tolls in tolls table for given trip & returns the sum of the tolls
+    public function tallytolls(Request $request) {
+
+        // get trip passed in
+        $data = json_decode($request->getContent(), true);
+        $trip = $data['trip'];
+
+        // get sum of tolls (Outgoing) from tolls table for this trip
+        $tolls = DB::table('tolls')
+                ->where("trip", $trip)
+                ->sum('Outgoing');
+        // round the tolls total
+        $tolls = round(floatval($tolls),2);
+
+        // if it's a number, return it
+        if(is_numeric($tolls)) {
+            return response()->json([
+                'message' => 'Sum of tolls successfully retrieved from tolls table.',
+                'status' => 'success',
+                'tolls' => $tolls
+            ]);
+        // otherwise, return error
+        } else {
+            return response()->json([
+                'message' => 'Unexpected error getting tolls sum from tolls table.',
+                'status' => 'error'
+            ]);
+        }
+    }   // end of function tallytolls
 
 
     // delete a transaction by id
@@ -1269,7 +1300,7 @@ class TransactionsController extends Controller
             ], 500);
         }
             
-    }
+    }   // end of function updateInvBalances
 
 
     // insert a new toFromAlias record
