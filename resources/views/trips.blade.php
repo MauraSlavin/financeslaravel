@@ -9,7 +9,11 @@
 
     <body>
         <h1>Trips - Cost to use car</h1>
-
+        <p style="color:red; margin-left:20px;"> NOTE: Make sure 
+            <br> --- <u>Maintenance</u> (tracking is the car, notes begins with "maint") 
+            <br> --- <u>Tolls</u> (can upload - "Upload Tolls" below - from EZPass download - beware of duplicate tolls records)
+            <br> --- and <u>Insurance</u> (if there's been a recent car insurance payment)
+            <br> are up to date.</p>
         <!-- data needed to calc use of a car -->
         <form action="{{ route('recordTrip') }}" method="POST">
         @csrf

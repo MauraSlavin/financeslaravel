@@ -1610,16 +1610,213 @@ class TransactionsController extends Controller
     }   // end of writeGBLimo
 
 
+    function calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles) {
+
+        // calc purchase cost per mile
+        $costPerMile = round($purchase/($expMiles - $beginMiles), 3);
+
+        // cost/mile * number of miles for this trip is the share of the purchase price for this trip
+        $sharePurchase = round($costPerMile * $tripData["tripmiles"], 2);
+
+        return $sharePurchase;
+
+    }   // end of function calcSharePurchase
+
+
+    // calculate share of maintenance costs for this trip
+    function calcShareMaint($tripData, $beginMiles, $expMiles) {
+
+        // sum total cost of maintenance 2022 or later.
+        // result is negative, so sign needs to be reversed.
+        $recentMaint = -DB::table('transactions')
+            ->where('tracking', $tripData['tripCar'])
+            ->where('notes', 'like', 'maint%')
+            ->sum('amount');
+
+        // maintenance before 2022
+        $oldMaint = DB::table('carcostdetails')
+            ->where('car', $tripData['tripCar'])
+            ->where('key', 'OldMaint')
+            ->pluck('value');
+
+        // if no old maintenance found, set to 0
+        if(count($oldMaint) > 0) {
+            $oldMaint = $oldMaint[0];
+        } else {
+            $oldMaint = 0;
+        }
+        
+        // total maintenance is old + new
+        $totMaint = $recentMaint + $oldMaint;
+
+        // calc maint cost per mile
+        $costPerMile = $totMaint/($expMiles - $beginMiles);
+
+        // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
+        $shareMaint = round($costPerMile * $tripData['tripmiles'], 2);
+
+        return $shareMaint;
+        
+    }   // end of function calcShareMaint
+
+
+    // calculate share of insurance premium for this trip
+    // NOTE:  This ASSUMES
+    //
+    //      IMPORTANT
+    //      ASSUMPTION:  all ins data for the same term will be together in the db table!!!
+    //
+    //
+    function calcShareIns($tripData, $beginMiles, $expMiles) {
+
+        // get all insurance inforamtion
+        // find what is relevant in the code below
+        $insTableData = DB::table('carcostdetails')
+            ->where('car', $tripData['tripCar'])
+            ->where('key', 'like', 'InsPay%')
+            ->get()->toArray();
+
+        // init vars to organize data
+        $begins = [];
+        $ends = [];
+        $miles = [];
+        $premiums = [];
+        $prefixes = [];
+        $errMsg = null;
+
+        foreach($insTableData as $insDatum) {
+            if(str_contains($insDatum->key, 'Begin')) {
+                $begins[] = $insDatum->value;
+            } else if(str_contains($insDatum->key, 'End')) {
+                $ends[] = $insDatum->value;
+            } else if(str_contains($insDatum->key, 'Miles')) {
+                $miles[] = $insDatum->value;
+            } else {
+                $premiums[] = $insDatum->value;
+                $prefixes[] = $insDatum->key;
+            }
+        }
+
+        // error_log("begins: " . json_encode($begins));
+        // error_log("ends: " . json_encode($ends));
+        // error_log("premiums: " . json_encode($premiums));
+        // error_log("miles: " . json_encode($miles));
+        // error_log("prefixes: " . json_encode($prefixes));
+
+        // find which prefix for the key to use
+        $found = false;
+        foreach($prefixes as $prefixIdx=>$prefix) {
+            if(
+                $tripData['tripBegin'] >= $begins[$prefixIdx] 
+                && $tripData['tripBegin']<= $ends[$prefixIdx]
+            ) {
+                $found = true;
+                break;
+            }
+        }
+        // error_log("\n----");
+        // error_log("found: " . ($found ? "true" : "false));
+        // error_log("prefix: " . $prefix);
+        // error_log("begin: " . $begins[$prefixIdx]);
+        // error_log("end: " . $ends[$prefixIdx]);
+        // error_log("miles: " . $miles[$prefixIdx]);
+        // error_log("premium: " . $premiums[$prefixIdx]);
+
+        if(!$found) {
+            $errMsg = "No Insurance Premium for this time frame was found in the carcostdetails table.";
+            $costPerMile = 0;
+        } else {
+            // $prefixIdx now has index into the relevant data for all the insurance info
+            // calc maint cost per mile
+            $costPerMile = $premiums[$prefixIdx]/$miles[$prefixIdx];
+        }
+
+        // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
+        $shareIns = round($costPerMile * $tripData['tripmiles'], 2);
+
+        return [$shareIns, $errMsg];
+        
+    }   // end of function calcShareIns
+
+
     // calc values & write transactions for cost of car for a trip
     // 2 transactions total (in & out of household checking) -- from MxxxSpending to IncomeMisc categories
     // - one from Spending (MikeSpending and/or MauraSpending) category (to charge who used the car)
     // - second to Checking with category IncomeMisc (because money never really left the ckg account)
     public function recordTrip(Request $request) {
 
-        $msg = "recordTrip done.";
+        // fields to retrieve (ids) from page (form)
+        $fields=[
+            "tripName",
+            "tripBegin",
+            "tripEnd",
+            "tripWho",
+            "tripCar",
+            "tripmiles",
+            "tripTolls"
+        ];
+
+        foreach($fields as $field) {
+            if($request->input($field)) $tripData[$field] = $request->input($field);
+            else $tripData[$field] = null;
+        }
+
+        // get data needed from carcostdetails table
+        // get purchase price of car, begin mileage & est total (end) mileage
+        $dataNeeded = DB::table('carcostdetails')
+            ->select("key", "value")
+            ->where("car", $tripData["tripCar"])
+            ->whereIn("key", ["Purchase", "BeginMiles", "ExpMiles"])
+            ->get()->toArray();
+
+        // pull data out of results
+        foreach($dataNeeded as $dataRcd) {
+            switch($dataRcd->key) {
+                case "Purchase":
+                    $purchase = $dataRcd->value;
+                    break;
+                case "BeginMiles";
+                    $beginMiles = $dataRcd->value;
+                    break;
+                case "ExpMiles";
+                    $expMiles = $dataRcd->value;
+                    break;
+            }
+        }
+
+        // calc different costs
+        
+        // share of purchase price
+        $tripData["sharePurchase"] = $this->calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles);
+        
+        // share of maintenance costs
+        $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $expMiles);
+
+        // share of insurance payments
+        [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
+        error_log("sharePurchase: " . $tripData['sharePurchase']);
+        error_log("shareMaint: " . $tripData['shareMaint']);
+        error_log("shareIns: " . $tripData['shareIns']);
+        error_log("msg:" . $msg);
+        
+        // left off here...
+        // fuel (gas or charging) for this trip
+        //      handle gas/charging purchased during trip
+        $tripData["fuelCost"] = $this->calcFuel($tripData);
+
+        // write record to the trips table.
+
+                    // left off here
+
+        if($msg == NULL) {
+            $msg = "Trip recorded. Total cost was...";
+        } else {
+            $msg = "PARTIAL trip recorded.  " . $msg;
+        }
 
         // go back to accounts page, with reminder wrt transfer
         return redirect()->route('accounts')->with('acctsMsg', $msg);
+
     }   // end of recordTrip
     
 

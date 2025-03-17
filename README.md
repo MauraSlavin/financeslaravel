@@ -5,6 +5,8 @@
   </ul>
 
 <h2>Branch 2025-03-13-trips</h2>
+    <p>WORKING ON --- Gas / charging (see below) - search for "left off here"</p>
+
   <ul>
     <li>table for info needed to calc cost of car<br>
       - insurance (payment, begin/end dates, expected mileage)<br>
@@ -19,28 +21,39 @@
       <ul>
         <li>KEYS</li>
         <li>Purchase - purchase price of the car</li>
-        <li>ExpMiles - expected total miles for the car to last</li>
-        <li>InsPaymmyy - Insurance payment (mmyy is the month and year of payment)</li>
-        <li>InsPaymmyyBegin - date insurance coverage begins</li>
-        <li>InsPaymmyyEnd - date insurance coverage end</li>
-        <li>InsPaymmyyMiles - expected mileage during this insurance term</li>
-        <li>Solar - home cost per KwH</li>
+        <li>BeginMiles - mileage on car when we bought it</li>
+        <li>ExpMiles - expected total miles before car dies (or traded in)</li>
+        <li>InsPayyymm - Insurance payment (yymm is the year and month of payment)</li>
+        <li>InsPayyymmBegin - date insurance coverage begins</li>
+        <li>InsPayyymmEnd - date insurance coverage end</li>
+        <li>InsPayyymmMiles - expected mileage during this insurance term</li>
+        <li>Solar - home cost per KwH in cents</li>
+        <li>Mileageyymm - mileage of the car</li>
+        <li>OldMaint - maintenance costs not in transactions file (before 2022)</li>
       </ul>
-    <li>Cost of purchase price of car</li>
-    <li>Gas / charging</li>
+    <li>WORKING ON --- Gas / charging - search for "left off here"</li>
     <li>Include gas/charging done en route</li>
-    <li>Maintenance</li>
-    <li>Insurance</li>
     <li>Write info to Trips table</li>
     <li>Do something to avoid duplicate tolls records??</li>
+    <li>Autofill end date same as begin when begin entered</li>
+    <li>autofill Bolt for Mike, CRZ for Maura</li>
+    <li>Error checking on inputs...</li>
+    <li>-- Check for duplicate <u>trip name</u> when entered.</li>
+    <li>-- Check that begin is before end when both entered.</li>
+    <li>-- If miles > 150, have user verify</li>
+    <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
+    <li>-- "required" doesn't work for tolls (maybe because disabled?).  Check for numeric value here.</li>
     <br>
+    <li>DONE - Insurance share</li>
+    <li>DONE - Maintenance share</li>
+    <li>DONE - Cost of purchase price of car</li>
     <li>DONE - Tally tolls for this trip (Tally Tolls button)</li>
     <li>DONE - Trips table (copied rcds for begin of 2025)</li>
     <li>DONE - Writes tolls to tolls table (Update Tolls button)</li>
     <li>DONE - prompt for dates of trip</li>
   </ul>
 
-<h2>Eliminate duplicate table (budget vs. newbudget)</h2>
+<h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>
 <p>Branch 2025-03-09-elim-dup-budget-table</p>
     <ul>
       <li>Keep budget</li>
