@@ -1625,6 +1625,7 @@ class TransactionsController extends Controller
 
     // calculate share of maintenance costs for this trip
     function calcShareMaint($tripData, $beginMiles, $expMiles) {
+        // error_log("\n\n--------------------");
 
         // sum total cost of maintenance 2022 or later.
         // result is negative, so sign needs to be reversed.
@@ -1632,28 +1633,37 @@ class TransactionsController extends Controller
             ->where('tracking', $tripData['tripCar'])
             ->where('notes', 'like', 'maint%')
             ->sum('amount');
+        // error_log("recentMaint: " . $recentMaint);
 
         // maintenance before 2022
         $oldMaint = DB::table('carcostdetails')
             ->where('car', $tripData['tripCar'])
             ->where('key', 'OldMaint')
             ->pluck('value');
-
+        
         // if no old maintenance found, set to 0
         if(count($oldMaint) > 0) {
             $oldMaint = $oldMaint[0];
         } else {
             $oldMaint = 0;
         }
+        // error_log("oldMaint: " . $oldMaint);
         
         // total maintenance is old + new
         $totMaint = $recentMaint + $oldMaint;
+        // error_log("totMaint: " . $totMaint);
 
         // calc maint cost per mile
+        // error_log("expMiles: " . $expMiles);
+        // error_log("beginMiles: " . $beginMiles);
+        // error_log("diff: " . ($expMiles - $beginMiles));
         $costPerMile = $totMaint/($expMiles - $beginMiles);
-
+        // error_log("cost per mile: " . $costPerMile);
+        
         // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
         $shareMaint = round($costPerMile * $tripData['tripmiles'], 2);
+        // error_log("shareMaint: " . $shareMaint);
+        // error_log("--------------------\n\n");
 
         return $shareMaint;
         
@@ -1739,6 +1749,263 @@ class TransactionsController extends Controller
     }   // end of function calcShareIns
 
 
+    // calculate fuel cost for this trip
+    function calcFuel($tripData) {
+    // NOTE:  This ASSUMES
+    //
+    //      IMPORTANT
+    //      ASSUMPTION:  
+    //          All gas/charging done is in the database
+    //              with notes like 'trips - <trip name>'
+    //              and gallons or kWhs purchased
+    //
+
+    // Need:
+    //      miles traveled  
+    //          $tripData['tripMiles']
+    //      gas/kWh purchased en route
+    //          in transactions table where notes = "% - trips - <tripName> ..."
+    //      MPG or mile/kwh
+    //          in carcostdetails table
+    //              key = "fuel" tells if gas or electric is used
+    //              for electric: solar kWh/mile is where key = "MPK"
+    //              for gas: mpg is where key = "MPG"
+    //      cost of fuel not bought on trip
+    //          electric: in carcostdetails table where key = "SolarKwh"
+    //          gas:    in transactions table, last where 
+
+
+        // get data keys needed in carcostdetails
+        function getCarCostData($tripData) {
+            $errMsg = '';     // assume no msgs to start
+
+            // keys in carcostdetails table for data needed
+            $keys = [
+                'fuel',
+                'MPK',
+                'MPG',
+                'SolarKwh'
+            ];
+
+            // get data
+            $carCostInfo = DB::table('carcostdetails')
+                ->where('car', $tripData['tripCar'])
+                ->whereIn('key', $keys)
+                ->get()->toArray();
+            // error_log("------ carCostInfo:");
+            // error_log(json_encode($carCostInfo));
+
+            // put in more usable format
+            $fuel = null;
+            $MPG = null;
+            $MPK = null;
+            $SolarKwh = null;
+
+            foreach($carCostInfo as $info) {
+                switch ($info->key) {
+                    case 'fuel':
+                        $fuel = $info->value;
+                        break;
+                    case 'MPG':
+                        $MPG = $info->value;
+                        break;
+                    case 'MPK':
+                        $MPK = $info->value; 
+                        break;
+                    case 'SolarKwh':
+                        $SolarKwh = $info->value;
+                        break;
+                    default:
+                        $errMsg = '  Undefined carCostInfo key found: ' . $info->key;
+                        break;
+                }
+            }
+
+            return [$fuel, $MPK, $MPG, $SolarKwh, $errMsg];
+
+        }  // end of function getCarCostData
+
+
+        // get fuel bought info (volume and cost)
+        function getFuelBoughtInfo($tripData, $fuel) {
+            $msg = '';  // assume no msgs to start
+
+            if($tripData['tripCar'] == 'CRZ') {
+                $fuelBoughtEnRoute = DB::table('transactions')
+                    ->where('tracking', $tripData['tripCar'])
+                    ->where('notes', 'like', '%gas - trips - ' . $tripData['tripName'] . '%')
+                    ->get()->toArray();
+            } else if($tripData['tripCar'] == 'Bolt') {
+                $fuelBoughtEnRoute = DB::table('transactions')
+                    ->where('tracking', $tripData['tripCar'])
+                    ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%')
+                    ->get()->toArray();
+            }
+            // error_log("------ fuelBought:");
+            // error_log(json_encode($fuelBoughtEnRoute));
+    
+            // put in usable format
+            $fuelVolumeEnRoute = 0;
+            $fuelCostEnRoute = 0;
+            $needUnitCost = false;
+            foreach($fuelBoughtEnRoute as $fuelEvent) {
+                [$cost, $vol, $unitCost, $msg] = findFuelCostAndAmt($fuelEvent, $fuel, $needUnitCost); // unitCost will be null
+                $msg .= $msg;
+                $fuelVolumeEnRoute += $vol;
+                $fuelCostEnRoute -= $cost;      // costs are negative in transactions table, positive here
+            }
+
+            return [$fuelVolumeEnRoute, $fuelCostEnRoute, $msg];
+        }   // end of function getFuelBoughtInfo
+
+
+        // get how much purchase (amt) and what cost from record where fuel was purchase en route
+        function findFuelCostAndAmt($fuelEvent, $fuel, $needUnitCost) {
+            $msg = '';  // assume no msg's until something found.
+
+            if(!$needUnitCost) {
+                // get cost of fuel from record
+                $cost = $fuelEvent->amount;
+
+                // get amt from "notes" column
+                if($fuel == 'electric') {
+                    // needs to have " ##.## kwh"
+                    $volPattern = '/(\d+(?:\.\d+)?)\s*kwh/i';
+
+                } else if ($fuel == 'gas') {
+                    // needs to have " ##.## gal"
+                    $volPattern = '/(\d+(?:\.\d+)?)\s*gal/i';
+                }
+
+                preg_match($volPattern, $fuelEvent->notes, $matches);
+                    
+                // Get the matched number
+                $amt = $matches[1]; // Will contain string of volume purchased
+                if($amt == '' || $amt == null) {
+                    $msg = "No amount found.";
+                } else {
+                    // Convert to float if needed
+                    $amt = floatval($amt);
+                }
+            } else {
+                $cost = null; // not requested
+                $amt = null;  // not requested
+            }
+
+            if($needUnitCost) {
+                // get unit cost
+                $unitPattern = '/@ *([\d.]+)/';
+                preg_match($unitPattern, $fuelEvent->notes, $matches);
+
+                if ($matches) {
+                    $unitCost = $matches[1];
+                } else {
+                    $unitCost = null;
+                    $msg .= "  No unit cost found.";
+                }
+            } else {
+                $unitCost = null;   // not requested
+            }
+
+            return [$cost, $amt, $unitCost, $msg];
+        }   // end of function findFuelCostAndAmt
+    
+    
+        $errMsg = '';
+
+        // get data keys needed in carcostdetails
+        [$fuel, $MPK, $MPG, $SolarKwh, $errMsg] = getCarCostData($tripData);
+        // error_log("\n\nfuel: " . $fuel . "\nMPG: " . $MPG . "\nMPK: " . $MPK . "\nSolarKwh: " . $SolarKwh . "\nerrMsg: " . $errMsg);
+
+        // get fuel bought info (volume and cost)
+        [$fuelVolumeEnRoute, $fuelCostEnRoute, $msg] = getFuelBoughtInfo($tripData, $fuel);
+        $errMsg .= "  " . $msg;
+        // error_log("\n\nfuel vol en route: " . $fuelVolumeEnRoute);
+        // error_log("\n\nfuel cost en route: " . $fuelCostEnRoute);
+        // error_log("\n\nerrMsg: " . $errMsg);
+
+
+
+        // get last time gas was bought (not on a trip) BEFORE this trip
+        if($tripData['tripCar'] == 'CRZ') {
+            $lastGases = DB::table('transactions')
+                ->where('trans_date', '<=', $tripData['tripBegin'])
+                ->where('tracking', $tripData['tripCar'])
+                ->where('notes', 'like', 'gas%')
+                ->where('notes', 'not like', '%- trips %')
+                ->where('notes', 'not like', '%- trip %')
+                ->orderBy('trans_date', 'desc')
+                ->get()->toArray();
+            $lastGas = $lastGases[0];
+            // error_log("------ lastGas:");
+            // error_log(json_encode($lastGas));
+
+            $needUnitCost = true;
+            // recentGasCost and recentGasVolume not needed, should be null
+            [$recentGasCost, $recentGasVolume, $recentUnitPrice, $msg] = findFuelCostAndAmt($lastGas, $fuel, $needUnitCost); 
+            $errMsg .= $msg;
+
+            // error_log("-- recentUnitPrice: " . $recentUnitPrice);
+        }
+
+        // left off here 1
+
+
+        // Display data for user to verify
+
+
+        // Have data needed to calc fuel cost.
+        if($fuel == 'electric') {
+            // Charging en route + Home charging
+            // Need est kWh used: Total miles / MPK
+            $totalKwhUsed = $tripData['tripmiles'] / $MPK;
+            $gallonsKwHused = $totalKwhUsed;
+            // error_log("total kwh used: " . $totalKwhUsed);
+
+            // fuel not purchased en route
+            $fuelVolumeNotBoughtEnRoute = $totalKwhUsed - $fuelVolumeEnRoute;
+            // error_log("totalkwhused: " . $totalKwhUsed);
+            // error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
+            // error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
+
+            // cost of fuel not bought en route
+            $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
+            
+            // error_log("fuel cost bought en route: " . $fuelCostEnRoute);
+            // error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+
+            // total fuel cost = bought en route + not bought en route
+            $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
+
+        } else if($fuel == 'gas') {
+            // Gas bought en route + gas already in tank that was used
+            // Need est gallons used: Total miles / MPG
+            $totalGalUsed = $tripData['tripmiles'] / $MPG; 
+            $gallonsKwHused = $totalGalUsed;   
+            // error_log("total gallons used: " . $totalGalUsed);
+
+            // fuel not purchased en route
+            $fuelVolumeNotBoughtEnRoute = $totalGalUsed - $fuelVolumeEnRoute;
+            // error_log("totalGalused: " . $totalGalUsed);
+            // error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
+            // error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
+
+            // cost of fuel not bought en route
+            $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
+            
+            // error_log("fuel cost bought en route: " . $fuelCostEnRoute);
+            // error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+
+            // total fuel cost = bought en route + not bought en route
+            $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
+
+        } else $errMsg .= "  Invalid fuel found on carCostDetails table.";
+
+        return [round($fuelCost,2), round($gallonsKwHused,2), $errMsg];
+        
+    }   // end of function calcFuel
+
+
     // calc values & write transactions for cost of car for a trip
     // 2 transactions total (in & out of household checking) -- from MxxxSpending to IncomeMisc categories
     // - one from Spending (MikeSpending and/or MauraSpending) category (to charge who used the car)
@@ -1760,6 +2027,7 @@ class TransactionsController extends Controller
             if($request->input($field)) $tripData[$field] = $request->input($field);
             else $tripData[$field] = null;
         }
+        // error_log("tripData: " . json_encode($tripData));
 
         // get data needed from carcostdetails table
         // get purchase price of car, begin mileage & est total (end) mileage
@@ -1793,25 +2061,50 @@ class TransactionsController extends Controller
         $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $expMiles);
 
         // share of insurance payments
-        [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
-        error_log("sharePurchase: " . $tripData['sharePurchase']);
-        error_log("shareMaint: " . $tripData['shareMaint']);
-        error_log("shareIns: " . $tripData['shareIns']);
-        error_log("msg:" . $msg);
+        [$tripData["shareIns"], $errMsg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
+        // error_log("sharePurchase: " . $tripData['sharePurchase']);
+        // error_log("shareMaint: " . $tripData['shareMaint']);
+        // error_log("shareIns: " . $tripData['shareIns']);
+        // error_log(" -------------- ");
+        // error_log("errMsg:" . $errMsg);
         
-        // left off here...
         // fuel (gas or charging) for this trip
         //      handle gas/charging purchased during trip
-        $tripData["fuelCost"] = $this->calcFuel($tripData);
+        [$tripData["fuelCost"], $tripData['gallonsKwHused'], $msg] = $this->calcFuel($tripData);
+        $errMsg .= $msg;
+        // error_log("Fuel cost: " . $tripData['fuelCost']);
+
+        // error_log("errMsg:" . $errMsg);
+        $newTripRcd = [];
+        $newTripRcd['trip'] = $tripData['tripName'];
+        $newTripRcd['who'] = $tripData['tripWho'];
+        $newTripRcd['car'] = $tripData['tripCar'];
+        $newTripRcd['begin'] = $tripData['tripBegin'];
+        $newTripRcd['end'] = $tripData['tripEnd'];
+        $newTripRcd['tolls'] = $tripData['tripTolls'];
+        $newTripRcd['mileage'] = $tripData['tripmiles'];
+        $newTripRcd['sharePurchase'] = $tripData['sharePurchase'];
+        $newTripRcd['shareIns'] = $tripData['shareIns'];
+        $newTripRcd['shareMaint'] = $tripData['shareMaint'];
+        $newTripRcd['gallonsKwHused'] = $tripData['tripWho'];
+        $newTripRcd['gasChargingDollars'] = $tripData['fuelCost'];
+        $newTripRcd['other'] = 0;
 
         // write record to the trips table.
+        $result = DB::table("trips")->insert($newTripRcd);
+        error_log("result: " . json_encode($result));
 
-                    // left off here
+        // error_log(" ");
+        // error_log(" ");
+        // error_log(" ");
+        // foreach($tripData as $key=>$data) error_log(" -- " . $key .": " . $data);
+                    
+        // left off here 2
 
-        if($msg == NULL) {
-            $msg = "Trip recorded. Total cost was...";
+        if($errMsg == NULL || $errMsg == '') {
+            $errMsg = "Trip recorded. Total cost was...";
         } else {
-            $msg = "PARTIAL trip recorded.  " . $msg;
+            $errMsg = "PARTIAL trip recorded.  " . $errMsg;
         }
 
         // go back to accounts page, with reminder wrt transfer
