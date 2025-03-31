@@ -31,12 +31,26 @@
         <li>Mileageyymm - mileage of the car</li>
         <li>OldMaint - maintenance costs not in transactions file (before 2022)</li>
       </ul>
-    <li>WORKING ON --- Gas / charging - search for "left off here"</li>
-    <li>Include gas/charging done en route</li>
-    <li>Write info to Trips table</li>
+    <li>WORKING ---  "left off here 1"<br>
+    CLEAN UP...<br>
+      not writing gallons/kwh used<br>
+      need to break out more methods?<br>
+      ask if tolls look right<br>
+      ask if last few maint rcds look right<br>
+      Clean up error_log's
+    </li>
+    <li></li>
+    <li>Enforce...<br>
+     -- "maint - " in notes<br>
+     -- kwh bought when charging en route in notes<br>
+     -- price per gallon when buying gas in notes<br>
+     -- date at end of trip name<br>
+     -- anything else ??
+    </li>
     <li>Do something to avoid duplicate tolls records??</li>
     <li>Autofill end date same as begin when begin entered</li>
     <li>autofill Bolt for Mike, CRZ for Maura</li>
+    <li>Interface to update mileage (put input on trips page)</li>
     <li>Error checking on inputs...</li>
     <li>-- Check for duplicate <u>trip name</u> when entered.</li>
     <li>-- Check that begin is before end when both entered.</li>
@@ -68,6 +82,7 @@
 
 <h2>BUGS</h2>
   <ul>
+    <li>On BUCKETS page, Goal Totals missing RetSavings amt</li>
     <li>Error msg: The GET method is not supported for route transactions/insertTrans. Supported methods: POST.<br>
     GET /transactions/insertTrans</li>
   </ul>

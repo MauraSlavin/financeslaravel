@@ -12,7 +12,9 @@
         <p style="color:red; margin-left:20px;"> NOTE: Make sure 
             <br> --- <u>Maintenance</u> (tracking is the car, notes begins with "maint") 
             <br> --- <u>Tolls</u> (can upload - "Upload Tolls" below - from EZPass download - beware of duplicate tolls records)
-            <br> --- and <u>Insurance</u> (if there's been a recent car insurance payment)
+            <br> --- <u>Insurance</u> (if there's been a recent car insurance payment)
+            <br> --- <u>gas</u> or <u>charging</u> purchased en route is recorded
+            <br> --- and (for gas car) other <u>recent gas purchases</u> are recorded.
             <br> are up to date.</p>
         <!-- data needed to calc use of a car -->
         <form action="{{ route('recordTrip') }}" method="POST">
@@ -26,12 +28,12 @@
             
             <div class="form-row">
                 <label class="tripLabel" for="tripBegin">Trip Began on:</label>
-                <input class="tripInput" type="date" id="tripBegin" name="tripBegin" class="form-control" required>
+                <input class="tripInput form-control" type="date" id="tripBegin" name="tripBegin" required>
             </div>
             
             <div class="form-row">
                 <label class="tripLabel" for="tripEnd">Trip Ended on:</label>
-                <input class="tripInput" type="date" id="tripEnd" name="tripEnd" class="form-control" required>
+                <input class="tripInput form-control" type="date" id="tripEnd" name="tripEnd" required>
             </div>
 
             <div class="form-row">
@@ -56,7 +58,7 @@
             <div class="form-row">
                 <label class="tripLabel" for="tripmiles">Est number of miles driven:</label>
                 <br>
-                <input class="tripInput" type="number" id="tripmiles" name="tripmiles" class="form-control" required>
+                <input class="tripInput form-control" type="number" id="tripmiles" name="tripmiles" required>
             </div>
 
             <div class="form-row d-flex align-items-center" style="margin-bottom:0;">
@@ -65,7 +67,7 @@
                 <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
             </div>
             <div class="form-row" style="margin-top:0;">
-                <input class="form-control tripInput" type="text" id="tripTolls" name="tripTolls" disabled>
+                <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
             </div>
 
             <button type="submit" class="btn btn-success processtrip">Process Trip</button>
@@ -142,6 +144,11 @@
                     }
 
                 }); // end of listener for tallyTollsButton
+
+                // remove disabled before submitting so triptolls gets sent with input
+                $('form').on('submit', function(e) {
+                    $('#tripTolls').prop('disabled', false);
+                });
 
             });
 
