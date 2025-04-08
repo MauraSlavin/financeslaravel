@@ -85,6 +85,19 @@
 
             $(document).ready(function() {
 
+                // When trip began on is entered, 
+                // fill in Trip Ended on with the same date (if not entered, yet)
+                $('#tripBegin').on('blur', function(e) {
+                    e.preventDefault();
+
+                    // if tripEnd has not been entered, make it the same as tripBegin
+                    if($('#tripEnd').val() == '') {
+                        $('#tripEnd').val($('#tripBegin').val());
+                    }
+
+                });
+
+
                 // Upload Tolls button clicked
                 $('.uploadTollsButton').on('click', function(e) {
                     e.preventDefault();

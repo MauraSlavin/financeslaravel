@@ -9,7 +9,7 @@
     <p>cleaning up trips...<p>
 
   <ul>
-    <li>WORKING<br>
+    <li>WORKING - No changes in progress<br>
     CLEAN UP...<br>
       add input to Trips page for mileage<br>
       need to break out more methods?<br>
@@ -27,7 +27,6 @@
      -- anything else ??
     </li>
     <li>Do something to avoid duplicate tolls records??</li>
-    <li>Autofill end date same as begin when begin entered</li>
     <li>autofill Bolt for Mike, CRZ for Maura (maybe)</li>
     <li>Interface to update mileage (put input on trips page)</li>
     <li>Error checking on inputs...</li>
