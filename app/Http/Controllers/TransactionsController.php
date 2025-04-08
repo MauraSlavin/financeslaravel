@@ -765,7 +765,7 @@ class TransactionsController extends Controller
         // Get today's date (for next few queries)
         $thisMonth = date('m');
         $thisYear = date('Y');
-        error_log("thisMonth: " . $thisMonth . "; thisYear: " . $thisYear);
+        // error_log("thisMonth: " . $thisMonth . "; thisYear: " . $thisYear);
         $firstDay = $thisYear . "-01-01";
 
         // get amount spent for this category this year
@@ -1624,7 +1624,7 @@ class TransactionsController extends Controller
 
 
     // calculate share of maintenance costs for this trip
-    function calcShareMaint($tripData, $beginMiles, $expMiles) {
+    function calcShareMaint($tripData, $beginMiles, $recentMileage) {
         // error_log("\n\n--------------------");
 
         // sum total cost of maintenance 2022 or later.
@@ -1633,13 +1633,14 @@ class TransactionsController extends Controller
             ->where('tracking', $tripData['tripCar'])
             ->where('notes', 'like', 'maint%')
             ->sum('amount');
-        // error_log("recentMaint: " . $recentMaint);
+        error_log("\n\nrecentMaint: " . $recentMaint);
 
         // maintenance before 2022
         $oldMaint = DB::table('carcostdetails')
             ->where('car', $tripData['tripCar'])
             ->where('key', 'OldMaint')
             ->pluck('value');
+        // error_log("\n\noldMaint: " . $oldMaint);
         
         // if no old maintenance found, set to 0
         if(count($oldMaint) > 0) {
@@ -1654,15 +1655,15 @@ class TransactionsController extends Controller
         // error_log("totMaint: " . $totMaint);
 
         // calc maint cost per mile
-        // error_log("expMiles: " . $expMiles);
-        // error_log("beginMiles: " . $beginMiles);
-        // error_log("diff: " . ($expMiles - $beginMiles));
-        $costPerMile = $totMaint/($expMiles - $beginMiles);
-        // error_log("cost per mile: " . $costPerMile);
+        error_log("recentMileage: " . $recentMileage);
+        error_log("beginMiles: " . $beginMiles);
+        error_log("diff: " . ($recentMileage - $beginMiles));
+        $costPerMile = $totMaint/($recentMileage - $beginMiles);
+        error_log("cost per mile: " . $costPerMile);
         
         // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
         $shareMaint = round($costPerMile * $tripData['tripmiles'], 2);
-        // error_log("shareMaint: " . $shareMaint);
+        error_log("shareMaint: " . $shareMaint);
         // error_log("--------------------\n\n");
 
         return $shareMaint;
@@ -1841,8 +1842,8 @@ class TransactionsController extends Controller
                     ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%')
                     ->get()->toArray();
             }
-            // error_log("------ fuelBought:");
-            // error_log(json_encode($fuelBoughtEnRoute));
+            error_log("------ fuelBought:");
+            error_log(json_encode($fuelBoughtEnRoute));
     
             // put in usable format
             $fuelVolumeEnRoute = 0;
@@ -1874,11 +1875,12 @@ class TransactionsController extends Controller
 
                 } else if ($fuel == 'gas') {
                     // needs to have " ##.## gal"
-                    $volPattern = '/(\d+(?:\.\d+)?)\s*gal/i';
+                    $volPattern = '/(\d+(?:\.\d+)?)\s*per gal/i';
                 }
 
                 preg_match($volPattern, $fuelEvent->notes, $matches);
-                    
+                error_log("matches: " . json_encode($matches));
+
                 // Get the matched number
                 $amt = $matches[1]; // Will contain string of volume purchased
                 if($amt == '' || $amt == null) {
@@ -1960,7 +1962,7 @@ class TransactionsController extends Controller
             // Need est kWh used: Total miles / MPK
             $totalKwhUsed = $tripData['tripmiles'] / $MPK;
             $gallonsKwHused = $totalKwhUsed;
-            // error_log("total kwh used: " . $totalKwhUsed);
+            error_log("total kwh used: " . $totalKwhUsed);
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalKwhUsed - $fuelVolumeEnRoute;
@@ -1971,8 +1973,8 @@ class TransactionsController extends Controller
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
             
-            // error_log("fuel cost bought en route: " . $fuelCostEnRoute);
-            // error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+            error_log("fuel cost bought en route: " . $fuelCostEnRoute);
+            error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
@@ -1982,7 +1984,7 @@ class TransactionsController extends Controller
             // Need est gallons used: Total miles / MPG
             $totalGalUsed = $tripData['tripmiles'] / $MPG; 
             $gallonsKwHused = $totalGalUsed;   
-            // error_log("total gallons used: " . $totalGalUsed);
+            error_log("total gallons used: " . $totalGalUsed);
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalGalUsed - $fuelVolumeEnRoute;
@@ -1993,8 +1995,8 @@ class TransactionsController extends Controller
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
             
-            // error_log("fuel cost bought en route: " . $fuelCostEnRoute);
-            // error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+            error_log("fuel cost bought en route: " . $fuelCostEnRoute);
+            error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
@@ -2037,6 +2039,14 @@ class TransactionsController extends Controller
             ->whereIn("key", ["Purchase", "BeginMiles", "ExpMiles"])
             ->get()->toArray();
 
+        // get most recent mileage
+        $recentMileage = DB::table('carcostdetails')
+            ->select("key", "value")
+            ->where("car", $tripData["tripCar"])
+            ->where("key", "like", "Mileage%")
+            ->max("value");
+        error_log("recentMileage: " . json_encode($recentMileage));
+
         // pull data out of results
         foreach($dataNeeded as $dataRcd) {
             switch($dataRcd->key) {
@@ -2058,7 +2068,7 @@ class TransactionsController extends Controller
         $tripData["sharePurchase"] = $this->calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles);
         
         // share of maintenance costs
-        $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $expMiles);
+        $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $recentMileage);
 
         // share of insurance payments
         [$tripData["shareIns"], $errMsg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
@@ -2073,6 +2083,7 @@ class TransactionsController extends Controller
         [$tripData["fuelCost"], $tripData['gallonsKwHused'], $msg] = $this->calcFuel($tripData);
         $errMsg .= $msg;
         // error_log("Fuel cost: " . $tripData['fuelCost']);
+        error_log("gallonsKwHused: " . $tripData['gallonsKwHused']);
 
         // error_log("errMsg:" . $errMsg);
         $newTripRcd = [];
@@ -2086,21 +2097,20 @@ class TransactionsController extends Controller
         $newTripRcd['sharePurchase'] = $tripData['sharePurchase'];
         $newTripRcd['shareIns'] = $tripData['shareIns'];
         $newTripRcd['shareMaint'] = $tripData['shareMaint'];
-        $newTripRcd['gallonsKwHused'] = $tripData['tripWho'];
+        $newTripRcd['gallonsKwHused'] = $tripData['gallonsKwHused'];
         $newTripRcd['gasChargingDollars'] = $tripData['fuelCost'];
         $newTripRcd['other'] = 0;
 
         // write record to the trips table.
         $result = DB::table("trips")->insert($newTripRcd);
-        error_log("result: " . json_encode($result));
+        if($result) error_log("TRIPS record written");
+        else error_log("TRIPS record NOT written: " . json_encode($result));
 
         // error_log(" ");
         // error_log(" ");
         // error_log(" ");
         // foreach($tripData as $key=>$data) error_log(" -- " . $key .": " . $data);
                     
-        // left off here 2
-
         if($errMsg == NULL || $errMsg == '') {
             $errMsg = "Trip recorded. Total cost was...";
         } else {
