@@ -5,39 +5,18 @@
   </ul>
 
 <h2>Branch 2025-03-13-trips</h2>
-    <p>WORKING ON --- Gas / charging (see below) - search for "left off here"</p>
+    <p>search for "left off here"</p>
+    <p>cleaning up trips...<p>
 
   <ul>
-    <li>table for info needed to calc cost of car<br>
-      - insurance (payment, begin/end dates, expected mileage)<br>
-      - purchase price (purchase price, expected mileage)<br>
-      - solar cost<br>
-      <ul>
-        <li>carcostdetails (table name)</li>
-        <li>1 - car</li>
-        <li>2 - key</li>
-        <li>3 - value</li>
-      </ul>
-      <ul>
-        <li>KEYS</li>
-        <li>Purchase - purchase price of the car</li>
-        <li>BeginMiles - mileage on car when we bought it</li>
-        <li>ExpMiles - expected total miles before car dies (or traded in)</li>
-        <li>InsPayyymm - Insurance payment (yymm is the year and month of payment)</li>
-        <li>InsPayyymmBegin - date insurance coverage begins</li>
-        <li>InsPayyymmEnd - date insurance coverage end</li>
-        <li>InsPayyymmMiles - expected mileage during this insurance term</li>
-        <li>Solar - home cost per KwH in cents</li>
-        <li>Mileageyymm - mileage of the car</li>
-        <li>OldMaint - maintenance costs not in transactions file (before 2022)</li>
-      </ul>
-    <li>WORKING ---  "left off here 1"<br>
+    <li>WORKING<br>
     CLEAN UP...<br>
-      not writing gallons/kwh used<br>
+      add input to Trips page for mileage<br>
       need to break out more methods?<br>
       ask if tolls look right<br>
       ask if last few maint rcds look right<br>
-      Clean up error_log's
+      Clean up error_log's<br>
+      Reminder to do the transfer (see trips tab in myworkbench)
     </li>
     <li></li>
     <li>Enforce...<br>
@@ -49,22 +28,14 @@
     </li>
     <li>Do something to avoid duplicate tolls records??</li>
     <li>Autofill end date same as begin when begin entered</li>
-    <li>autofill Bolt for Mike, CRZ for Maura</li>
+    <li>autofill Bolt for Mike, CRZ for Maura (maybe)</li>
     <li>Interface to update mileage (put input on trips page)</li>
     <li>Error checking on inputs...</li>
     <li>-- Check for duplicate <u>trip name</u> when entered.</li>
     <li>-- Check that begin is before end when both entered.</li>
     <li>-- If miles > 150, have user verify</li>
     <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
-    <li>-- "required" doesn't work for tolls (maybe because disabled?).  Check for numeric value here.</li>
-    <br>
-    <li>DONE - Insurance share</li>
-    <li>DONE - Maintenance share</li>
-    <li>DONE - Cost of purchase price of car</li>
-    <li>DONE - Tally tolls for this trip (Tally Tolls button)</li>
-    <li>DONE - Trips table (copied rcds for begin of 2025)</li>
-    <li>DONE - Writes tolls to tolls table (Update Tolls button)</li>
-    <li>DONE - prompt for dates of trip</li>
+    <li>-- Ask user if tolls amt seems right (was it calculated? Uploaded? Enough time for out-of-state tolls to appear in EZPass?).</li>
   </ul>
 
 <h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>
@@ -292,6 +263,29 @@
     <li><u>tolls</u>: copied (after massaging) from download from EZPass website</li>
     <li><u>trips</u>: calculated cost broken down to use car for Spending trips</li>
     <li><u>uploadmatch</u>: maps csv to transaction fields for each account</li>
+    <li><u>carcostdetails</u>: table for info needed to calc cost of car<br>
+      - insurance (payment, begin/end dates, expected mileage)<br>
+      - purchase price (purchase price, expected mileage)<br>
+      - solar cost<br>
+      <ul>
+        <li>carcostdetails (table name)</li>
+        <li>1 - car</li>
+        <li>2 - key</li>
+        <li>3 - value</li>
+      </ul>
+      <ul>
+        <li>KEYS</li>
+        <li>Purchase - purchase price of the car</li>
+        <li>BeginMiles - mileage on car when we bought it</li>
+        <li>ExpMiles - expected total miles before car dies (or traded in)</li>
+        <li>InsPayyymm - Insurance payment (yymm is the year and month of payment)</li>
+        <li>InsPayyymmBegin - date insurance coverage begins</li>
+        <li>InsPayyymmEnd - date insurance coverage end</li>
+        <li>InsPayyymmMiles - expected mileage during this insurance term</li>
+        <li>Solar - home cost per KwH in cents</li>
+        <li>Mileageyymm - mileage of the car</li>
+        <li>OldMaint - maintenance costs not in transactions file (before 2022)</li>
+      </ul>
   </ul>
 
 
