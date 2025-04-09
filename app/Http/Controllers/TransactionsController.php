@@ -1610,6 +1610,31 @@ class TransactionsController extends Controller
     }   // end of writeGBLimo
 
 
+    // write odometer reading to carcostdetails table
+    function writeOdom($tripData) {
+        $errMsg = null;
+
+        $readingDate = $tripData['tripOdomDate'];
+        $reading = $tripData['tripOdom'];
+        $car = $tripData['tripCar'];
+
+        $key = 'Mileage' . substr($readingDate, 2, 2) . substr($readingDate, 5, 2) . substr($readingDate, 8, 2);
+
+        $insertRcd = [];
+        $insertRcd['car'] = $car;
+        $insertRcd['key'] = $key;
+        $insertRcd['value'] = $reading;
+
+        $result = DB::table('carcostdetails')
+            ->insert($insertRcd);
+
+        // check for error
+        if(!$result) $errMsg = "Error writing odometer reading to carcostdetails table.  " . json_encode($result);
+
+        return $errMsg;
+    }   // end of writeOdom
+
+
     function calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles) {
 
         // calc purchase cost per mile
@@ -2014,6 +2039,9 @@ class TransactionsController extends Controller
     // - second to Checking with category IncomeMisc (because money never really left the ckg account)
     public function recordTrip(Request $request) {
 
+        // in case there are messages
+        $errMsg = ''; 
+
         // fields to retrieve (ids) from page (form)
         $fields=[
             "tripName",
@@ -2021,6 +2049,8 @@ class TransactionsController extends Controller
             "tripEnd",
             "tripWho",
             "tripCar",
+            "tripOdom",
+            "tripOdomDate",
             "tripmiles",
             "tripTolls"
         ];
@@ -2030,6 +2060,9 @@ class TransactionsController extends Controller
             else $tripData[$field] = null;
         }
         // error_log("tripData: " . json_encode($tripData));
+
+        // write odometer reading, if it was entered
+        if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') $errMsg .= $this->writeOdom($tripData);
 
         // get data needed from carcostdetails table
         // get purchase price of car, begin mileage & est total (end) mileage
@@ -2071,7 +2104,8 @@ class TransactionsController extends Controller
         $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $recentMileage);
 
         // share of insurance payments
-        [$tripData["shareIns"], $errMsg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
+        [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
+        $errMsg .= $msg;
         // error_log("sharePurchase: " . $tripData['sharePurchase']);
         // error_log("shareMaint: " . $tripData['shareMaint']);
         // error_log("shareIns: " . $tripData['shareIns']);
@@ -2092,7 +2126,7 @@ class TransactionsController extends Controller
         $newTripRcd['car'] = $tripData['tripCar'];
         $newTripRcd['begin'] = $tripData['tripBegin'];
         $newTripRcd['end'] = $tripData['tripEnd'];
-        $newTripRcd['tolls'] = $tripData['tripTolls'];
+        $newTripRcd['tolls'] = $tripData['tripTolls'] ?? 0;
         $newTripRcd['mileage'] = $tripData['tripmiles'];
         $newTripRcd['sharePurchase'] = $tripData['sharePurchase'];
         $newTripRcd['shareIns'] = $tripData['shareIns'];
@@ -2110,15 +2144,19 @@ class TransactionsController extends Controller
         // error_log(" ");
         // error_log(" ");
         // foreach($tripData as $key=>$data) error_log(" -- " . $key .": " . $data);
-                    
+        // trip errMsg
+        $errMsg = trim($errMsg);
+        error_log("errMsg: /" . $errMsg . "/");
+        error_log("  null? " . (($errMsg == null) ? "NULL" : "not null"));
+        error_log("  null string? " . (($errMsg == '') ? "NULL string" : "not null string"));
         if($errMsg == NULL || $errMsg == '') {
-            $errMsg = "Trip recorded. Total cost was...";
+            $errMsg = "Trip recorded. Total cost was " . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0));
         } else {
             $errMsg = "PARTIAL trip recorded.  " . $errMsg;
         }
 
         // go back to accounts page, with reminder wrt transfer
-        return redirect()->route('accounts')->with('acctsMsg', $msg);
+        return redirect()->route('accounts')->with('acctsMsg', $errMsg);
 
     }   // end of recordTrip
     
