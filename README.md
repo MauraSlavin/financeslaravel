@@ -10,8 +10,8 @@
 
   <ul>
     <li>WORKING - No changes in progress<br>
+    <br>
     CLEAN UP...<br>
-      add input to Trips page for mileage<br>
       need to break out more methods?<br>
       ask if tolls look right<br>
       ask if last few maint rcds look right<br>
@@ -23,12 +23,12 @@
      -- "maint - " in notes<br>
      -- kwh bought when charging en route in notes<br>
      -- price per gallon when buying gas in notes<br>
-     -- date at end of trip name<br>
+     -- date at end of trip name (then populate trip begin, end, odometer reading)<br>
+     -- make sure trip began before trip end<br>
      -- anything else ??
     </li>
     <li>Do something to avoid duplicate tolls records??</li>
     <li>autofill Bolt for Mike, CRZ for Maura (maybe)</li>
-    <li>Interface to update mileage (put input on trips page)</li>
     <li>Error checking on inputs...</li>
     <li>-- Check for duplicate <u>trip name</u> when entered.</li>
     <li>-- Check that begin is before end when both entered.</li>

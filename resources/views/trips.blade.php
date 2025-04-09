@@ -29,48 +29,81 @@
             </div>
             
             <div class="form-row">
-                <label class="tripLabel" for="tripBegin">Trip Began on:</label>
-                <input class="tripInput form-control" type="date" id="tripBegin" name="tripBegin" required>
-            </div>
-            
+                <div class="form-group row">
+
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripBegin">Trip Began on:</label>
+                        <input class="tripInput form-control" type="date" id="tripBegin" name="tripBegin" required>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripEnd">Trip Ended on:</label>
+                        <input class="tripInput form-control" type="date" id="tripEnd" name="tripEnd" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripWho">Who used the car:</label>
+                        <select name="tripWho" class="form-control tripInput" required>
+                            <option value="">Who used the car</option>
+                            <option value="Mike" {{ old('tripWho') == 'Mike' ? 'selected' : '' }}>Mike</option>
+                            <option value="Maura" {{ old('tripWho') == 'Maura' ? 'selected' : '' }}>Maura</option>
+                            <option value="both" {{ old('tripWho') == 'both' ? 'selected' : '' }}>both</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>    
+
             <div class="form-row">
-                <label class="tripLabel" for="tripEnd">Trip Ended on:</label>
-                <input class="tripInput form-control" type="date" id="tripEnd" name="tripEnd" required>
+                <div class="form-group row">
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripCar">Which car was used:</label>
+                        <select name="tripCar" class="form-control tripInput" required>
+                            <option value="">Which car was used</option>
+                            <option value="Bolt" {{ old('tripCar') == 'Bolt' ? 'selected' : '' }}>Bolt</option>
+                            <option value="CRZ" {{ old('tripCar') == 'CRZ' ? 'selected' : '' }}>CRZ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripOdom">Odometer reading for that car:</label>
+                        <input type="number" 
+                            class="tripInput form-control" 
+                            id="tripOdom" 
+                            name="tripOdom">
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="tripLabel" for="tripOdomDate">Date of Odometer Reading:</label>
+                        <input type="date" 
+                            class="tripInput form-control" 
+                            id="tripOdomDate" 
+                            name="tripOdomDate">
+                    </div>
+                </div>
             </div>
 
             <div class="form-row">
-                <label class="tripLabel" for="tripWho">Who used the car:</label>
-                <select name="tripWho" class="form-control tripInput" required>
-                    <option value="">Who used the car</option>
-                    <option value="Mike" {{ old('tripWho') == 'Mike' ? 'selected' : '' }}>Mike</option>
-                    <option value="Maura" {{ old('tripWho') == 'Maura' ? 'selected' : '' }}>Maura</option>
-                    <option value="both" {{ old('tripWho') == 'both' ? 'selected' : '' }}>both</option>
-                </select>
+                <div class="form-group row">
+
+                <div class="col-md-6">
+                    <label class="tripLabel" for="tripmiles">Est number of miles driven:</label>
+                    <br>
+                    <input class="tripInput form-control" type="number" id="tripmiles" name="tripmiles" required>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-row d-flex align-items-center" style="margin-bottom:0;">
+                        <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label>
+                        <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
+                        <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
+                    </div>
+                    <div class="form-row" style="margin-top:0;">
+                        <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-row">
-                <label class="tripLabel" for="tripCar">Which car was used:</label>
-                <select name="tripCar" class="form-control tripInput" required>
-                    <option value="">Which car was used</option>
-                    <option value="Bolt" {{ old('tripCar') == 'Bolt' ? 'selected' : '' }}>Bolt</option>
-                    <option value="CRZ" {{ old('tripCar') == 'CRZ' ? 'selected' : '' }}>CRZ</option>
-                </select>
-            </div>
-
-            <div class="form-row">
-                <label class="tripLabel" for="tripmiles">Est number of miles driven:</label>
-                <br>
-                <input class="tripInput form-control" type="number" id="tripmiles" name="tripmiles" required>
-            </div>
-
-            <div class="form-row d-flex align-items-center" style="margin-bottom:0;">
-                <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label>
-                <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
-                <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
-            </div>
-            <div class="form-row" style="margin-top:0;">
-                <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
-            </div>
 
             <button type="submit" class="btn btn-success processtrip">Process Trip</button>
         </form>
@@ -93,6 +126,11 @@
                     // if tripEnd has not been entered, make it the same as tripBegin
                     if($('#tripEnd').val() == '') {
                         $('#tripEnd').val($('#tripBegin').val());
+                    }
+
+                    // if date of odometer reading not set, make this the default
+                    if($('#tripOdomDate').val() == '') {
+                        $('#tripOdomDate').val($('#tripBegin').val());
                     }
 
                 });
