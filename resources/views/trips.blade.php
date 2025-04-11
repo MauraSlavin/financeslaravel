@@ -26,6 +26,11 @@
                 <label class="tripLabel" for="tripName">Trip name (25 char max):</label>
                 <br>
                 <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="25">
+                <!-- <div class="form-row d-flex align-items-center" style="margin-bottom:0;"> -->
+                        <!-- <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label> -->
+                        <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
+                        <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
+                <!-- </div> -->
             </div>
             
             <div class="form-row">
@@ -93,14 +98,9 @@
                 </div>
                 
                 <div class="col-md-6">
-                    <div class="form-row d-flex align-items-center" style="margin-bottom:0;">
-                        <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label>
-                        <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
-                        <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
-                    </div>
-                    <div class="form-row" style="margin-top:0;">
-                        <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
-                    </div>
+                    <label class="tripLabel" for="tripmiles">Tolls tallied:</label>
+                    <br>
+                    <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
                 </div>
             </div>
 
@@ -186,7 +186,13 @@
                             }),
                             success: function(response) {
                                 // write tally to page
-                                $("#tripTolls").val(response['tolls']);
+                                var tollMsg = '';
+                                var tollRcds = JSON.parse(response['tollRcds']);
+                                tollRcds.forEach(rcd => {
+                                    tollMsg += "When: " + rcd[0] + ' ' + rcd[1] + ';  Where: ' + rcd[2] + '  ' + rcd[3] + ';  $' + rcd[4] + "\n"; 
+                                });
+                                var tollsOk = confirm("Do these tolls look correct?\n\n" + tollMsg);
+                                if(tollsOk) $("#tripTolls").val(response['tolls']);
                             },
                             error: function(xhr, status, error) {
                                 var errorMsg = "Error tallying tolls.";
