@@ -13,7 +13,6 @@
     <br>
     CLEAN UP...<br>
       need to break out more methods?<br>
-      ask if tolls look right<br>
       ask if last few maint rcds look right<br>
       Clean up error_log's<br>
       Reminder to do the transfer (see trips tab in myworkbench)
@@ -34,7 +33,6 @@
     <li>-- Check that begin is before end when both entered.</li>
     <li>-- If miles > 150, have user verify</li>
     <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
-    <li>-- Ask user if tolls amt seems right (was it calculated? Uploaded? Enough time for out-of-state tolls to appear in EZPass?).</li>
   </ul>
 
 <h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>

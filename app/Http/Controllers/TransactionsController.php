@@ -1093,15 +1093,8 @@ class TransactionsController extends Controller
         $tollRcds = $this->readTollCsv();
 
         // Write toll records to tolls table
-        // DB::beginTransaction();
-        // try {
-            $result = DB::table('tolls')
+        $result = DB::table('tolls')
                 ->insert($tollRcds);
-        //     DB::commit();
-        // } catch (\Exception $e) {
-        //     DB::rollback();
-        //     throw $e;
-        // }
 
         if($result) {
             return response()->json([
@@ -1127,16 +1120,41 @@ class TransactionsController extends Controller
         // get sum of tolls (Outgoing) from tolls table for this trip
         $tolls = DB::table('tolls')
                 ->where("trip", $trip)
-                ->sum('Outgoing');
+                ->get()->toArray();
+
+        // from each toll record, sum total tolls; pass back each toll record for user to verify
+        $sumTolls = 0;
+        $tollRcds = [];
+        foreach($tolls as $toll) {
+            $sumTolls += $toll->Outgoing;
+            $tollRcds[] = [
+                $toll->{'Transaction Date'},
+                substr($toll->{'Transaction Time'}, 0, 5),
+                $toll->{'Exit Plaza'},
+                $toll->{'Exit Lane'},
+                $toll->Outgoing
+            ];
+        }
+
+        // sort tolls by date and time, ascending
+        usort($tollRcds, fn($a, $b) => [
+            $a[0], // Transaction Date (ascending)
+            substr($a[1], 0, 5), // Transaction Time (ascending)
+        ] <=> [
+            $b[0], // Transaction Date (ascending)
+            substr($b[1], 0, 5) // Transaction Time (ascending)
+        ]);
+
         // round the tolls total
-        $tolls = round(floatval($tolls),2);
+        $sumTolls = round($sumTolls, 2);
 
         // if it's a number, return it
-        if(is_numeric($tolls)) {
+        if(is_numeric($sumTolls)) {
             return response()->json([
                 'message' => 'Sum of tolls successfully retrieved from tolls table.',
                 'status' => 'success',
-                'tolls' => $tolls
+                'tolls' => $sumTolls,
+                'tollRcds' => json_encode($tollRcds)
             ]);
         // otherwise, return error
         } else {
