@@ -9,11 +9,11 @@
     <p>cleaning up trips...<p>
 
   <ul>
-    <li>WORKING - No changes in progress<br>
-    <br>
+    <li>WORKING ON - nothing in progress</li>
+    <li></li>
+    <li>
     CLEAN UP...<br>
       need to break out more methods?<br>
-      ask if last few maint rcds look right<br>
       Clean up error_log's<br>
       Reminder to do the transfer (see trips tab in myworkbench)
     </li>

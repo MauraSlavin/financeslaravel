@@ -14,40 +14,40 @@
             <br> --- <u>Tolls</u> (can upload - "Upload Tolls" below - from EZPass download - beware of duplicate tolls records),
             <br> --- <u>Insurance</u> (if there's been a recent car insurance payment),
             <br> --- <u>Mileage</u> has recently been updated in carcostdetails (add input for this to this page), and
-            <br> --- <u>gas</u> or <u>charging</u> purchased en route
-            <br> are up to date in the transactions table,
+            <br> --- <u>gas</u> or <u>charging</u> purchased en route are up to date in the transactions table,
             <br> --- and (for gas car) other <u>recent gas purchases</u> are recorded.
         </p>
+        <p style="color:red; margin-left:20px; white-space: pre-wrap;">{{ $errMsg ?? '' }}</p>
+        <p style="margin-left:20px;">* Indicates a required field.</p>
         <!-- data needed to calc use of a car -->
         <form action="{{ route('recordTrip') }}" method="POST">
         @csrf
 
             <div class="form-row">
-                <label class="tripLabel" for="tripName">Trip name (25 char max):</label>
+                <label class="tripLabel" for="tripName">Trip name (25 char max): *</label>
                 <br>
                 <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="25">
-                <!-- <div class="form-row d-flex align-items-center" style="margin-bottom:0;"> -->
-                        <!-- <label class="tripLabel mr-auto" for="tripTolls" style="width: 275px;">Click button to upload & tally tolls</label> -->
+                <div style="margin-top: 5px;">
+                    <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
                         <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
-                        <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
-                <!-- </div> -->
+                </div>
             </div>
             
             <div class="form-row">
                 <div class="form-group row">
 
                     <div class="col-md-4">
-                        <label class="tripLabel" for="tripBegin">Trip Began on:</label>
+                        <label class="tripLabel" for="tripBegin">Trip Began on: *</label>
                         <input class="tripInput form-control" type="date" id="tripBegin" name="tripBegin" required>
                     </div>
                     
                     <div class="col-md-4">
-                        <label class="tripLabel" for="tripEnd">Trip Ended on:</label>
+                        <label class="tripLabel" for="tripEnd">Trip Ended on: *</label>
                         <input class="tripInput form-control" type="date" id="tripEnd" name="tripEnd" required>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="tripLabel" for="tripWho">Who used the car:</label>
+                        <label class="tripLabel" for="tripWho">Who used the car: *</label>
                         <select name="tripWho" class="form-control tripInput" required>
                             <option value="">Who used the car</option>
                             <option value="Mike" {{ old('tripWho') == 'Mike' ? 'selected' : '' }}>Mike</option>
@@ -62,7 +62,7 @@
             <div class="form-row">
                 <div class="form-group row">
                     <div class="col-md-4">
-                        <label class="tripLabel" for="tripCar">Which car was used:</label>
+                        <label class="tripLabel" for="tripCar">Which car was used: *</label>
                         <select name="tripCar" class="form-control tripInput" required>
                             <option value="">Which car was used</option>
                             <option value="Bolt" {{ old('tripCar') == 'Bolt' ? 'selected' : '' }}>Bolt</option>
@@ -92,13 +92,13 @@
                 <div class="form-group row">
 
                 <div class="col-md-6">
-                    <label class="tripLabel" for="tripmiles">Est number of miles driven:</label>
+                    <label class="tripLabel" for="tripmiles">Est number of miles driven: *</label>
                     <br>
                     <input class="tripInput form-control" type="number" id="tripmiles" name="tripmiles" required>
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="tripLabel" for="tripmiles">Tolls tallied:</label>
+                    <label class="tripLabel" for="tripmiles">Tolls tallied: * (via Tally Tolls button)</label>
                     <br>
                     <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
                 </div>
