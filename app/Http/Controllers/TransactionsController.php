@@ -1672,18 +1672,39 @@ class TransactionsController extends Controller
 
         // sum total cost of maintenance 2022 or later.
         // result is negative, so sign needs to be reversed.
-        $recentMaint = -DB::table('transactions')
+        $recentMaint = DB::table('transactions')
             ->where('tracking', $tripData['tripCar'])
             ->where('notes', 'like', 'maint%')
-            ->sum('amount');
-        error_log("\n\nrecentMaint: " . $recentMaint);
+            ->where('trans_date', '<=', $tripData['tripBegin'])
+            ->get()->toArray();
+        
+        // sum recent maint costs (those in transactions) for this car to $recentMaintTotAmt
+        // and pull last $numbMaintTransToCheck maintenance transactions for this car in $checkRecentMaint
+        $numbMaintTransToCheck = 5;
+        $numRecentMaint = count($recentMaint);
+        $checkRecentMaint = [];
+        $recentMaintTotAmt = 0;
+        foreach($recentMaint as $maintKey=>$maintRcd) {
+            $recentMaintTotAmt -= $maintRcd->amount;
+            if($maintKey >= $numRecentMaint-$numbMaintTransToCheck) {
+                $checkRecentMaint[] = [
+                    'Date' => $maintRcd->trans_date,
+                    'Business' => $maintRcd->toFrom,
+                    'Account' => $maintRcd->account,
+                    'Tracking' => $maintRcd->tracking,
+                    'Category' => $maintRcd->category,
+                    'Notes' => $maintRcd->notes
+                ];
+            }
+        }
+        // error_log("*** recentMaintTotAmt: " . $recentMaintTotAmt);
 
-        // maintenance before 2022
+        // sum maintenance before 2022 (not in transactions table) to $oldMaint
         $oldMaint = DB::table('carcostdetails')
             ->where('car', $tripData['tripCar'])
             ->where('key', 'OldMaint')
             ->pluck('value');
-        // error_log("\n\noldMaint: " . $oldMaint);
+        // error_log("*** oldMaint: " . $oldMaint);
         
         // if no old maintenance found, set to 0
         if(count($oldMaint) > 0) {
@@ -1691,25 +1712,24 @@ class TransactionsController extends Controller
         } else {
             $oldMaint = 0;
         }
-        // error_log("oldMaint: " . $oldMaint);
+        // error_log("*** oldMaint: " . $oldMaint);
         
         // total maintenance is old + new
-        $totMaint = $recentMaint + $oldMaint;
-        // error_log("totMaint: " . $totMaint);
+        $totMaint = $recentMaintTotAmt + $oldMaint;
+        // error_log("*** totMaint: " . $totMaint);
 
         // calc maint cost per mile
-        error_log("recentMileage: " . $recentMileage);
-        error_log("beginMiles: " . $beginMiles);
-        error_log("diff: " . ($recentMileage - $beginMiles));
+        // error_log("recentMileage: " . $recentMileage);
+        // error_log("beginMiles: " . $beginMiles);
+        // error_log("diff: " . ($recentMileage - $beginMiles));
         $costPerMile = $totMaint/($recentMileage - $beginMiles);
-        error_log("cost per mile: " . $costPerMile);
+        // error_log("cost per mile: " . $costPerMile);
         
         // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
         $shareMaint = round($costPerMile * $tripData['tripmiles'], 2);
         error_log("shareMaint: " . $shareMaint);
-        // error_log("--------------------\n\n");
 
-        return $shareMaint;
+        return [$shareMaint, $checkRecentMaint];
         
     }   // end of function calcShareMaint
 
@@ -1885,8 +1905,8 @@ class TransactionsController extends Controller
                     ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%')
                     ->get()->toArray();
             }
-            error_log("------ fuelBought:");
-            error_log(json_encode($fuelBoughtEnRoute));
+            // error_log("------ fuelBought:");
+            // error_log(json_encode($fuelBoughtEnRoute));
     
             // put in usable format
             $fuelVolumeEnRoute = 0;
@@ -1922,7 +1942,7 @@ class TransactionsController extends Controller
                 }
 
                 preg_match($volPattern, $fuelEvent->notes, $matches);
-                error_log("matches: " . json_encode($matches));
+                // error_log("matches: " . json_encode($matches));
 
                 // Get the matched number
                 $amt = $matches[1]; // Will contain string of volume purchased
@@ -2096,7 +2116,7 @@ class TransactionsController extends Controller
             ->where("car", $tripData["tripCar"])
             ->where("key", "like", "Mileage%")
             ->max("value");
-        error_log("recentMileage: " . json_encode($recentMileage));
+        // error_log("recentMileage: " . json_encode($recentMileage));
 
         // pull data out of results
         foreach($dataNeeded as $dataRcd) {
@@ -2119,7 +2139,17 @@ class TransactionsController extends Controller
         $tripData["sharePurchase"] = $this->calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles);
         
         // share of maintenance costs
-        $tripData["shareMaint"] = $this->calcShareMaint($tripData, $beginMiles, $recentMileage);
+        [$tripData["shareMaint"], $checkRecentMaint] = $this->calcShareMaint($tripData, $beginMiles, $recentMileage);
+
+        // add checkRecentMaint to errMsg
+        $msgIntro = "If these are NOT the most recent maint transactions, add those and re-calc the trip:";
+        $errMsg .= "\n" . $msgIntro . "\n";
+        foreach($checkRecentMaint as $maintTrans) {
+            foreach($maintTrans as $key=>$maintItem) {
+                $errMsg .= " - " . str_pad($key . ":", 10) . "\t" . $maintItem . "\n";
+            }
+            $errMsg .= "\n";
+        }
 
         // share of insurance payments
         [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
@@ -2158,23 +2188,19 @@ class TransactionsController extends Controller
         if($result) error_log("TRIPS record written");
         else error_log("TRIPS record NOT written: " . json_encode($result));
 
-        // error_log(" ");
-        // error_log(" ");
-        // error_log(" ");
-        // foreach($tripData as $key=>$data) error_log(" -- " . $key .": " . $data);
         // trip errMsg
         $errMsg = trim($errMsg);
-        error_log("errMsg: /" . $errMsg . "/");
-        error_log("  null? " . (($errMsg == null) ? "NULL" : "not null"));
-        error_log("  null string? " . (($errMsg == '') ? "NULL string" : "not null string"));
-        if($errMsg == NULL || $errMsg == '') {
-            $errMsg = "Trip recorded. Total cost was " . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0));
+        if(substr($errMsg, 0, 16) == "If these are NOT") {
+            $errMsg = "\n**** Trip recorded. Total cost was " 
+            . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0))
+            . ". ****\n\n" 
+            . $errMsg;
         } else {
-            $errMsg = "PARTIAL trip recorded.  " . $errMsg;
+            $errMsg = "PARTIAL trip recorded.\n\n" . $errMsg;
         }
 
-        // go back to accounts page, with reminder wrt transfer
-        return redirect()->route('accounts')->with('acctsMsg', $errMsg);
+        // load trips page with msg containing what was done, errors, warning.
+        return view('trips', ['errMsg' => $errMsg]);
 
     }   // end of recordTrip
     
