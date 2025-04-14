@@ -1019,7 +1019,7 @@ class TransactionsController extends Controller
 
         // READ transactions from csv file
         $newCsvData = $this->readUploadCsv($accountName);
-        
+      
         // If Checking, modify csv for upload
         if($accountName == "Checking") $newCsvData = $this->modifyCsvForChecking($newCsvData);
         // If VISA, modify csv for upload
@@ -2012,12 +2012,6 @@ class TransactionsController extends Controller
 
             // error_log("-- recentUnitPrice: " . $recentUnitPrice);
         }
-
-        // left off here 1
-
-
-        // Display data for user to verify
-
 
         // Have data needed to calc fuel cost.
         if($fuel == 'electric') {
