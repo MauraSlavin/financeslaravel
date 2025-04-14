@@ -5,11 +5,10 @@
   </ul>
 
 <h2>Branch 2025-03-13-trips</h2>
-    <p>search for "left off here"</p>
     <p>cleaning up trips...<p>
 
   <ul>
-    <li>WORKING ON - nothing in progress</li>
+    <li>WORKING ON - nothing in particular</li>
     <li></li>
     <li>
     CLEAN UP...<br>
@@ -19,9 +18,6 @@
     </li>
     <li></li>
     <li>Enforce...<br>
-     -- "maint - " in notes<br>
-     -- kwh bought when charging en route in notes<br>
-     -- price per gallon when buying gas in notes<br>
      -- date at end of trip name (then populate trip begin, end, odometer reading)<br>
      -- make sure trip began before trip end<br>
      -- anything else ??
@@ -58,6 +54,8 @@
 <h2>To do:</h2>
     <ul>
       <li>splitting Spending transaction may still not be working correctly</li>
+      <li>duplicate a transaction and put in edit mode (when transactions repeat</li>
+      <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
       <li>fix saving new aliases</li>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>

@@ -245,6 +245,192 @@
                 }
             });
             
+
+            // Check car-related records in file for required notes formatting.
+            // NOTE:  notes text is case in-sensitive.
+
+            // Cars used are in the car column of the carcostdetail table.
+            // If category or tracking is one of the cars, check the following:
+            //      If cateogory or tracking is one of the cars, notes must start with one of the following:
+            //          -- charg        (charge or charging)
+            //          -- gas
+            //          -- ins          (ins or insurance)
+            //          -- maint        (maint or maintenance)
+            //          -- parking
+            //          -- registration
+            //          -- tolls
+            //
+            //  For charging, use
+            //          charging: ##.### kwh; - trips - {tripName}
+            //          unless loading a charging app, then just "charging" is ok
+            //  For gas, 
+            //      if on a tracked trip, use
+            //          gas - trips - {tripName}; @ #.### per gal {opt addnl info}
+            //      if NOT on a tracked trip, use
+            //          gas - @ #.### per gal {opt addnl info}
+            //  For insurance,
+            //      must begin with "ins"
+            //  For maint,
+            //      maint - {what was done}
+            //    or
+            //      maintenance - {what was done}
+            //  For parking,
+            //      must begin with "parking"
+            //  For registration,
+            //      registration
+            //  For tolls,
+            //      tolls {optional "- {desc}" }
+            function checkCarNotes(category, tracking, notes) {
+
+                //  For charging, use
+                //          charging: ##.### kwh; - trips - {tripName}
+                //          unless loading a charging app, then just "charging" is ok
+                function checkChargeNotes(notes) {
+                    var errMsg = '';
+
+                    // does notes start with 'charg'?
+                    if(notes.substr(0, 5) != 'charg')
+                        errMsg = 'Notes must start with "charg" (case insensitive) for kwh hours added (not at home).';
+
+                    // does notes have the kwh's added?
+                    const kwhPattern = /\d+\.\d+\s*kwh;/i;
+                    if(!kwhPattern.test(notes))
+                        errMsg += "\nNotes must include '#.# kwh;'";
+
+                    // trips reminder
+                    if(errMsg != '') errMsg += "\nRemember to include ' - trips - {tripName}' if the kwh were added on a 'fun' trip.";                        
+
+                    return errMsg;
+                }
+
+                //  For gas, 
+                //      if on a tracked trip, use
+                //          gas - trips - {tripName}; @ #.### per gal {opt addnl info}
+                //      if NOT on a tracked trip, use
+                //          gas - @ #.### per gal {opt addnl info}
+                function checkGasNotes(notes) {
+                    var errMsg = '';
+
+                    // does notes start with 'gas'?
+                    if(notes.substr(0, 3) != 'gas')
+                        errMsg = 'Notes must start with "gas" (case insensitive) for gasoline purchased.';
+
+                    // does notes have the price per gallon?
+                    const priceOfGasPattern = /\@ \d+\.\d+ per gal/;
+                    if(!priceOfGasPattern.test(notes))
+                        errMsg += "\nNotes must include '@ #.### per gal'";
+
+                    // trips reminder
+                    if(errMsg != '') errMsg += "\nRemember to include ' - trips - {tripName}' if the gas was bought on a 'fun' trip.";
+                    
+                    return errMsg;
+                }
+
+                //  For insurance,
+                //      must begin with "ins"
+                function checkInsNotes(notes) {
+                    var errMsg = '';
+                    if(notes.substr(0, 3) != 'ins')
+                        errMsg = 'Notes must start with "ins" (case insensitive) for auto insurance payments.';                    
+                    return errMsg;
+                }
+
+                //  For maint,
+                //      maint - {what was done}
+                //    or
+                //      maintenance - {what was done}
+                function checkMaintNotes(notes) {
+                    var errMsg = '';
+                    if(notes.substr(0, 5) != 'maint')
+                        errMsg = 'Notes must start be "maint - {desc of what was done}" or "maintenance - {desc of what was done}" (case insensitive) for any maintenance done.';                    
+                    return errMsg;
+                }
+
+                //  For parking,
+                //      must begin with "parking"
+                function checkParkingNotes(notes) {
+                    var errMsg = '';
+                    if(notes.substr(0, 7) != 'parking')
+                        errMsg = 'Notes must start with "parking" (case insensitive) for parking fees.';                    
+                    return errMsg;
+                }
+
+                //  For registration,
+                //      registration
+                function checkRegistrationNotes(notes) {
+                    var errMsg = '';
+                    if(notes.substr(0, 12) != 'registration')
+                        errMsg = 'Notes must start with "registration" (case insensitive) for car registrations.';
+
+                    return errMsg;
+                }
+
+                //  For tolls,
+                //      tolls {optional "- {desc}" }
+                function checkTollsNotes(notes) {
+                    var errMsg = '';
+                    if(notes.substr(0, 5) != 'tolls')
+                        errMsg = 'Notes must start with "tolls" (case insensitive) for tolls incurred.';
+                    return errMsg;
+                }
+
+                var errMsg = '';
+                var typeNote = null;
+                notes = notes.toLowerCase();
+
+                if(
+                    ['CRZ', 'Bolt'].includes(category)
+                    || ['CRZ', 'Bolt'].includes(tracking)
+                ) {
+                    if(notes.substr(0, 5) == 'charg') typeNote = 'charge';
+                    else if(notes.substr(0, 3) == 'gas') typeNote = 'gas';
+                    else if(notes.substr(0, 3) == 'ins') typeNote = 'ins';
+                    else if(notes.substr(0, 5) == 'maint') typeNote = 'maint';
+                    else if(notes.substr(0, 7) == 'parking') typeNote = 'parking';
+                    else if(notes.substr(0, 12) == 'registration') typeNote = 'registration';
+                    else if(notes.substr(0, 5) == 'tolls') typeNote = 'tolls';
+
+                    if(typeNote == null) {
+                        errMsg = "The notes field must begin with one of these: " +
+                            "\n - charg (charging), " +
+                            "\n - gas, " +
+                            "\n - ins (insurance), " +
+                            "\n - maint (maintenance), " +
+                            "\n - park (parking), " +
+                            "\n - registration, or " +
+                            "\n - tolls.\n";
+                    } else {
+                        switch(typeNote) {
+                            case 'charge':
+                                errMsg = checkChargeNotes(notes)
+                                break;
+                            case 'gas':
+                                errMsg = checkGasNotes(notes)
+                                break;
+                            case 'ins':
+                                errMsg = checkInsNotes(notes)
+                                break;
+                            case 'maint':
+                                errMsg = checkMaintNotes(notes)
+                                break;
+                            case 'parking':
+                                errMsg = checkParkingNotes(notes)
+                                break;
+                            case 'registration':
+                                errMsg = checkRegistrationNotes(notes)
+                                break;
+                            case 'tolls':
+                                errMsg = checkTollsNotes(notes)
+                                break;
+                        }
+                    }
+                }  // end of if car transaction
+
+                return errMsg;
+
+            } // end of function checkCarNotes
+
+
             // number of characters in toFrom to match in automatically using the alias
             var numberOfAliasCharsToMatch = 11;
 
@@ -2072,6 +2258,8 @@
                         var total_key = $record.find('.total_key').children(':first-child').val();
                         var total_amt = Number($record.find('.total_amt').children(':first-child').val());
                         var bucket = $record.find('.bucket').children(':first-child').val();
+                        var notes = $record.find('.notes').children(':first-child').val();
+                        var tracking = $record.find('.tracking').children(':first-child').val();
 
                         // console.log("\naccount: ", account);
                         // console.log("category: ", category);
@@ -2081,8 +2269,17 @@
                         // console.log("total_key: ", total_key);
                         // console.log("total_amt: ", total_amt);
                         // console.log("bucket: ", bucket);
+                        // console.log("notes: ", notes);
+                        // console.log("tracking: ", tracking);
 
                         var errMsg;
+
+                        // check notes for car transactions
+                        errMsg = checkCarNotes(category, tracking, notes);
+                        if(errMsg != '') {
+                            alert(errMsg + "\nTransaction not updated in database.");
+                            throw errMsg;
+                        }
 
                         // If category is MauraSpending, amtMaura should be amount and amtMike should be 0
                         if(category == "MauraSpending") {
