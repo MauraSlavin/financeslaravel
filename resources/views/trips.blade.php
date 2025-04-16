@@ -59,6 +59,10 @@
                         </select>
                     </div>
 
+                    <div class="col-md-12">
+                        <scan style="color:red; font-size: 12px; font-weight: bold;" id="dateErr"></scan>
+                    </div>
+
                 </div>
             </div>    
 
@@ -147,8 +151,42 @@
                         tripName += ' ' + tripBegin;
                         $('#tripName').val(tripName);
                     }
+
+                    // if tripEnd already entered, make sure begin is before end
+                    if($('#tripEnd').val()) {
+                        console.log("\n(begin) checking dates...");
+                        console.log("begin: " + $('#tripBegin').val());
+                        console.log("end: " + $('#tripEnd').val());
+                        console.log("compare: " + ($('#tripEnd').val() < $('#tripBegin').val()) );
+
+                        if($('#tripEnd').val() < $('#tripBegin').val()) {
+                            $("#dateErr").html("Trip must start before it ends.");
+                        } else {
+                            $("#dateErr").html(" ");
+                        }
+                    }
                     
-                });
+                }); // end tripBegin blurred
+
+
+                // When trip end entered, make sure it's = or after begin
+                $('#tripEnd').on('change', function(e) {
+                    e.preventDefault();
+
+                    if($('#tripBegin').val()) {
+                        console.log("\n(end) checking dates...");
+    
+                        console.log("begin: " + $('#tripBegin').val());
+                        console.log("end: " + $('#tripEnd').val());
+                        console.log("compare: " + ($('#tripEnd').val() < $('#tripBegin').val()) );
+                        if($('#tripEnd').val() < $('#tripBegin').val()) {
+                            $("#dateErr").html("Trip must start before it ends.");
+                        } else {
+                            $("#dateErr").html(" ");
+                        }
+                    }
+
+                }); // end tripEnd blurred
 
 
                 // Upload Tolls button clicked
