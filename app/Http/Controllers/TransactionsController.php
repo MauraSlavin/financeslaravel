@@ -1841,7 +1841,7 @@ class TransactionsController extends Controller
 
         // get data keys needed in carcostdetails
         function getCarCostData($tripData) {
-            $errMsg = '';     // assume no msgs to start
+            $errMsg = null;     // assume no msgs to start
 
             // keys in carcostdetails table for data needed
             $keys = [
@@ -1880,7 +1880,7 @@ class TransactionsController extends Controller
                         $SolarKwh = $info->value;
                         break;
                     default:
-                        $errMsg = '  Undefined carCostInfo key found: ' . $info->key;
+                        $errMsg = '\n\n  NOTE:  *** Undefined carCostInfo key found: ' . $info->key . "\n\n";
                         break;
                 }
             }
@@ -1892,7 +1892,7 @@ class TransactionsController extends Controller
 
         // get fuel bought info (volume and cost)
         function getFuelBoughtInfo($tripData, $fuel) {
-            $msg = '';  // assume no msgs to start
+            $msg = null; // assume no msgs to start
 
             if($tripData['tripCar'] == 'CRZ') {
                 $fuelBoughtEnRoute = DB::table('transactions')
@@ -1976,7 +1976,7 @@ class TransactionsController extends Controller
         }   // end of function findFuelCostAndAmt
     
     
-        $errMsg = '';
+        $errMsg = null;
 
         // get data keys needed in carcostdetails
         [$fuel, $MPK, $MPG, $SolarKwh, $errMsg] = getCarCostData($tripData);
@@ -1984,7 +1984,7 @@ class TransactionsController extends Controller
 
         // get fuel bought info (volume and cost)
         [$fuelVolumeEnRoute, $fuelCostEnRoute, $msg] = getFuelBoughtInfo($tripData, $fuel);
-        $errMsg .= "  " . $msg;
+        if($msg != null) $errMsg .= "  " . $msg;
         // error_log("\n\nfuel vol en route: " . $fuelVolumeEnRoute);
         // error_log("\n\nfuel cost en route: " . $fuelCostEnRoute);
         // error_log("\n\nerrMsg: " . $errMsg);
@@ -2001,16 +2001,24 @@ class TransactionsController extends Controller
                 ->where('notes', 'not like', '%- trip %')
                 ->orderBy('trans_date', 'desc')
                 ->get()->toArray();
-            $lastGas = $lastGases[0];
-            // error_log("------ lastGas:");
-            // error_log(json_encode($lastGas));
+            // need at least one lastGases record
+            if(count($lastGases) == 0) {
+                $errMsg .= "Need to be able to see how much was paid for gas recently.\n\n";
+                $recentGasCost = 0;
+                $recentGasVolume = 0;
+                $recentUnitPrice = 0;
+            } else {
+                $lastGas = $lastGases[0];
+                // error_log("------ lastGas:");
+                // error_log(json_encode($lastGas));
 
-            $needUnitCost = true;
-            // recentGasCost and recentGasVolume not needed, should be null
-            [$recentGasCost, $recentGasVolume, $recentUnitPrice, $msg] = findFuelCostAndAmt($lastGas, $fuel, $needUnitCost); 
-            $errMsg .= $msg;
+                $needUnitCost = true;
+                // recentGasCost and recentGasVolume not needed, should be null
+                [$recentGasCost, $recentGasVolume, $recentUnitPrice, $msg] = findFuelCostAndAmt($lastGas, $fuel, $needUnitCost); 
+                $errMsg .= $msg;
 
-            // error_log("-- recentUnitPrice: " . $recentUnitPrice);
+                // error_log("-- recentUnitPrice: " . $recentUnitPrice);
+            }
         }
 
         // Have data needed to calc fuel cost.
@@ -2060,6 +2068,8 @@ class TransactionsController extends Controller
 
         } else $errMsg .= "  Invalid fuel found on carCostDetails table.";
 
+        // $errMsg = trim($errMsg);
+        // error_log("errMsg (end of calcFuel): " . $errMsg);
         return [round($fuelCost,2), round($gallonsKwHused,2), $errMsg];
         
     }   // end of function calcFuel
@@ -2071,8 +2081,12 @@ class TransactionsController extends Controller
     // - second to Checking with category IncomeMisc (because money never really left the ckg account)
     public function recordTrip(Request $request) {
 
+        // Do we have all the info?  Assume complete until find something missing
+        $completeTripInfo = true;
+        // error_log("completeTripInfo (init): " . $completeTripInfo);
+
         // in case there are messages
-        $errMsg = ''; 
+        $errMsg = null;
 
         // fields to retrieve (ids) from page (form)
         $fields=[
@@ -2094,7 +2108,14 @@ class TransactionsController extends Controller
         // error_log("tripData: " . json_encode($tripData));
 
         // write odometer reading, if it was entered
-        if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') $errMsg .= $this->writeOdom($tripData);
+        if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') {
+            $msg = $this->writeOdom($tripData);
+            // Go no further if error recording odometer reading
+            if($msg != null) {
+                $errMsg = '**** No TRIP recorded.  Need correct odometer reading! ****';
+                return view('trips', ['errMsg' => ($msg . "\n" . $errMsg)]);
+            }
+        }
 
         // Go no further if tripEnd is before tripBegin
         if($tripData['tripEnd'] < $tripData['tripBegin']) {
@@ -2153,6 +2174,9 @@ class TransactionsController extends Controller
 
         // share of insurance payments
         [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
+        if($msg != null) $completeTripInfo = false;
+        // error_log("completeTripInfo (sharIns): " . $completeTripInfo);
+
         $errMsg .= $msg;
         // error_log("sharePurchase: " . $tripData['sharePurchase']);
         // error_log("shareMaint: " . $tripData['shareMaint']);
@@ -2163,7 +2187,12 @@ class TransactionsController extends Controller
         // fuel (gas or charging) for this trip
         //      handle gas/charging purchased during trip
         [$tripData["fuelCost"], $tripData['gallonsKwHused'], $msg] = $this->calcFuel($tripData);
-        $errMsg .= $msg;
+        if($msg != null) $completeTripInfo = false;
+        // error_log("completeTripInfo (calcFuel): " . $completeTripInfo);
+
+        $errMsg = $msg . $errMsg;
+        // error_log("errMsg (after calcFuel): " . $errMsg);
+
         // error_log("Fuel cost: " . $tripData['fuelCost']);
         error_log("gallonsKwHused: " . $tripData['gallonsKwHused']);
 
@@ -2189,14 +2218,20 @@ class TransactionsController extends Controller
         else error_log("TRIPS record NOT written: " . json_encode($result));
 
         // trip errMsg
-        $errMsg = trim($errMsg);
-        if(substr($errMsg, 0, 16) == "If these are NOT") {
+        // $errMsg = trim($errMsg);
+        // error_log("completeTripInfo (end): " . $completeTripInfo);
+
+        if($completeTripInfo) {
             $errMsg = "\n**** Trip recorded. Total cost was " 
             . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0))
-            . ". ****\n\n" 
+            . ". ****\n" 
+            . "**** REMEMBER!!! Transfer the cost of the trip from Mike/Maura-Spending!\n\n"
             . $errMsg;
         } else {
-            $errMsg = "PARTIAL trip recorded.\n\n" . $errMsg;
+            $errMsg = "PARTIAL trip recorded.\n\n" 
+            . "May need to fix problems and re-calc trip."
+            . "\nIf not, REMEMBER to transfer the cost of the trip from Mike/Maura-Spending!\n\n"
+            . $errMsg;
         }
 
         // load trips page with msg containing what was done, errors, warning.
