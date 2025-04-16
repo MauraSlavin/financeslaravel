@@ -14,7 +14,6 @@
     CLEAN UP...<br>
       need to break out more methods?<br>
       Clean up error_log's<br>
-      Reminder to do the transfer (see trips tab in myworkbench)<br>
       Cars ("CRZ", "Bolt") are hard-coded when error-checking notes field.<br>
       -- Search for <br>
       ---- ['CRZ', 'Bolt'].includes<br>
@@ -60,12 +59,15 @@
 <h2>To do:</h2>
     <ul>
       <li>splitting Spending transaction may still not be working correctly</li>
-      <li>duplicate a transaction and put in edit mode (when transactions repeat</li>
+      <li>highlight outstanding transactions (no clear date)</li>
+      <li>duplicate a transaction and put in edit mode (when transactions repeat)<br>
+      -- and make default range bigger - maybe six weeks? - to capture monthly transactions to be duplicated</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
       <li>fix saving new aliases</li>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
+      <li>button to write M/M spending to a CSV, Google sheets, etc. so I can send Mike a copy</li>
       <li>Button to add or delete notes</li>
       <li>Update account totals at top on page for specific account when transaction added/deleted (Cleared balance; Register balance)</li>
       <br>
