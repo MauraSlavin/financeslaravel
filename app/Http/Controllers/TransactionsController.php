@@ -2096,6 +2096,12 @@ class TransactionsController extends Controller
         // write odometer reading, if it was entered
         if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') $errMsg .= $this->writeOdom($tripData);
 
+        // Go no further if tripEnd is before tripBegin
+        if($tripData['tripEnd'] < $tripData['tripBegin']) {
+            $errMsg = '**** No TRIP recorded.  Trip must begin before it ends! ****';
+            return view('trips', ['errMsg' => $errMsg]);
+        }
+
         // get data needed from carcostdetails table
         // get purchase price of car, begin mileage & est total (end) mileage
         $dataNeeded = DB::table('carcostdetails')

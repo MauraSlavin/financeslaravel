@@ -22,15 +22,17 @@
       ---- {{ old('tripCar') == 
     </li>
     <li></li>
+    <li>Only enable "Process Trip" if form filled out and no discernable errors.<br>
+    begin before end<br>
+    odometer higher than last<br>
+    all required fields filled in<br>
     <li>Enforce...<br>
-     -- make sure trip began before trip end<br>
-     -- anything else ??
+     -- odometer reading higher than last reading
     </li>
     <li>Do something to avoid duplicate tolls records??</li>
     <li>autofill Bolt for Mike, CRZ for Maura (maybe)</li>
     <li>Error checking on inputs...</li>
     <li>-- Check for duplicate <u>trip name</u> when entered.</li>
-    <li>-- Check that begin is before end when both entered.</li>
     <li>-- If miles > 150, have user verify</li>
     <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
   </ul>
