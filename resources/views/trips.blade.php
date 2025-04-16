@@ -24,9 +24,12 @@
         @csrf
 
             <div class="form-row">
-                <label class="tripLabel" for="tripName">Trip name (25 char max): *</label>
+                <label class="tripLabel" for="tripName">Trip name (16 char max - date will be appended): *
+                    <br>
+                    <span style="font-size: 10px; font-weight: normal; margin: 0;">Note: if multiple dates appear, delete all dates & tab through to "Trip Ended on:"</span>
+                </label>
                 <br>
-                <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="25">
+                <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="16">
                 <div style="margin-top: 5px;">
                     <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
                         <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
@@ -133,6 +136,18 @@
                         $('#tripOdomDate').val($('#tripBegin').val());
                     }
 
+                    // append tripBegin to tripName (use last 2 of year - drop '20'), if not already there
+                    var tripName = $('#tripName').val();
+                    var tripBegin = $('#tripBegin').val();  // yyyy-mm-dd format
+                    // format tripBegin to mm-dd-yy
+                    tripBegin = tripBegin.substr(5, 5) + '-' + tripBegin.substr(2, 2);
+
+                    // only add tripBegin date if it's not already there.
+                    if(tripName.slice(-8) != tripBegin) {
+                        tripName += ' ' + tripBegin;
+                        $('#tripName').val(tripName);
+                    }
+                    
                 });
 
 

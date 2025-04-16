@@ -14,11 +14,15 @@
     CLEAN UP...<br>
       need to break out more methods?<br>
       Clean up error_log's<br>
-      Reminder to do the transfer (see trips tab in myworkbench)
+      Reminder to do the transfer (see trips tab in myworkbench)<br>
+      Cars ("CRZ", "Bolt") are hard-coded when error-checking notes field.<br>
+      -- Search for <br>
+      ---- ['CRZ', 'Bolt'].includes<br>
+      ---- $tripData['tripCar'] == <br>
+      ---- {{ old('tripCar') == 
     </li>
     <li></li>
     <li>Enforce...<br>
-     -- date at end of trip name (then populate trip begin, end, odometer reading)<br>
      -- make sure trip began before trip end<br>
      -- anything else ??
     </li>
