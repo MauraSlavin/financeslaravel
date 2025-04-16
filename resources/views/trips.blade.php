@@ -51,7 +51,7 @@
 
                     <div class="col-md-4">
                         <label class="tripLabel" for="tripWho">Who used the car: *</label>
-                        <select name="tripWho" class="form-control tripInput" required>
+                        <select name="tripWho" id="tripWho" class="form-control tripInput" required>
                             <option value="">Who used the car</option>
                             <option value="Mike" {{ old('tripWho') == 'Mike' ? 'selected' : '' }}>Mike</option>
                             <option value="Maura" {{ old('tripWho') == 'Maura' ? 'selected' : '' }}>Maura</option>
@@ -70,7 +70,7 @@
                 <div class="form-group row">
                     <div class="col-md-4">
                         <label class="tripLabel" for="tripCar">Which car was used: *</label>
-                        <select name="tripCar" class="form-control tripInput" required>
+                        <select name="tripCar" id="tripCar" class="form-control tripInput" required>
                             <option value="">Which car was used</option>
                             <option value="Bolt" {{ old('tripCar') == 'Bolt' ? 'selected' : '' }}>Bolt</option>
                             <option value="CRZ" {{ old('tripCar') == 'CRZ' ? 'selected' : '' }}>CRZ</option>
@@ -105,14 +105,14 @@
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="tripLabel" for="tripmiles">Tolls tallied: * (via Tally Tolls button)</label>
+                    <label class="tripLabel" for="tripTolls">Tolls tallied: * (via Tally Tolls button)</label>
                     <br>
                     <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
                 </div>
             </div>
 
 
-            <button type="submit" class="btn btn-success processtrip">Process Trip</button>
+            <button type="submit" class="btn btn-success processtrip" disabled>Process Trip</button>
         </form>
 
         <script>
@@ -125,6 +125,27 @@
 
             $(document).ready(function() {
 
+                // enable "Process Trip" when all fields completed.
+                var processTrip = {
+                    "name": false,
+                    "begin": false,
+                    "end": false,
+                    "who": false,
+                    "car": false,
+                    "miles": false,
+                    "tolls": false
+                }
+                var areAllTrue = Object.values(processTrip).every(value => value === true);
+
+                
+                // note that name was entered (to determine if Process Trip button should be enabled)
+                $('#tripName').on('blur', function(e) {
+                    processTrip.name = true;
+                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    if(areAllTrue) $(".processTrip").prop("disabled", false);
+                });
+
+
                 // When trip began on is entered, 
                 // fill in Trip Ended on with the same date (if not entered, yet)
                 $('#tripBegin').on('blur', function(e) {
@@ -133,6 +154,7 @@
                     // if tripEnd has not been entered, make it the same as tripBegin
                     if($('#tripEnd').val() == '') {
                         $('#tripEnd').val($('#tripBegin').val());
+                        processTrip.end = true;
                     }
 
                     // if date of odometer reading not set, make this the default
@@ -154,11 +176,6 @@
 
                     // if tripEnd already entered, make sure begin is before end
                     if($('#tripEnd').val()) {
-                        console.log("\n(begin) checking dates...");
-                        console.log("begin: " + $('#tripBegin').val());
-                        console.log("end: " + $('#tripEnd').val());
-                        console.log("compare: " + ($('#tripEnd').val() < $('#tripBegin').val()) );
-
                         if($('#tripEnd').val() < $('#tripBegin').val()) {
                             $("#dateErr").html("Trip must start before it ends.");
                         } else {
@@ -166,6 +183,9 @@
                         }
                     }
                     
+                    processTrip.begin = true;
+                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    if(areAllTrue) $(".processTrip").prop("disabled", false);
                 }); // end tripBegin blurred
 
 
@@ -186,8 +206,34 @@
                         }
                     }
 
+                    processTrip.end = true;
+                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    if(areAllTrue) $(".processTrip").prop("disabled", false);
+
                 }); // end tripEnd blurred
 
+
+                // default "car" when "who" is entered
+                $('#tripWho').on('blur', function(e) {
+                    if($('#tripWho').val() == 'Mike') {
+                        $('#tripCar').val('Bolt');
+                        processTrip.car = true;
+                    } else if ($('#tripWho').val() == 'Maura') {
+                        $('#tripCar').val('CRZ');
+                        processTrip.car = true;
+                    }
+
+                    processTrip.who = true;
+                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    if(areAllTrue) $(".processTrip").prop("disabled", false);
+                });
+
+
+                $('#tripmiles').on('blur', function(e) {
+                    processTrip.miles = true;
+                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    if(areAllTrue) $(".processTrip").prop("disabled", false);
+                });
 
                 // Upload Tolls button clicked
                 $('.uploadTollsButton').on('click', function(e) {
@@ -246,6 +292,10 @@
                                 });
                                 var tollsOk = confirm("Do these tolls look correct?\n\n" + tollMsg);
                                 if(tollsOk) $("#tripTolls").val(response['tolls']);
+
+                                processTrip.tolls = true;
+                                areAllTrue = Object.values(processTrip).every(value => value === true);
+                                if(areAllTrue) $(".processTrip").prop("disabled", false);
                             },
                             error: function(xhr, status, error) {
                                 var errorMsg = "Error tallying tolls.";

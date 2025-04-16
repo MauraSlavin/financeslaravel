@@ -22,14 +22,14 @@
     </li>
     <li></li>
     <li>Only enable "Process Trip" if form filled out and no discernable errors.<br>
-    begin before end<br>
-    odometer higher than last<br>
-    all required fields filled in<br>
+    "Process Trip" only enabled when all fields filled in.<br>
+    STILL NEEDS: odometer higher than last<br>
     <li>Enforce...<br>
      -- odometer reading higher than last reading
     </li>
     <li>Do something to avoid duplicate tolls records??</li>
-    <li>autofill Bolt for Mike, CRZ for Maura (maybe)</li>
+    <li>Get Bolt/CRZ from database, rather than hard-coding<br>
+    ...and default driver for each car on trips page from carcostdetails (key is "who")</li>
     <li>Error checking on inputs...</li>
     <li>-- Check for duplicate <u>trip name</u> when entered.</li>
     <li>-- If miles > 150, have user verify</li>
