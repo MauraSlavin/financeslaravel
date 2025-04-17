@@ -15,23 +15,15 @@
       need to break out more methods?<br>
       Clean up error_log's<br>
       Cars ("CRZ", "Bolt") are hard-coded when error-checking notes field.<br>
+      -- Have them in "carInfo"<br>
       -- Search for <br>
       ---- ['CRZ', 'Bolt'].includes<br>
       ---- $tripData['tripCar'] == <br>
       ---- {{ old('tripCar') == 
     </li>
     <li></li>
-    <li>Only enable "Process Trip" if form filled out and no discernable errors.<br>
-    "Process Trip" only enabled when all fields filled in.<br>
-    STILL NEEDS: odometer higher than last<br>
-    <li>Enforce...<br>
-     -- odometer reading higher than last reading
-    </li>
     <li>Do something to avoid duplicate tolls records??</li>
-    <li>Get Bolt/CRZ from database, rather than hard-coding<br>
-    ...and default driver for each car on trips page from carcostdetails (key is "who")</li>
     <li>Error checking on inputs...</li>
-    <li>-- Check for duplicate <u>trip name</u> when entered.</li>
     <li>-- If miles > 150, have user verify</li>
     <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
   </ul>

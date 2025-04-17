@@ -1831,7 +1831,7 @@ class TransactionsController extends Controller
     //          in transactions table where notes = "% - trips - <tripName> ..."
     //      MPG or mile/kwh
     //          in carcostdetails table
-    //              key = "fuel" tells if gas or electric is used
+    //              key = "Fuel" tells if gas or electric is used
     //              for electric: solar kWh/mile is where key = "MPK"
     //              for gas: mpg is where key = "MPG"
     //      cost of fuel not bought on trip
@@ -1845,7 +1845,7 @@ class TransactionsController extends Controller
 
             // keys in carcostdetails table for data needed
             $keys = [
-                'fuel',
+                'Fuel',
                 'MPK',
                 'MPG',
                 'SolarKwh'
@@ -1867,7 +1867,7 @@ class TransactionsController extends Controller
 
             foreach($carCostInfo as $info) {
                 switch ($info->key) {
-                    case 'fuel':
+                    case 'Fuel':
                         $fuel = $info->value;
                         break;
                     case 'MPG':
@@ -2112,15 +2112,29 @@ class TransactionsController extends Controller
             $msg = $this->writeOdom($tripData);
             // Go no further if error recording odometer reading
             if($msg != null) {
+
+                // get cars, drivers, and most recent mileage from carcostdetails table
+                $carInfo = $this->getCarInfo();
+
+                // get an array of all the trip names
+                $tripNames = $this->getTripNames();
+
                 $errMsg = '**** No TRIP recorded.  Need correct odometer reading! ****';
-                return view('trips', ['errMsg' => ($msg . "\n" . $errMsg)]);
+                return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames, 'errMsg' => ($msg . "\n" . $errMsg)]);
             }
         }
 
         // Go no further if tripEnd is before tripBegin
         if($tripData['tripEnd'] < $tripData['tripBegin']) {
+
+            // get cars, drivers, and most recent mileage from carcostdetails table
+            $carInfo = $this->getCarInfo();
+
+            // get an array of all the trip names
+            $tripNames = $this->getTripNames();
+        
             $errMsg = '**** No TRIP recorded.  Trip must begin before it ends! ****';
-            return view('trips', ['errMsg' => $errMsg]);
+            return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames,'errMsg' => $errMsg]);
         }
 
         // get data needed from carcostdetails table
@@ -2235,7 +2249,14 @@ class TransactionsController extends Controller
         }
 
         // load trips page with msg containing what was done, errors, warning.
-        return view('trips', ['errMsg' => $errMsg]);
+        // get cars, drivers, and most recent mileage from carcostdetails table
+        $carInfo = $this->getCarInfo();
+
+        // get an array of all the trip names
+        $tripNames = $this->getTripNames();
+
+        return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames,'errMsg' => $errMsg]);
+
 
     }   // end of recordTrip
     
@@ -2915,12 +2936,76 @@ class TransactionsController extends Controller
     }   // end function spending
 
 
+    // get car info for trips blade
+    public function getCarInfo() {
+        // get cars, drivers, and most recent mileage from carcostdetails table
+        $DBCarsDriversMileages = DB::table('carcostdetails')
+            ->where('key', 'Driver')
+            ->orWhere('key', 'like', 'Mileage%')
+            ->get()->toArray();
+            
+        // Transform the data
+        $carsDriversMileages = [];
+        foreach ($DBCarsDriversMileages as $item) {
+            // get which car the data is about
+            $car = $item->car;
+
+            // is an element initialized for this car?
+            if (!isset($carsDriversMileages[$car])) {
+                $carsDriversMileages[$car] = ['car' => $car];
+            }
+            
+            // if it's the default driver, capture that
+            if ($item->key === 'Driver') {
+                $carsDriversMileages[$car]['Driver'] = $item->value;
+
+            // if it's the mileage, handle that
+            } elseif (strpos($item->key, 'Mileage') === 0) {
+                // get the mileage and the date
+                $odomDate = substr($item->key, 7);
+                $mileage = (int)$item->value;
+
+                // if this mileage is higher, capture it and the date
+                if (!isset($carsDriversMileages[$car]['Mileage']) || $mileage > $carsDriversMileages[$car]['Mileage']) {
+                    $carsDriversMileages[$car]['Mileage'] = $mileage;
+                    $carsDriversMileages[$car]['OdomDate'] = $odomDate;
+                }
+            }
+        }
+
+        // Convert to array of objects
+        $carInfo = array_values($carsDriversMileages);
+        // error_log("carInfo:");
+        // error_log(json_encode($carInfo));
+
+        return $carInfo;
+    }   // end of function getCarInfo
+
+
+    // get array of trip names
+    public function getTripNames() {
+
+        // get an array of all the trip names
+        $tripNames = DB::table('trips')
+            ->pluck('trip');
+        // error_log("tripnames:");
+        // foreach($DBtripNames as $tripName) error_log($tripName);   
+        
+        return $tripNames;
+    }
+
     // calc cost to use car for a trip
     // and write corresponding records to transactions table
     public function trips() {
 
+        // get cars, drivers, and most recent mileage from carcostdetails table
+        $carInfo = $this->getCarInfo();
+
+        // get an array of all the trip names
+        $tripNames = $this->getTripNames();
+
         // return view to get info to calc cost to use car for a trip
-        return view('trips');
+        return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames]);
     
     }   // end function trips
 
