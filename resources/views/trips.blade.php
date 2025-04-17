@@ -19,6 +19,7 @@
         </p>
         <p style="color:red; margin-left:20px; white-space: pre-wrap;">{{ $errMsg ?? '' }}</p>
         <p style="margin-left:20px;">* Indicates a required field.</p>
+
         <!-- data needed to calc use of a car -->
         <form action="{{ route('recordTrip') }}" method="POST">
         @csrf
@@ -125,8 +126,16 @@
 
             $(document).ready(function() {
 
+                // data passed in
+                var carInfo = {{ Js::from($carInfo) }};
+                var tripNames = {{ Js::from($tripNames) }};
+
+                // info for car entered (or default car for driver entered)
+                var car = null;
+                var thisCarInfo = [];
+
                 // enable "Process Trip" when all fields completed.
-                var processTrip = {
+                var processTripArray = {
                     "name": false,
                     "begin": false,
                     "end": false,
@@ -135,13 +144,13 @@
                     "miles": false,
                     "tolls": false
                 }
-                var areAllTrue = Object.values(processTrip).every(value => value === true);
+                var areAllTrue = Object.values(processTripArray).every(value => value === true);
 
                 
                 // note that name was entered (to determine if Process Trip button should be enabled)
                 $('#tripName').on('blur', function(e) {
-                    processTrip.name = true;
-                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    processTripArray.name = true;
+                    areAllTrue = Object.values(processTripArray).every(value => value === true);
                     if(areAllTrue) $(".processTrip").prop("disabled", false);
                 });
 
@@ -154,7 +163,7 @@
                     // if tripEnd has not been entered, make it the same as tripBegin
                     if($('#tripEnd').val() == '') {
                         $('#tripEnd').val($('#tripBegin').val());
-                        processTrip.end = true;
+                        processTripArray.end = true;
                     }
 
                     // if date of odometer reading not set, make this the default
@@ -174,18 +183,25 @@
                         $('#tripName').val(tripName);
                     }
 
-                    // if tripEnd already entered, make sure begin is before end
-                    if($('#tripEnd').val()) {
-                        if($('#tripEnd').val() < $('#tripBegin').val()) {
-                            $("#dateErr").html("Trip must start before it ends.");
-                        } else {
-                            $("#dateErr").html(" ");
+                    // Is tripName unique
+                    if(tripNames.includes($('#tripName').val())) {
+                        alert("This trip name is already being used.  Change it.");
+                        processTripArray.name = false;
+                    } else {
+
+                        // if tripEnd already entered, make sure begin is before end
+                        if($('#tripEnd').val()) {
+                            if($('#tripEnd').val() < $('#tripBegin').val()) {
+                                $("#dateErr").html("Trip must start before it ends.");
+                            } else {
+                                $("#dateErr").html(" ");
+                            }
                         }
+                        
+                        processTripArray.begin = true;
+                        areAllTrue = Object.values(processTripArray).every(value => value === true);
+                        if(areAllTrue) $(".processTrip").prop("disabled", false);
                     }
-                    
-                    processTrip.begin = true;
-                    areAllTrue = Object.values(processTrip).every(value => value === true);
-                    if(areAllTrue) $(".processTrip").prop("disabled", false);
                 }); // end tripBegin blurred
 
 
@@ -206,34 +222,64 @@
                         }
                     }
 
-                    processTrip.end = true;
-                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    processTripArray.end = true;
+                    areAllTrue = Object.values(processTripArray).every(value => value === true);
                     if(areAllTrue) $(".processTrip").prop("disabled", false);
 
                 }); // end tripEnd blurred
 
 
                 // default "car" when "who" is entered
-                $('#tripWho').on('blur', function(e) {
-                    if($('#tripWho').val() == 'Mike') {
-                        $('#tripCar').val('Bolt');
-                        processTrip.car = true;
-                    } else if ($('#tripWho').val() == 'Maura') {
-                        $('#tripCar').val('CRZ');
-                        processTrip.car = true;
-                    }
+                $('#tripWho').on('change', function(e) {
+                    // get the driver entered
+                    const driver = $('#tripWho').val();
 
-                    processTrip.who = true;
-                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    // get the info for the car this driver usually drives
+                    thisCarInfo = carInfo.find(thisCar => thisCar.Driver === driver);
+
+                    // set the default car for this driver
+                    $('#tripCar').val(thisCarInfo.car);
+
+                    // driver and car are filled
+                    processTripArray.car = true;
+                    processTripArray.who = true;
+
+                    // are all the fields filled?
+                    areAllTrue = Object.values(processTripArray).every(value => value === true);
                     if(areAllTrue) $(".processTrip").prop("disabled", false);
+                });
+
+
+                // if the car was changed
+                $('#tripCar').on('change', function(e) {
+                    car = $('#tripCar').val();
+                    thisCarInfo = carInfo.find(thisCar => thisCar.car === car);
+                    console.log("thisCarInfo: ", thisCarInfo);
                 });
 
 
                 $('#tripmiles').on('blur', function(e) {
-                    processTrip.miles = true;
-                    areAllTrue = Object.values(processTrip).every(value => value === true);
+                    processTripArray.miles = true;
+                    areAllTrue = Object.values(processTripArray).every(value => value === true);
                     if(areAllTrue) $(".processTrip").prop("disabled", false);
                 });
+
+
+                // Is Odometer reading more than last reading?
+                $('#tripOdom').on('change', function(e) {
+                    var odomMilesEntered = parseInt($('#tripOdom').val());
+                    if( odomMilesEntered < thisCarInfo.Mileage) alert("Last recorded odometer reading was " + thisCarInfo.Mileage + ".  Enter a reading more than that.");
+                });
+
+
+                // Is Odometer date after last reading?
+                $('#tripOdomDate').on('blur', function(e) {
+                    var odomDateEntered = $('#tripOdomDate').val(); // yyyy-mm-dd
+                    // reformat to yymmdd
+                    odomDateEntered = odomDateEntered.substr(2, 2) + odomDateEntered.substr(5, 2) + odomDateEntered.substr(8,2);
+                    if( odomDateEntered < thisCarInfo.OdomDate) alert("Last recorded odometer reading was on " + thisCarInfo.OdomDate + ".  Enter a reading after that.");
+                });
+
 
                 // Upload Tolls button clicked
                 $('.uploadTollsButton').on('click', function(e) {
@@ -293,8 +339,8 @@
                                 var tollsOk = confirm("Do these tolls look correct?\n\n" + tollMsg);
                                 if(tollsOk) $("#tripTolls").val(response['tolls']);
 
-                                processTrip.tolls = true;
-                                areAllTrue = Object.values(processTrip).every(value => value === true);
+                                processTripArray.tolls = true;                    
+                                areAllTrue = Object.values(processTripArray).every(value => value === true);
                                 if(areAllTrue) $(".processTrip").prop("disabled", false);
                             },
                             error: function(xhr, status, error) {
