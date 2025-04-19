@@ -15,10 +15,8 @@
       need to break out more methods?<br>
       Clean up error_log's<br>
       Cars ("CRZ", "Bolt") are hard-coded when error-checking notes field.<br>
-      -- Have them in "carInfo"<br>
+      -- Have them in "carInfo" (in TransactionsController), and in cars (in transaction blade)<br>
       -- Search for <br>
-      ---- ['CRZ', 'Bolt'].includes<br>
-      ---- $tripData['tripCar'] == <br>
       ---- {{ old('tripCar') == 
     </li>
     <li></li>

@@ -378,9 +378,13 @@
                 var typeNote = null;
                 notes = notes.toLowerCase();
 
+                // get cars from $cars passed in
+                var cars = @json($cars);
+                cars = cars.replace(/&quot;/g, '"');
+
                 if(
-                    ['CRZ', 'Bolt'].includes(category)
-                    || ['CRZ', 'Bolt'].includes(tracking)
+                    cars.includes(category)
+                    || cars.includes(tracking)
                 ) {
                     if(notes.substr(0, 5) == 'charg') typeNote = 'charge';
                     else if(notes.substr(0, 3) == 'gas') typeNote = 'gas';

@@ -826,7 +826,12 @@ class TransactionsController extends Controller
             $transaction->accountId = $accountIds[$accountIdx];
         }
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFroms' => $toFroms, 'tofromaliases' => $tofromaliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced]);
+        // get cars
+        $cars = DB::table('carcostdetails')
+            ->where('key', 'Purchase')
+            ->pluck('car');
+
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => [], 'transactions' => $transactions, 'beginDate' => $beginDate, 'endDate' => $endDate, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'toFroms' => $toFroms, 'tofromaliases' => $tofromaliases, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => false, 'clearedBalance' => $clearedBalance, 'registerBalance' => $registerBalance, 'lastBalanced' => $lastBalanced, 'cars' => $cars]);
     }
 
 
@@ -1079,9 +1084,14 @@ class TransactionsController extends Controller
             $newTransactions[$trxIdx] = (array)$newTransaction; // for page (expecting arrays)
         }
 
+        // get cars
+        $cars = DB::table('carcostdetails')
+            ->where('key', 'Purchase')
+            ->pluck('car');
+
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '']);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '', 'cars' => cars]);
     }   // end of function upload
 
 
@@ -1893,18 +1903,20 @@ class TransactionsController extends Controller
         // get fuel bought info (volume and cost)
         function getFuelBoughtInfo($tripData, $fuel) {
             $msg = null; // assume no msgs to start
+           
+            // gets gas bought, if any
+            $gasBought = DB::table('transactions')
+                ->where('tracking', $tripData['tripCar'])
+                ->where('notes', 'like', '%gas - trips - ' . $tripData['tripName'] . '%');
 
-            if($tripData['tripCar'] == 'CRZ') {
-                $fuelBoughtEnRoute = DB::table('transactions')
-                    ->where('tracking', $tripData['tripCar'])
-                    ->where('notes', 'like', '%gas - trips - ' . $tripData['tripName'] . '%')
-                    ->get()->toArray();
-            } else if($tripData['tripCar'] == 'Bolt') {
-                $fuelBoughtEnRoute = DB::table('transactions')
-                    ->where('tracking', $tripData['tripCar'])
-                    ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%')
-                    ->get()->toArray();
-            }
+            // gets kwh bought, if any
+            $kwhBought = DB::table('transactions')
+                ->where('tracking', $tripData['tripCar'])
+                ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%');
+
+            // all fuel bought (should be just all gas or kwh)
+            $fuelBoughtEnRoute = $gasBought ->unionAll($kwhBought)->get()->toArray();
+
             // error_log("------ fuelBought:");
             // error_log(json_encode($fuelBoughtEnRoute));
     
@@ -1992,7 +2004,8 @@ class TransactionsController extends Controller
 
 
         // get last time gas was bought (not on a trip) BEFORE this trip
-        if($tripData['tripCar'] == 'CRZ') {
+        // if($tripData['tripCar'] == 'CRZ') {
+        if($fuel == 'gas') {
             $lastGases = DB::table('transactions')
                 ->where('trans_date', '<=', $tripData['tripBegin'])
                 ->where('tracking', $tripData['tripCar'])
