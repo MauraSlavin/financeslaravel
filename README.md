@@ -14,16 +14,9 @@
     CLEAN UP...<br>
       need to break out more methods?<br>
       Clean up error_log's<br>
-      Cars ("CRZ", "Bolt") are hard-coded when error-checking notes field.<br>
-      -- Have them in "carInfo" (in TransactionsController), and in cars (in transaction blade)<br>
-      -- Search for <br>
-      ---- {{ old('tripCar') == 
     </li>
     <li></li>
     <li>Do something to avoid duplicate tolls records??</li>
-    <li>Error checking on inputs...</li>
-    <li>-- If miles > 150, have user verify</li>
-    <li>-- If miles < 30, have user verify (no need to do this for short trips)</li>
   </ul>
 
 <h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>
