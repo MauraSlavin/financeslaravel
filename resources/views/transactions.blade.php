@@ -380,7 +380,8 @@
 
                 // get cars from $cars passed in
                 var cars = @json($cars);
-                cars = cars.replace(/&quot;/g, '"');
+                // console.log("cars:",cars);
+                // cars = cars.replace(/&quot;/g, '"');
 
                 if(
                     cars.includes(category)
