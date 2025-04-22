@@ -1091,7 +1091,7 @@ class TransactionsController extends Controller
 
         // TO DO:  order transactions by trans_date descending, toFrom ascending
 
-        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '', 'cars' => cars]);
+        return view('transactions', ['accountName' => $accountName, 'newTransactions' => $newTransactions, 'transactions' => $transactions, 'accountNames' => $accountNames, 'accountIds' => $accountIds, 'lastStmtDates' => $lastStmtDates, 'tofromaliases' => $tofromaliases, 'toFroms' => $toFroms, 'categories' => $categories, 'trackings' => $trackings, 'buckets' => $buckets, 'upload' => true, 'beginDate' => $beginDate, 'endDate' => $endDate, 'clearedBalance' => '', 'registerBalance' => '', 'lastBalanced' => '', 'cars' => $cars]);
     }   // end of function upload
 
 
@@ -2051,8 +2051,8 @@ class TransactionsController extends Controller
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
             
-            error_log("fuel cost bought en route: " . $fuelCostEnRoute);
-            error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+            error_log("fuel cost bought en route (kwh): " . $fuelCostEnRoute);
+            error_log("fuel cost not bought en route (kwh): " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
@@ -2072,9 +2072,10 @@ class TransactionsController extends Controller
 
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
+            error_log("recent unit price/gal: " . $recentUnitPrice);
             
-            error_log("fuel cost bought en route: " . $fuelCostEnRoute);
-            error_log("fuel cost not bought en route: " . $fuelCostNotBoughtEnRoute);
+            error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
+            error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;

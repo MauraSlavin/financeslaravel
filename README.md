@@ -9,7 +9,6 @@
 
   <ul>
     <li>WORKING ON - nothing in particular</li>
-    <li></li>
     <li>
     CLEAN UP...<br>
       need to break out more methods?<br>
