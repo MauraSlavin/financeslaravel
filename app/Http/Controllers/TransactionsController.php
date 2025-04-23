@@ -29,7 +29,7 @@ class TransactionsController extends Controller
 
         // beginDate defaults to a month ago
         if($beginDate == null) {
-            $beginDate = date('Y-m-d', strtotime('-1 month'));
+            $beginDate = date('Y-m-d', strtotime('-45 day'));
         }
 
         return [$beginDate, $endDate];
@@ -85,6 +85,125 @@ class TransactionsController extends Controller
     // get tolls from csv file
     public function readTollCsv() {
 
+        // removes duplicates from tollData (no dup rcds from CSV file)
+        function removeDupCSVTolls($tollData) {
+
+            // toll data with duplicates removed
+            $noDupsTollData = [];
+            
+            // for each toll records, only write it to the new noDupsTollData if it is not already there.
+            foreach($tollData as $key=>$tollRecord) {
+
+                // if $row is a duplicate, don't add it to tollData
+                if(isUniqueCSVToll($tollRecord, $noDupsTollData)) {
+                    $noDupsTollData[] = $tollRecord;
+                } else {
+                    error_log("This is a duplicate entry in the tolls CSV file, so it was not written to the tolls table:");
+                    error_log(json_encode($tollRecord));
+                    error_log("\n\n");
+                }
+            }
+
+            return $noDupsTollData;
+        }   // end of function removeDupCSVTolls
+
+        // returns true if tollRecord is not already in noDupsTollData
+        function isUniqueCSVToll($tollRecord, $noDupsTollData) {
+
+            $isUnique = true;  // assume unique unless found otherwise
+            foreach($noDupsTollData as $key=>$currToll) {
+                if($currToll == $tollRecord) {
+                    return false;   // it's already in the CSV file
+                }
+            }
+            return $isUnique;   // Unique if no dups found
+        }   // end of isUniqueCSVToll
+
+        // returns true if tollRecord is not already in $tableTolls (from tolls table)
+        function isUniqueTableToll($tollRecord, $tableTolls) {
+
+            $isUnique = true;  // assume unique unless found otherwise
+            foreach($tableTolls as $key=>$currToll) {
+                // if date, time, transponder & amount match, it's a duplicate
+                if(
+                    $currToll->date == $tollRecord["Transaction Date"] &&
+                    $currToll->time == $tollRecord["Transaction Time"] &&
+                    substr($currToll->transponder, -8) == substr($tollRecord["Transponder/Plate"], -8) &&
+                    $currToll->amount == $tollRecord["Outgoing"]
+                ) {
+                    return false;   // it's already in the tolls table
+                }
+            }
+
+            return $isUnique;   // Unique if no dups found
+        }   // end of isUniqueTableToll
+        
+
+        // removes duplicates from tollData that are already in the tolls table
+        // considered a dupe if the car, date, time and amt match
+        function removeDupTableTolls($tollData) {
+
+            // need tolls from tolls table to compare.  Only need those in the date range in $tollData
+            [$minDate, $maxDate] = getTollsDateRange($tollData);
+
+            // get tolls from table
+            $tableTolls = DB::table('tolls')
+                ->select(
+                    DB::raw('`Transaction Date` as date'),
+                    DB::raw('`Transaction Time` as time'),
+                    DB::raw('`Transponder/Plate` as transponder'),
+                    DB::raw('`Outgoing` as amount')
+                )
+                ->where(DB::raw('`Transaction Date`'), '>=', $minDate)
+                ->where(DB::raw('`Transaction Date`'), '<=', $maxDate)
+                // ->where('`Transaction Date`', '>=', $minDate)
+                ->get()->toArray();
+            // error_log("\n\nTable tolls:  (type: " . gettype($tableTolls) . ")");
+            // error_log(json_encode($tableTolls));
+            // foreach($tableTolls as $key=>$tableToll) {
+            //     error_log(" - " . $key . ":");
+            //     error_log(" --- date: " . $tableToll->date);
+            //     error_log(" --- time: " . $tableToll->time);
+            //     error_log(" --- transponder: " . $tableToll->transponder);
+            //     error_log(" --- amount: " . $tableToll->amount);
+            // }
+
+            // toll data with duplicates removed
+            $noDupsTollData = [];
+
+            // for each toll records, only write it to the new noDupsTollData if it is not in the tolls table ($tableTolls)
+            foreach($tollData as $key=>$tollRecord) {
+
+                // if $row is a duplicate, don't add it to tollData
+                if(isUniqueTableToll($tollRecord, $tableTolls)) {
+                    $noDupsTollData[] = $tollRecord;
+                } else {
+                    error_log("This is a duplicate entry in the tolls TABLE, so it was not written to the tolls table:");
+                    error_log(json_encode($tollRecord));
+                    error_log("\n\n");
+                }
+            }
+
+            return $noDupsTollData;
+        }   // end of function removeDupTableTolls
+        
+
+        // get min and max dates in tollData
+        function getTollsDateRange($tollData) {
+
+            // init min and max dates
+            $minDate = $tollData[0]["Transaction Date"];
+            $maxDate = $tollData[0]["Transaction Date"];
+
+            // change min and max dates to the actual min and max dates in tollData
+            foreach($tollData as $tollRecord) {
+                if($tollRecord["Transaction Date"] < $minDate) $minDate = $tollRecord["Transaction Date"];
+                if($tollRecord["Transaction Date"] > $maxDate) $maxDate = $tollRecord["Transaction Date"];
+            }
+
+            return [$minDate, $maxDate];
+        }   // end of function getTollsDateRange
+
         // csv files are expected to be in the public/uploadFiles folder.
         $fullFilePath = public_path('uploadFiles/tolls.csv');
 
@@ -135,6 +254,12 @@ class TransactionsController extends Controller
 
         // close the csv file
         fclose($handle);
+
+        // eliminate dups in csv file
+        $tollData = removeDupCSVTolls($tollData);
+        
+        // eliminate tolls from tollData that are already in tolls table
+        $tollData = removeDupTableTolls($tollData);
 
         return $tollData;
     }   // end function readTollCSV
@@ -1108,7 +1233,7 @@ class TransactionsController extends Controller
 
         if($result) {
             return response()->json([
-                'message' => 'Tolls successfully written to tolls table.',
+                'message' => 'Tolls successfully written to tolls table. ' . $result,
                 'status' => 'success'
             ]);
         } else {

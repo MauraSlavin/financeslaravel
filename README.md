@@ -4,18 +4,9 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Branch 2025-03-13-trips</h2>
-    <p>cleaning up trips...<p>
-
+<h2>Branch 2025-03-13-trips (done!  Start new branch)</h2>
   <ul>
-    <li>WORKING ON - nothing in particular</li>
-    <li>
-    CLEAN UP...<br>
-      need to break out more methods?<br>
-      Clean up error_log's<br>
-    </li>
-    <li></li>
-    <li>Do something to avoid duplicate tolls records??</li>
+    <li>WORKING ON - nothing - start new branch!!</li>
   </ul>
 
 <h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>
@@ -42,8 +33,7 @@
     <ul>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>highlight outstanding transactions (no clear date)</li>
-      <li>duplicate a transaction and put in edit mode (when transactions repeat)<br>
-      -- and make default range bigger - maybe six weeks? - to capture monthly transactions to be duplicated</li>
+      <li>duplicate a transaction and put in edit mode (when transactions repeat)</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
       <li>fix saving new aliases</li>
       <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
