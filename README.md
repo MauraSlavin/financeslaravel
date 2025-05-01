@@ -4,23 +4,13 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Branch 2025-03-13-trips (done!  Start new branch)</h2>
+<h2>Budgets / categories.  Branch 2025-04-25-budget-table</h2>
   <ul>
-    <li>WORKING ON - nothing - start new branch!!</li>
+    <li> In BUD VS ACT view, bdgt & act look good, transactions might not be categorized correctly<br>
+    -- Catch up on GB Limo paystubs<br>
   </ul>
 
-<h2>Eliminate duplicate table (budget vs. newbudget) -- haven't finished testing</h2>
-<p>Branch 2025-03-09-elim-dup-budget-table</p>
-    <ul>
-      <li>Keep budget</li>
-      <li> - just need to verify numbers in TRANSACTIONS view</li>
-      <li> - AND in BUD VS ACT view</li>
-      <li> - AND delete newbudget table</li>
-      <br>
-      <li> - make sure budget has most recent data (DONE)</li>
-      <li> - find where newbudget is being used (DONE)</li>
-      <li> - get data from budget instead (in format expected) (DONE)</li>
-    </ul>
+  <p>NEXT:  Monthly bills, etc?</p>
 
 <h2>BUGS</h2>
   <ul>
@@ -32,11 +22,12 @@
 <h2>To do:</h2>
     <ul>
       <li>splitting Spending transaction may still not be working correctly</li>
+      <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
       <li>duplicate a transaction and put in edit mode (when transactions repeat)</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
       <li>fix saving new aliases</li>
-      <li>**Manually** add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
+      <li><b>Manually</b> add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
       <li>button to write M/M spending to a CSV, Google sheets, etc. so I can send Mike a copy</li>
@@ -68,7 +59,7 @@
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
-    <li>** Assets</li>
+    <li>**Assets</li>
     <li> --- Include ability to set end date</li>
     <li>Loans?</li>
     <li>App for Marina's Miles??</li>
@@ -90,6 +81,172 @@
     <li>should now have all changes in the main branch, and ready to start again with a new branch</li>
   </ul>
 
+
+<h2>Categories (in transactions)</h2>
+  <P>Each transaction, except those for Mike and Maura spending account (Mike, MauraSCU, MauraDisc) need a category.</p>
+  <p>DiscRet (Discover Retirement) should not have categories, except virtually moving money from Inherited IRA to LTC.<br>
+  This may seem backwards, but I want it to show as GOING to LTC as an expense.<br><br>
+  One exception for $16,000 to WF on 3/26/25.<br><br>
+  <u><b>NOTE:</b></u> See below for more notes on retirement income.
+  </p>
+  <p>These are used to track actual spending against the budget.</p>
+  <p>The categories, and what they include are: (by type of category)<p>
+    <ul><u>INCOME</u><br>
+      <li><b>IncomeInterest</b>: Interest earned from financial institution, or Edward Jones income.</li>
+      <li><b>IncomeMisc</b>: Earned or gift income not from pay going toward household expenses:
+        <ul>
+          <li>M/M for trips</li>
+          <li>inheritance</li>
+          <li>side jobs</li>
+          <li>gifts</li>
+          <li>solar credits</li>
+          <li>Discover Rewards</li>
+          <li>selling stuff</li>
+          <li>Door Dash (because it's for spending, not household)</li>
+          <li>Great Bay (because it's for spending, not household)</li>
+          <li>RMD from Inherited IRA</li>
+          <li>Selling of savings bonds</li>
+          <li>travel reimbursement</li>
+          <li>found</li>
+          <li>$ virtually transferred from DiscRet to LTC</li>
+        </ul>
+      <li><b>IncomePaycheck</b>: Regular paycheck from employment going to household expenses.</li>
+      <li><b>IncomeRental</b>: Income from renting rooms in our house.</li>
+      <li><b>IncomeRetirement</b>: Retirement (SS income is RetContribIn & RetContribOut since saving for future retirement).</li>
+      <li><b>LoanPaid</b>: Money paid back from a loan.</li>
+      <li><b>RetContribIn</b>:  Money coming in that goes right back out to an IRA, 401k, 403b, or Disc Retirement acct.</li>
+    </ul>
+    <ul><u>EXPENSE</u><br>
+      <li><b>BigExpenses</b>: Money set aside for known, irregular big expenses:
+        <ul>
+          <li>New Car</li>
+          <li>Home Improvement</li>
+          <li>Home Repairs</li>
+          <li>Big medical bills</li>
+          <li>Wedding</li>
+          <li>(not an all-inclusive list)</li>
+        </ul>
+      </li>
+      <li><b>Bolt</b>: All costs to run the Bolt:
+        <ul>
+          <li>Charging</li>
+          <li>Maintenance (Parts & Labor)</li>
+          <li>Insurance</li>
+          <li>Registration</li>
+          <li>Parking</li>
+          <li>Tolls</li>
+        </ul>
+        <p>NOTE: Purchase price in category BigExpenses</p>
+      </li>
+      <li><b>Charity</b>: All donations (may or may not be tax deductible, but we don't itemize, so it doesn't matter).</li>
+      <li><b>College</b>: Tuition and related school costs.</li>
+      <li><b>CRZ</b>: All costs to run the CRZ:
+        <ul>
+          <li>Gasoline</li>
+          <li>Maintenance (Parts & Labor)</li>
+          <li>Insurance</li>
+          <li>Registration</li>
+          <li>Parking</li>
+          <li>Tolls</li>
+        </ul>
+        <p>NOTE: Purchase price in category BigExpenses</p>
+      </li>
+      <li><b>Dentist</b>: Dental insurance and bills. (Dani in KIDS)</li>
+      <li><b>Doctor</b>: Doctor & hospital insurance, equipment, bills. (Dani in KIDS)</li>
+      <li><b>ExtraSpending</b>: From Door Dash and Great Bay Limo income that increases spending</li>
+      <li><b>Eyecare</b>: Insurance & actual expenses.</li>
+      <li><b>Gift</b>: Gifts (other than to kids) that are from <u><b>both of us</b>,</u>:
+        <ul>
+          <li>birthdays</li>
+          <li>weddings</li>
+          <li>Mass Intentions</li>
+          <li>other</li>
+        </ul>
+      <p><b>NOTE:</b>  For kids are in KIDS category; from just one of us comes from our own SPENDING category.</p>
+      <li><b>Groceries</b>: Supermarket food for Mike or Maura & guests.  Food for Dani comes from KIDS category.  May or may not include holiday meals.</li>
+      <li><b>Holiday</b>: Extra stuff bought for a holiday from both of us.<br>Examples:
+        <ul>
+          <li>Easter candy</li>
+          <li>Valentine's Day cards</li>
+          <li>Christmas cards, stamps</li>
+        </ul> 
+        <p><b>NOTE:</b>  From just one of us comes from our own SPENDING category.</p>   
+      </li>
+      <li><b>Home</b>: Examples...
+        <ul>
+          <li>Stuff for yard (mulch, fertilizer, grass seed)</li>
+          <li>Misc stuff that's not food: toilet paper, detergent, etc.</li>
+          <li>Pool chemicals and supplies</li>
+        </ul>
+      </li>
+      <li><b>HomeInsurance</b>: Insurance premiums</li>
+      <li><b>IncomeOtherWH</b>: Medicare and SS withholdings</li>
+      <li><b>IncomeTaxes</b>: Income tax withheld, paid, returned</li>
+      <li><b>Kids</b>: Stuff for kids...
+        <ul>
+          <li>Food for Dani</li>
+          <li>Birthday, anniversary gifts; cards</li>
+          <li>Help with costs (that aren't loans)</li>
+          <li>Their tickets, etc., when with Mike & Maura</li>
+          <li>Ins premiums, medical bills</li>
+        </ul>
+        <p><b>NOTE:</b>If fun stuff with just one of us (movie, restaurant) then it comes from our own SPENDING category.</p>   
+      </li>
+      <li><b>LifeInsurance</b>: Maura's Riversource premium</li>
+      <li><b>Loan</b>: Money we loaned to people</li>
+      <li><b>LTC</b>: Money set aside for Long Term Care</li>
+      <li><b>MarinasMiles</b>: Costs we incurred for Marina's Miles</li>
+      <li><b>MauraSpending</b>: Maura's spending money</li>
+      <li><b>MikeSpending</b>: Mike's spending money</li>
+      <li><b>MiscExpense</b>: Costs not categorized elsewhere. i.e.
+        <ul>
+          <li>lost</li>
+          <li>Tickets</li>
+          <li>Trips not for fun</li>
+          <li>Sales tax</li>
+          <li>Funerals/burials</li>
+          <li>Bank fees</li>
+        </ul>
+      </li>
+      <li><b>Prescriptions</b>: Premiums and costs. Can include OTC.</li>
+      <li><b>PropertyTax</b>: Property tax.</li>
+      <li><b>RentalExpense</b>: Stuff bought for rental rooms we wouldn't have done otherwise.</li>
+      <li><b>RetContribOut</b>: To IRA, 401K, or 403B</li>
+      <li><b>Utilities</b>:
+        <ul>
+          <li>Gas</li>
+          <li>Electricity</li>
+          <li>Phone (same for each - extra from SPENDING)</li>
+          <li>Internet</li>
+          <li>Water/Sewer</li>
+        </ul>
+      </li>
+      <li><b>Vacation</b>: Fun trips, Mike & Maura (just one comes from SPENDING)</li>
+      <li><b>WorkExpense</b></li>
+    </ul>
+    <ul><u>NEITHER Income NOR Expense</u><br>
+      <li><b>BucketMove</b>:  Move from one Big Bills bucket to another. Should be in pairs that cancel each other out.</li>
+      <li><b>SecurityDeposit</b>:  To be moved to a separate account.  Should be in pairs that cancel each other out.</li>
+      <li><b>Transfer</b>:  Just moving our own money around.  Should be in pairs that cancel each other out.</li>
+      <li><b>Value</b>:  Balance of investment accounts, house, cash value of LI.</li>
+    </ul>
+
+
+<h2>Retirement Income</h2>
+  <ul>
+    <li><u><b>NHRetirement</b></u>:  Used for household expenses
+    <p>All in category IncomeRetirement</p>
+    </li>
+    <li><u><b>MTS IBM Retirement</b></u>:  Save for future retirement, if not needed for household expenses.
+    <p>Some being withheld ($278.85 in 2025) for Income taxes.<br>
+    Rest can be saved for future retirement, or used for houshold expenses.
+    </li>
+    <li><u><b>SSMike</b></u>:  Save for future retirement, if not needed for household expenses.
+    <p>Mike's Medicare Part B (& D if there is a premium) come from this,<br>
+    but still transfer gross amount to future retirement savings.
+    </li>
+  </ul>
+  <p><u><b>NOTE:  </u></b> See more detailed notes in Workbench "Retirement txns" tab.
 
 <h2>uploadMatch Documentation</h2>
   <p>uploadMatch determines how each field in the transactions table gets filled from the csv download.</p>
@@ -341,19 +498,19 @@ We would like to extend our thanks to the following sponsors for funding Laravel
 
 ### Premium Partners
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+-**[Vehikl](https://vehikl.com/)**
+-**[Tighten Co.](https://tighten.co)**
+-**[WebReinvent](https://webreinvent.com/)**
+-**[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+-**[64 Robots](https://64robots.com)**
+-**[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+-**[Cyber-Duck](https://cyber-duck.co.uk)**
+-**[DevSquad](https://devsquad.com/hire-laravel-developers)**
+-**[Jump24](https://jump24.co.uk)**
+-**[Redberry](https://redberry.international/laravel/)**
+-**[Active Logic](https://activelogic.com)**
+-**[byte5](https://byte5.de)**
+-**[OP.GG](https://op.gg)**
 
 ## Contributing
 
