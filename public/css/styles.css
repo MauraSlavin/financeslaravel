@@ -66,6 +66,12 @@ h5, h6 {
     color: darkblue !important;
 }
 
+.monthly {
+    background-color: violet !important;
+    color: purple !important;  
+    font-weight: bold !important;  
+}
+
 #errorMsg {
     color: red;
     font-size: 20px;
@@ -111,7 +117,7 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura, #mauraSpending, #mikeSpending, #trips {
+#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura, #mauraSpending, #mikeSpending, #trips, #monthly {
     margin: 10px;
 }
 

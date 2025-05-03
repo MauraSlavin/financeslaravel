@@ -4,13 +4,33 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Budgets / categories.  Branch 2025-04-25-budget-table</h2>
+<h2>Working on - Branch 2025-05-01-monthly-bills</h2>
   <ul>
-    <li> In BUD VS ACT view, bdgt & act look good, transactions might not be categorized correctly<br>
-    -- Catch up on GB Limo paystubs<br>
+    <li>Created table "monthlies"</li>
+    <li>Put some transactions in "monthlies" table</li>
+    <li>Created button "Monthly Transactions" on landing page.</li>
+    <li>Created primitive view "monthlies"</li>
+    <li>Clicking "Monthly Transactions" displays the view</li>
+  </ul>
+  <p>Need to...</p>
+  <ul>
+    <li>Enable editting of the rows in the monthlies view</li>
+    <li>Fill in some of the other fields in the view</li>
+    <li>Run the transactions in the view</li>
+    <li>Indicate when the transaction is last in the transactions table <br>(trans_date and cleared_date)</li>
+  </ul>
+<p>NOTES:</p>
+  <ul>
+    <li>NOTE: Catch up on GB Limo paystubs</li>
+    <li>NOTE: Make sure IncomeTaxes and IncomeOtherWH are done correctly<br>
+    -- IncomeTaxes is taxes withheld, paid, refunded<br>
+    -- IncomeOtherWH is SS and Medicare withholdings
   </ul>
 
-  <p>NEXT:  Monthly bills, etc?</p>
+  <p>NEXT:  Monthly bills, other monthly transactions<br>
+  -- store in a table (monthly?)<br>
+  -- interface to update<br>
+  -- needs day of month (for trans_date), toFrom, category, notes. That might be it.</p>
 
 <h2>BUGS</h2>
   <ul>
@@ -21,6 +41,7 @@
     
 <h2>To do:</h2>
     <ul>
+      <li>Copy a transaction (new one in edit mode)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>

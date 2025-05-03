@@ -43,6 +43,8 @@ Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController
 Route::post('/accounts/moveFundsBetweenBuckets', 'App\Http\Controllers\TransactionsController@moveFundsBetweenBuckets')->name('moveFundsBetweenBuckets');
 // see spending for Mike/Maura
 Route::get('/accounts/spending/{who}', 'App\Http\Controllers\TransactionsController@spending')->name('spending');
+// Monthly transactions
+Route::get('/accounts/monthly', 'App\Http\Controllers\TransactionsController@monthly')->name('monthly');
 // calc cost for a trip
 Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
 // sum tolls for a specific trip, using records in tolls table
