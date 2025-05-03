@@ -13,12 +13,13 @@
     @endif
     <button type="button" id="assets" class="btn btn-primary">Assets</button>
     <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
-    <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
+    <button type="button" id="trips" class="btn btn-info trips">Trips</button>
     <button type="button" id="buckets" class="btn btn-success">Buckets</button>
-    <button type="button" id="budget" class="btn btn-danger">Budget</button>
     <button type="button" id="mikeSpending" class="btn btn-primary mike">Mike Spending</button>
     <button type="button" id="mauraSpending" class="btn btn-primary maura">Maura Spending</button>
-    <button type="button" id="trips" class="btn btn-info trips">Trips</button>
+    <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
+    <button type="button" id="budget" class="btn btn-danger">Budget</button>
+    <button type="button" id="monthly" class="btn btn-primary monthly">Monthly Transactions</button>
 
         <table>
             <thead>
@@ -116,6 +117,15 @@
                     const url = '/accounts/trips';
                     window.location.href = url;
                 });
+
+                // Monthly transactions page
+                $('#monthly').on('click', function(e) {
+                    e.preventDefault();
+
+                    const url = '/accounts/monthly';
+                    window.location.href = url;
+                });
+
             });
 
         </script>

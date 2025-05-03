@@ -2584,6 +2584,16 @@ class TransactionsController extends Controller
     }   // end of function gblimo
 
 
+    // Set up & do montly transactions
+    public function monthly() {
+
+        $monthlies = DB::table('monthlies')
+            ->get()->toArray();
+
+        return view('monthlies', ['monthlies' => $monthlies]);
+    }
+
+
     // Prompt for new investment account balances
     public function investmentsindex() {
 
