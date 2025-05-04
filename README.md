@@ -11,13 +11,19 @@
     <li>Created button "Monthly Transactions" on landing page.</li>
     <li>Created primitive view "monthlies"</li>
     <li>Clicking "Monthly Transactions" displays the view</li>
+    <li>Filled in transaction date and status</li>
   </ul>
   <p>Need to...</p>
   <ul>
+    <li>Order rows by status & date<br>
+    Search for "left off here"</li>
     <li>Enable editting of the rows in the monthlies view</li>
     <li>Fill in some of the other fields in the view</li>
-    <li>Run the transactions in the view</li>
-    <li>Indicate when the transaction is last in the transactions table <br>(trans_date and cleared_date)</li>
+    <li>Run the transactions in the view<br>
+    maybe a check box and run transactions button<br>
+    pairs of transactions (same name) only have one button for both to run (can be more than 2)</li>
+    <li>Color pairs of transactions the same color</li>
+    <li>Color "Pending" and "Completed" differently</li>
   </ul>
 <p>NOTES:</p>
   <ul>
