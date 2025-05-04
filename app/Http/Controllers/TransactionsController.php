@@ -2587,8 +2587,74 @@ class TransactionsController extends Controller
     // Set up & do montly transactions
     public function monthly() {
 
+        // get monthly transactions set up
         $monthlies = DB::table('monthlies')
             ->get()->toArray();
+
+        // get last cleared_date (or last trans_date if cleared is null) for each monthly transaction
+        // if cleared_date is null, transaction is Pending, else it is Completed.
+        foreach($monthlies as $monIdx=>$month) {
+            // these don't have a set amount
+            if($month->amount == null) {
+                $dates = DB::table('transactions')
+                    ->where('toFrom', $month->toFrom)
+                    ->where('account', $month->account)
+                    ->where('category', $month->category)
+                    ->select(
+                        DB::raw("CASE 
+                            WHEN clear_date IS NOT NULL THEN clear_date 
+                            ELSE trans_date 
+                        END as date"),
+                        DB::raw("CASE 
+                            WHEN clear_date IS NOT NULL THEN 'Completed'
+                            ELSE 'Pending'
+                        END as status")
+                    )
+                    ->orderByRaw("CASE 
+                        WHEN clear_date IS NOT NULL THEN clear_date 
+                        ELSE trans_date 
+                    END DESC")
+                    ->first();
+
+            // these DO have a set amount.
+            } else {
+                $dates = DB::table('transactions')
+                    ->where('toFrom', $month->toFrom)
+                    ->where('account', $month->account)
+                    ->where('amount', $month->amount)
+                    ->where('category', $month->category)
+                    ->select(
+                        DB::raw("CASE 
+                            WHEN clear_date IS NOT NULL THEN clear_date 
+                            ELSE trans_date 
+                        END as date"),
+                        DB::raw("CASE 
+                            WHEN clear_date IS NOT NULL THEN 'Completed'
+                            ELSE 'Pending'
+                        END as status")
+                    )
+                    ->orderByRaw("CASE 
+                        WHEN clear_date IS NOT NULL THEN clear_date
+                        ELSE trans_date
+                    END DESC")
+                    ->first();                
+            }
+
+            if($dates == NULL) {
+                // this shouldn't happen - means there's probably an error in the database
+                $monthlies[$monIdx]->trans_date = 'not found';
+                $monthlies[$monIdx]->status = 'unknown';
+            } else {
+                // add dates and statuses to monthlies array
+                $monthlies[$monIdx]->trans_date = $dates->date;
+                $monthlies[$monIdx]->status = $dates->status;
+            }
+
+        }
+
+        // left off here
+        
+        // order monthlies by status and date
 
         return view('monthlies', ['monthlies' => $monthlies]);
     }
