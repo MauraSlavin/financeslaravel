@@ -24,19 +24,20 @@
             <!-- table headers -->
             <thead>
                 <tr>
-                    <th style="display: none; width: 100px; word-break: break-word;">id</th>
-                    <th style="width: 70px; word-break: break-word;">reg date</th>
-                    <th style="width: 100px; word-break: break-word;">date sched or done</th>
-                    <th style="width: 100px; word-break: break-word;">status</th>
+                    <th style="display: none; word-break: break-word;">id</th>
+                    <th style="width: 90px; word-break: break-word;">NAME</th>
+                    <th style="width: 50px; word-break: break-word;">reg date</th>
+                    <th style="width: 85px; word-break: break-word;">date sched or done</th>
+                    <th style="width: 90px; word-break: break-word;">status</th>
                     <!-- <th style="width: 100px; word-break: break-word;">clear_date</th> -->
                     <th style="width: 100px; word-break: break-word;">account</th>
                     <!-- <th style="display: none;">id</th> -->
                     <th style="width: 100px; word-break: break-word;">toFrom</th>
-                    <th style="width: 100px; word-break: break-word;">amount</th>
+                    <th style="width: 75px; word-break: break-word;">amount</th>
                     <th style="width: 100px; word-break: break-word;">category</th>
                     <th style="width: 100px; word-break: break-word;">bucket</th>
-                    <th style="width: 100px; word-break: break-word;">notes</th>
-                    <th style="width: 100px; word-break: break-word;">comments</th>
+                    <th style="width: 160px; word-break: break-word;">notes</th>
+                    <th style="width: 300px; word-break: break-word;">comments</th>
                     <!-- <th style="width: 100px; word-break: break-word;">method</th> -->
                     <!-- <th style="width: 100px; word-break: break-word;">tracking</th> -->
                     <!-- <th style="width: 100px; word-break: break-word;">Edit/Save</th>
@@ -56,6 +57,7 @@
                 @foreach($monthlies as $monthly)
                     <tr data-id={{ $monthly->name }}>
                         <!-- <td class="newtransaction">{{ $newTransaction["id"] ?? NULL }}</td> -->
+                        <td class="name">{{ $monthly->name ?? NULL  }}</td>
                         <td class="date" style="text-align: center;">{{ $monthly->dateOfMonth ?? NULL  }}</td>
                         <td class="transDate">{{ $monthly->trans_date ?? NULL }}</td>
                         <td class="status">{{ $monthly->status ?? NULL }}</td>

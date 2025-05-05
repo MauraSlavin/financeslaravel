@@ -2594,52 +2594,41 @@ class TransactionsController extends Controller
         // get last cleared_date (or last trans_date if cleared is null) for each monthly transaction
         // if cleared_date is null, transaction is Pending, else it is Completed.
         foreach($monthlies as $monIdx=>$month) {
-            // these don't have a set amount
-            if($month->amount == null) {
-                $dates = DB::table('transactions')
-                    ->where('toFrom', $month->toFrom)
-                    ->where('account', $month->account)
-                    ->where('category', $month->category)
-                    ->select(
-                        DB::raw("CASE 
-                            WHEN clear_date IS NOT NULL THEN clear_date 
-                            ELSE trans_date 
-                        END as date"),
-                        DB::raw("CASE 
-                            WHEN clear_date IS NOT NULL THEN 'Completed'
-                            ELSE 'Pending'
-                        END as status")
-                    )
-                    ->orderByRaw("CASE 
+
+            // basic query to get most recent monthly transactions
+            $dates = DB::table('transactions')
+                ->where('toFrom', $month->toFrom)
+                ->where('account', $month->account)
+                // ->where('amount', $month->amount)        -- only do this (below) when amount is consistent
+                // ->where('category', $month->category)    -- only do this (below) if category is consistent
+                ->select(
+                    DB::raw("CASE 
                         WHEN clear_date IS NOT NULL THEN clear_date 
                         ELSE trans_date 
-                    END DESC")
-                    ->first();
-
-            // these DO have a set amount.
-            } else {
-                $dates = DB::table('transactions')
-                    ->where('toFrom', $month->toFrom)
-                    ->where('account', $month->account)
-                    ->where('amount', $month->amount)
-                    ->where('category', $month->category)
-                    ->select(
-                        DB::raw("CASE 
-                            WHEN clear_date IS NOT NULL THEN clear_date 
-                            ELSE trans_date 
-                        END as date"),
-                        DB::raw("CASE 
-                            WHEN clear_date IS NOT NULL THEN 'Completed'
-                            ELSE 'Pending'
-                        END as status")
-                    )
-                    ->orderByRaw("CASE 
-                        WHEN clear_date IS NOT NULL THEN clear_date
-                        ELSE trans_date
-                    END DESC")
-                    ->first();                
+                    END as date"),
+                    DB::raw("CASE 
+                        WHEN clear_date IS NOT NULL THEN 'Completed'
+                        ELSE 'Pending'
+                    END as status")
+                )
+                ->orderByRaw("CASE 
+                    WHEN clear_date IS NOT NULL THEN clear_date
+                    ELSE trans_date
+                END DESC"); // puts the most recent first
+                
+            // if amount is set, filter by that
+            if(!is_null($month->amount)) {
+                $dates->where('amount', $month->amount);
             }
 
+            // match category, if needed
+            if(!$month->anyCategory) {
+                $dates->where('category', $month->category);
+            }
+
+            // get the first transaction (they've been sorted by most recent first)
+            $dates = $dates->first();
+            
             if($dates == NULL) {
                 // this shouldn't happen - means there's probably an error in the database
                 $monthlies[$monIdx]->trans_date = 'not found';
@@ -2652,10 +2641,14 @@ class TransactionsController extends Controller
 
         }
 
-        // left off here
+        // Sort by status and transaction date to display in an orderly fashion
+        usort($monthlies, function($a, $b) {
+            if ($a->status === $b->status) {
+                return strcmp($a->trans_date, $b->trans_date);
+            }
+            return strcmp($a->status, $b->status);
+        });
         
-        // order monthlies by status and date
-
         return view('monthlies', ['monthlies' => $monthlies]);
     }
 
