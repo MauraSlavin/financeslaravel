@@ -80,6 +80,6 @@ Route::get('/transactions/totalKey/{total_key}', 'App\Http\Controllers\Transacti
 Route::get('/transactions/getDefaults/{account}/{toFrom}', 'App\Http\Controllers\TransactionsController@getDefaults');
 Route::get('/transactions/add', 'App\Http\Controllers\TransactionsController@addTransaction')->name("addTransaction");
 Route::post('/transactions/insert', 'App\Http\Controllers\TransactionsController@writeTransaction')->name("writeTransaction");
-
+Route::get('/transactions/monthlies', 'App\Http\Controllers\TransactionsController@writeMonthlyTransactions')->name('writeMonthlyTransactions');
 Route::get('/temp/splitMandM', 'App\Http\Controllers\TransactionsController@splitMandM');
 ?>

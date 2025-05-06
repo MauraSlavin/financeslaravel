@@ -19,90 +19,80 @@
 
         <p id="errorMsg"></p>
         <!-- table -->
-        <table id="editMonthliesTable">
 
-            <!-- table headers -->
-            <thead>
-                <tr>
-                    <th style="display: none; word-break: break-word;">id</th>
-                    <th style="width: 90px; word-break: break-word;">NAME</th>
-                    <th style="width: 50px; word-break: break-word;">reg date</th>
-                    <th style="width: 85px; word-break: break-word;">date sched or done</th>
-                    <th style="width: 90px; word-break: break-word;">status</th>
-                    <!-- <th style="width: 100px; word-break: break-word;">clear_date</th> -->
-                    <th style="width: 100px; word-break: break-word;">account</th>
-                    <!-- <th style="display: none;">id</th> -->
-                    <th style="width: 100px; word-break: break-word;">toFrom</th>
-                    <th style="width: 75px; word-break: break-word;">amount</th>
-                    <th style="width: 100px; word-break: break-word;">category</th>
-                    <th style="width: 100px; word-break: break-word;">bucket</th>
-                    <th style="width: 160px; word-break: break-word;">notes</th>
-                    <th style="width: 300px; word-break: break-word;">comments</th>
-                    <!-- <th style="width: 100px; word-break: break-word;">method</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">tracking</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">Edit/Save</th>
-                    <th style="width: 100px; word-break: break-word;">Split</th>
-                    <th style="width: 100px; word-break: break-word;">Delete</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">stmtDate</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">amtMike</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">amtMaura</th> -->
-                    <!-- <th style="width: 100px; word-break: break-word;">total_amt</th>
-                    <th style="width: 100px; word-break: break-word;">total_key</th>
-                    <th style="width: 100px; word-break: break-word;">split_total</th> -->
-                </tr>
-            </thead>
-
-            <tbody>
-                <!-- transactions just uploaded -->
-                @foreach($monthlies as $monthly)
-                    <tr data-id={{ $monthly->name }}>
-                        <!-- <td class="newtransaction">{{ $newTransaction["id"] ?? NULL }}</td> -->
-                        <td class="name">{{ $monthly->name ?? NULL  }}</td>
-                        <td class="date" style="text-align: center;">{{ $monthly->dateOfMonth ?? NULL  }}</td>
-                        <td class="transDate">{{ $monthly->trans_date ?? NULL }}</td>
-                        <td class="status">{{ $monthly->status ?? NULL }}</td>
-                        <td class="account">{{ $monthly->account ?? NULL  }}</td>
-                        <!-- <td style="display: none;" class="accountId">{{ $newTransaction["accountId"] ?? "id"  }}</td> -->
-                        <td class="toFrom">{{ $monthly->toFrom ?? NULL  }}</td>
-                        <td class="amount" style="text-align: right;">{{ $monthly->amount ?? NULL  }}</td>
-                        <td class="category">{{ $monthly->category ?? NULL  }}</td>
-                        <td class="bucket">{{ $monthly->bucket ?? NULL  }}</td>
-                        <td class="notes">{{ $monthly->notes ?? NULL  }}</td>
-                        <td class="comments">{{ $monthly->comments ?? NULL  }}</td>
-                        <!-- <td class="method"></td> -->
-                        <!-- <td class="tracking"></td> -->
-                        <!-- once this ("edit") is clicked, change to save.  Once saved, change back to edit -->
-                        <!-- <td>
-                            <button class="btn btn-primary editTransaction" data-id=id>Edit</button>
-                        </td>
-                        <td>
-                            <button class="btn btn-warning splitTransaction" data-id=id>Split</button>
-                        </td>                       
-                        <td>
-                            <button class="btn btn-danger deleteTransaction" data-id=id>Delete</button>
-                        </td> -->
-                        <!-- <td class="stmtDate"></td> -->
-                        <!-- <td class="amtMike" style="text-align: right;"></td> -->
-                        <!-- <td class="amtMaura" style="text-align: right;"></td> -->
-                        <!-- <td class="total_amt" style="text-align: right;"></td> -->
-                        <!-- <td class="total_key"></td> -->
-                        <!-- <td class="split_total" style="text-align: right;"></td> -->
-                        <!-- <td class="lastBalanced"></td> -->
-                        <!-- <td class="spent" style="text-align: right;">
-
-                        </td> -->
-                        <!-- <td class="ytmBudget" style="text-align: right;">
-
-                        </td>
-                        <td class="yearBudget" style="text-align: right;">
-                                    
-                        </td> -->
-                    </tr>
-                @endforeach
-
-            </tbody>
-        </table>
+        <form action="{{ route('writeMonthlyTransactions') }}" method="GET">
         
+            <!-- button w/ explanation -->
+            <span style="margin-left: 10px;">Click <b>RECORD</b> to record the <b>checked</b> transactions in the transactions table.</span><br>
+            <button class="btn btn-success" type="submit" style="margin-left: 10px; margin-bottom: 10px;">Record</button>
+
+            <table id="editMonthliesTable">
+
+                <!-- table headers -->
+                <thead>
+                    <tr>
+                        <th style="width: 10px;">Run</th>
+                        <th style="width: 90px; word-break: break-word;">NAME</th>
+                        <th style="width: 40px; word-break: break-word;">reg date</th>
+                        <th style="width: 90px; word-break: break-word;">date sched or done</th>
+                        <th style="width: 90px; word-break: break-word;">status</th>
+                        <th style="width: 100px; word-break: break-word;">account</th>
+                        <th style="width: 100px; word-break: break-word;">toFrom</th>
+                        <th style="width: 75px; word-break: break-word;">amount</th>
+                        <th style="width: 110px; word-break: break-word;">category</th>
+                        <th style="width: 100px; word-break: break-word;">bucket</th>
+                        <th style="width: 160px; word-break: break-word;">notes</th>
+                        <th style="width: 300px; word-break: break-word;">comments</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <!-- transactions just uploaded -->
+                    @foreach($monthlies as $monthly)
+                        <tr data-id={{ $monthly->id }}>
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="checkbox" class="check" style="width: 10px;">
+                            </td>
+                            <td>
+                                <input type="text" name="name" class="name" style="width: 90px;" value={{ $monthly->name ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="dateOfMonth" class="date" style="text-align: center; width: 40px;" value={{ $monthly->dateOfMonth ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="transDate" class="transDate" style="width: 90px;" value={{ $monthly->trans_date ?? NULL }}>
+                            </td>
+                            <td>
+                                <input type="text" name="status" class="status" style="width: 90px;" value={{ $monthly->status ?? NULL }}>
+                            </td>
+                            <td>
+                                <input type="text" name="account" class="account" style="width: 100px;" value={{ $monthly->account ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="toFrom" class="toFrom" style="width: 100px;" value={{ $monthly->toFrom ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="amount" class="amount" style="text-align: right; width: 75px;" value={{ number_format(round($monthly->amount,2), 2, '.', '') ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="category" class="category" style="width: 110px;" value={{ $monthly->category ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="bucket" class="bucket" style="width: 100px;" value={{ $monthly->bucket ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="notes" class="notes" style="width: 160px;" value={{ $monthly->notes ?? NULL  }}>
+                            </td>
+                            <td>
+                                <input type="text" name="comments" class="comments" style="width: 300px;" value={{ $monthly->comments ?? NULL  }}>
+                            </td>
+                        </tr>
+                    @endforeach
+
+                </tbody>
+            </table>
+
+        </form>
         
         <script>
             
@@ -112,6 +102,46 @@
                 }
             });
             
+            // colors to rotate through for each transaction group
+            const colors = [
+                'palegoldenrod',
+                'skyblue'
+            ];
+
+            $(document).ready(function() {
+                var colorId = -1;
+                $('tbody tr').each(function(index, element) {
+                    var row = $(this);
+
+                    // set background color
+                    var name = row.find('.name').val();
+                    var prevName = row.prev().find('.name').val();
+
+                    if(name != prevName) {
+                        colorId++;
+                    } else {
+                        // hide checkbox if it's the same group of transactions
+                        row.find('.check').css('display', 'none');
+                    }
+
+                    // have we gone through all the colors yet?
+                    if(colorId >= colors.length) colorId = 0;
+                    row.css('background-color', colors[colorId]);
+                    row.find('input').css('background-color', colors[colorId]);
+
+                    // color Completed/Pending
+                    var status = row.find('.status').val();
+                    if(status == 'Completed') {
+                        row.find('.status').css('background-color', 'lightgreen')
+                            .parent().css('background-color', 'lightgreen');
+                    } else if(status == 'Pending') {
+                        row.find('.status').css('background-color', '#f7d98d')
+                            .parent().css('background-color', '#f7d98d');
+                    }
+                });
+
+
+            });
 
 
         </script>

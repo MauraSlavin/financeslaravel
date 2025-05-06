@@ -5,6 +5,15 @@
   </ul>
 
 <h2>Working on - Branch 2025-05-01-monthly-bills</h2>
+  <p>Un-committed changes...<p>
+  <ul>
+    <li>Color rows</li>
+    <li>Color "Pending" and "Completed" differently</li>
+    <li>Add check boxes</li>
+    <li>fields are all input fields</li>
+    <li>Have submit button which calls writeMonthlyTransactions, but that method doesn't do much, yet</li>
+  </ul>
+  <p>DONE</p>
   <ul>
     <li>Created table "monthlies"</li>
     <li>Put some transactions in "monthlies" table</li>
@@ -12,16 +21,15 @@
     <li>Created primitive view "monthlies"</li>
     <li>Clicking "Monthly Transactions" displays the view</li>
     <li>Filled in transaction date and status</li>
+    <li>Ordered by status & date</li>
+    <li>Add anyCategory and doTrans to monthlies table</li>
   </ul>
   <p>Need to...</p>
   <ul>
+    <li>Values on page drop everything after the first space</li>
     <li>Enable editting of the rows in the monthlies view</li>
     <li>Fill in some of the other fields in the view</li>
-    <li>Run the transactions in the view<br>
-    maybe a check box and run transactions button<br>
-    pairs of transactions (same name) only have one button for both to run (can be more than 2)</li>
-    <li>Color pairs of transactions the same color</li>
-    <li>Color "Pending" and "Completed" differently</li>
+    <li>Run the transactions in the view</li>
     <li>Reminder to DO the transaction (see column doTran in monthlies table, show comments w/reminder)</li>
   </ul>
 <p>NOTES:</p>
