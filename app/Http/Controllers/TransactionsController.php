@@ -1640,6 +1640,16 @@ class TransactionsController extends Controller
     }   // end of function writeTransaction
 
 
+    // insert monthly transactions
+    public function writeMonthlyTransactions(Request $request) {
+
+        error_log("in writeMonthlyTransactions");
+        error_log("input: " . $request->input('checkbox'));
+
+        return "Done";
+    }   // end of function writeMonthlyTransactions
+
+
     // write transactions to database for GB Limo pay & spending
     // 6 transactions total:
     // - one for gross paycheck
