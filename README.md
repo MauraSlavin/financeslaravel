@@ -7,14 +7,24 @@
 <h2>Working on - Branch 2025-05-01-monthly-bills</h2>
   <p>Un-committed changes...<p>
   <ul>
-    <li>Color rows</li>
-    <li>Color "Pending" and "Completed" differently</li>
-    <li>Add check boxes</li>
-    <li>fields are all input fields</li>
-    <li>Have submit button which calls writeMonthlyTransactions, but that method doesn't do much, yet</li>
+    <li>none - all committed (except last changes to README)</li>
   </ul>
-  <p>DONE</p>
+
+  <p>Need to...</p>
   <ul>
+    <li>Run the transactions checked in the view when "Record" clicked - fields like MikeAmt, MauraAmt will need to be filled in</li>
+    <li>Reminder to DO the transaction (see column doTran in monthlies table, show comments w/reminder) if doTran bit on</li>
+    <li>add new/delete monthly transactions (need add and delete buttons)</li>
+    <li>Save changes to a transaction (need save buttons)</li>
+    <li>"Pending" transactions should not have a checkbox</li>
+  </ul>
+  
+  <br>
+  
+  <ul><u>DONE</u>
+    <li>when transaction clicked, if it's been completed, update the status to Chosen and the date to the following month<br>
+    when unchecked, back to "Completed" and most recent completed date<br>
+    change dates for all transactions in the group (same transaction name) when checkbox clicked</li>
     <li>Created table "monthlies"</li>
     <li>Put some transactions in "monthlies" table</li>
     <li>Created button "Monthly Transactions" on landing page.</li>
@@ -23,15 +33,14 @@
     <li>Filled in transaction date and status</li>
     <li>Ordered by status & date</li>
     <li>Add anyCategory and doTrans to monthlies table</li>
+    <li>Color rows</li>
+    <li>Color "Pending" and "Completed" differently</li>
+    <li>Add check boxes</li>
+    <li>fields are all input fields</li>
+    <li>Have submit button which calls writeMonthlyTransactions, but that method doesn't do much, yet</li>
+    <li>Enable editting of the rows in the monthlies view - to save to monthlies table<br>
   </ul>
-  <p>Need to...</p>
-  <ul>
-    <li>Values on page drop everything after the first space</li>
-    <li>Enable editting of the rows in the monthlies view</li>
-    <li>Fill in some of the other fields in the view</li>
-    <li>Run the transactions in the view</li>
-    <li>Reminder to DO the transaction (see column doTran in monthlies table, show comments w/reminder)</li>
-  </ul>
+
 <p>NOTES:</p>
   <ul>
     <li>NOTE: Catch up on GB Limo paystubs</li>
