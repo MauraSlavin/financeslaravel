@@ -1642,11 +1642,87 @@ class TransactionsController extends Controller
 
     // insert monthly transactions
     public function writeMonthlyTransactions(Request $request) {
+        
+        // note transactions done
+        $transRecorded = [];
 
-        error_log("in writeMonthlyTransactions");
-        error_log("input: " . $request->input('checkbox'));
+        // get inputs needed
+        $chosens = $request->input('chosen');
+        $names = $request->input('name');
+        $transDates = $request->input('transDate');
+        $accounts = $request->input('account');
+        $toFroms = $request->input('toFrom');
+        $amounts = $request->input('amount');
+        $categorys = $request->input('category');
+        $buckets = $request->input('bucket');
+        $noteses = $request->input('notes');
+        $doTrans = $request->input('dotrans');
 
-        return "Done";
+        // used to redisplay monthlies with updated info
+        $monthlies = $request->input('monthlies');
+        $monthlies = json_decode($monthlies);
+
+        // process each transaction, if chosen
+        foreach($chosens as $idx=>$chosen) {
+
+            if($chosen == 'true') {
+                $transaction = [];
+                $transaction['trans_date'] = $transDates[$idx];
+                $transaction['account'] = $accounts[$idx];
+                $transaction['toFrom'] = $toFroms[$idx];
+                $transaction['amount'] = $amounts[$idx];
+                $transaction['category'] = $categorys[$idx];
+                $transaction['notes'] = $noteses[$idx];
+
+                // set amtMike and amtMaura
+                if($categorys[$idx] == 'MikeSpending' || $accounts[$idx] == 'Mike') {
+                    $transaction['amtMike'] = $amounts[$idx];
+                    $transaction['amtMaura'] = 0;
+                } else if($categorys[$idx] == 'MauraSpending' || substr( $accounts[$idx], 0, 5) == 'Maura') {
+                    $transaction['amtMaura'] = $amounts[$idx];
+                    $transaction['amtMike'] = 0;
+                } else {
+                        $transaction['amtMaura'] = $amounts[$idx] / 2;
+                        $transaction['amtMike'] = $amounts[$idx] / 2;
+                }
+
+                // set stmtDate
+                $year = substr($transDates[$idx], 2, 2);
+                $monthNumber = (int)substr($transDates[$idx], 5, 2 );
+                $monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                $month = $monthAbbrs[$monthNumber];
+                $transaction['stmtDate'] = $year . '-' . $month;
+
+                // for Disc Savings, set bucket
+                if($accounts[$idx] == 'DiscSavings') {
+                    $transaction['bucket'] = $buckets[$idx];
+                }
+
+                // insert the transaction
+                $result = DB::table('transactions')
+                    ->insert($transaction);
+         
+                // update monthlies so it's reflected on the page
+                $monthlies[$idx]->trans_date = $transaction['trans_date'];
+                $monthlies[$idx]->status = 'Pending';
+
+                // add this to transactions recorded
+                //  (with reminder to DO the transaction, if needed)
+
+                $transRecorded[] = [
+                    'name' => $names[$idx],
+                    'account' => $accounts[$idx],
+                    'to_from' => $toFroms[$idx],
+                    'amount' => $amounts[$idx],
+                    'category' => $categorys[$idx],
+                    'dotrans' => $doTrans[$idx]
+                ];
+            }
+        }
+
+        // reload the page with the new monthlies
+        return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => $transRecorded]);
+
     }   // end of function writeMonthlyTransactions
 
 
@@ -2594,7 +2670,7 @@ class TransactionsController extends Controller
     }   // end of function gblimo
 
 
-    // Set up & do montly transactions
+    // Set up & do monthly transactions
     public function monthly() {
 
         // get monthly transactions set up
@@ -2659,7 +2735,8 @@ class TransactionsController extends Controller
             return strcmp($a->status, $b->status);
         });
         
-        return view('monthlies', ['monthlies' => $monthlies]);
+        // no recorded transactions to show here
+        return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => [] ]);
     }
 
 
