@@ -5,30 +5,39 @@
   </ul>
 
 <h2>Working on - Branch 2025-05-01-monthly-bills</h2>
+
   <p>Un-committed changes...<p>
   <ul>
-    <li>none - all committed (except last changes to README)</li>
+    <li>none</liS>
   </ul>
 
   <p>Need to...</p>
   <ul>
-    <li>Run the transactions checked in the view when "Record" clicked - fields like MikeAmt, MauraAmt will need to be filled in</li>
-    <li>Reminder to DO the transaction (see column doTran in monthlies table, show comments w/reminder) if doTran bit on</li>
-    <li>add new/delete monthly transactions (need add and delete buttons)</li>
-    <li>Save changes to a transaction (need save buttons)</li>
-    <li>"Pending" transactions should not have a checkbox</li>
+    <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>
+    <li>Save changes to a monthly transaction (need save buttons) to update monthlies table</li>
+    <li>Completed date might be different for each transaction in the group.  Save an array of transDates, not just the first.</li>
   </ul>
   
   <br>
   
   <ul><u>DONE</u>
-    <li>when transaction clicked, if it's been completed, update the status to Chosen and the date to the following month<br>
+    <li>Reminder to DO THE TRANS!</li>
+    <li>Update monthlies when changed so refreshed page reflects status & date changes</li>
+    <li>Writes monthly to transactions table.</li>
+    <li>Is stmtDate getting set correctly for cc payments??</li>
+    <li>Highlights amount if it's 0</li>
+    <li>Highlights & changes bucket if <br>
+    -- account is DiscSavings and bucket is blank (changes to 'Misc')<br>
+    -- account is NOT DiscSavings and bucket has a value (changes to '')</li>  
+    <li>Writes the transactions checked in the view when "Record" clicked to the transactions table - fields like MikeAmt, MauraAmt are filled in</li>
+    <li>"Pending" transactions don't have a checkbox</li>
+    <li>when transaction clicked, if it's been completed, updates the status to Chosen and the date to the following month<br>
     when unchecked, back to "Completed" and most recent completed date<br>
-    change dates for all transactions in the group (same transaction name) when checkbox clicked</li>
+    changes dates for all transactions in the group (same transaction name) when checkbox clicked</li>
     <li>Created table "monthlies"</li>
     <li>Put some transactions in "monthlies" table</li>
     <li>Created button "Monthly Transactions" on landing page.</li>
-    <li>Created primitive view "monthlies"</li>
+    <li>Created view "monthlies"</li>
     <li>Clicking "Monthly Transactions" displays the view</li>
     <li>Filled in transaction date and status</li>
     <li>Ordered by status & date</li>
@@ -37,7 +46,7 @@
     <li>Color "Pending" and "Completed" differently</li>
     <li>Add check boxes</li>
     <li>fields are all input fields</li>
-    <li>Have submit button which calls writeMonthlyTransactions, but that method doesn't do much, yet</li>
+    <li>Have submit button which calls writeMonthlyTransactions</li>
     <li>Enable editting of the rows in the monthlies view - to save to monthlies table<br>
   </ul>
 
