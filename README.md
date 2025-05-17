@@ -8,13 +8,22 @@
 
   <p>Un-committed changes...<p>
   <ul>
-    <li>none</liS>
+    <li>Search "left off here"<br>
+    I think each row has to be a form ... ask Phind<br>
+    May be in: https://www.phind.com/search/cmarnium80000357i4khyop9k
+    </li>
+    <li>Save changes to a monthly transaction (need save buttons) to update monthlies table</li>
+    <li>Fix "Eversource" entry in "monthlies" table</li>
+    <li>-- HAVE button</li>
+    <li>-- getting .. <br>
+    Missing required parameters for [Route: saveMonthly] [URI: transactions/saveMonthly/{id}/{name}/{account}/{dateOfMonth}/{toFrom}/{amount}/{category}/{bucket}/{notes}/{comments}] [Missing parameters: amount, bucket, comments].<br>
+    ** See laravel log
+    </li>
   </ul>
 
   <p>Need to...</p>
   <ul>
     <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>
-    <li>Save changes to a monthly transaction (need save buttons) to update monthlies table</li>
     <li>Completed date might be different for each transaction in the group.  Save an array of transDates, not just the first.</li>
   </ul>
   

@@ -47,28 +47,63 @@
                 <thead>
                     <tr>
                         <th style="width: 10px;">Run</th>
+                        <th>Save changes to defaults</th>
                         <th style="width: 130px; word-break: break-word;">NAME</th>
-                        <th style="width: 40px; word-break: break-word;">reg date</th>
-                        <th style="width: 90px; word-break: break-word;">date sched or done</th>
-                        <th style="width: 90px; word-break: break-word;">status</th>
-                        <th style="width: 100px; word-break: break-word;">account</th>
-                        <th style="width: 100px; word-break: break-word;">toFrom</th>
-                        <th style="width: 75px; word-break: break-word;">normal amount</th>
-                        <th style="width: 110px; word-break: break-word;">category</th>
-                        <th style="width: 100px; word-break: break-word;">bucket</th>
-                        <th style="width: 160px; word-break: break-word;">notes</th>
-                        <th style="width: 300px; word-break: break-word;">comments</th>
+                        <th style="width: 40px; word-break: break-word;">Reg Date</th>
+                        <th style="width: 90px; word-break: break-word;">Date Sched or Done</th>
+                        <th style="width: 90px; word-break: break-word;">Status</th>
+                        <th style="width: 100px; word-break: break-word;">Account</th>
+                        <th style="width: 100px; word-break: break-word;">To/From</th>
+                        <th style="width: 75px; word-break: break-word;">Normal amount</th>
+                        <th style="width: 110px; word-break: break-word;">Category</th>
+                        <th style="width: 100px; word-break: break-word;">Bucket</th>
+                        <th style="width: 160px; word-break: break-word;">Notes</th>
+                        <th style="width: 300px; word-break: break-word;">Comments</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     <!-- transactions saved in monthlies table -->
                     @foreach($monthlies as $sequence=>$monthly)
+                        @php 
+                            $amount = $monthly->amount ?? 0.00; 
+                            echo "\nGenerated Route: " . route('saveMonthly', [
+                                    'id' => $monthly->id,
+                                    'name' => $monthly->name,
+                                    'account' => $monthly->account,
+                                    'dateOfMonth' => $monthly->dateOfMonth,
+                                    'toFrom' => $monthly->toFrom,
+                                    'amount' => number_format($amount, 2, '.', '')
+                                ]);
+                        @endphp
+                        <p>{{ $amount . " -- type: " . gettype($amount) }}</p>
                         <tr data-id={{ $monthly->id }}>
                             <td style="text-align: center;">
                                 <input type="checkbox" name="checkbox[]" class="check" style="width: 10px;">
                                 <input hidden class="chosen" name="chosen[]" value=false>
                                 <input hidden class="dotrans" name="dotrans[]" value="{{ $monthly->doTrans ? true : false }}">
+                            </td>
+                            <!-- ... left off here -->
+                            <td>
+                                <!-- <a href="{{ route('saveMonthly', 
+                                    [
+                                        'id' => $monthly->id, 
+                                        'name' => str_replace(' ', '|', $monthly->name),
+                                        'account' => $monthly->account,
+                                        'dateOfMonth' => $monthly->dateOfMonth,
+                                        'toFrom' => str_replace(' ', '|', $monthly->toFrom),
+                                        'amount' => $monthly->amount,
+                                        'category' => $monthly->category,
+                                        'bucket' => $monthly->bucket,
+                                        'notes' => str_replace(' ', '|', $monthly->notes),
+                                        'comments' => str_replace(' ', '|', $monthly->comments)
+                                    ]) }}" class="btn btn-primary"> -->
+                                <a href="{{ route('saveMonthly', [
+                                        'id' => $monthly->id
+                                    ]) }}?name={{$monthly->name}}&account={{$monthly->account}}&dateOfMonth={{$monthly->dateOfMonth}}&&category={{$monthly->category ?? ''}}"
+                                    class="btn btn-primary">
+                                    Save
+                                </a>
                             </td>
                             <td>
                                 <input type="text" name="name[]" class="name" style="width: 130px;" value="{{ $monthly->name ?? NULL  }}">

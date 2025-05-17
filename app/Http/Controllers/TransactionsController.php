@@ -1640,7 +1640,7 @@ class TransactionsController extends Controller
     }   // end of function writeTransaction
 
 
-    // insert monthly transactions
+    // insert monthly transactions to transactions table for current month
     public function writeMonthlyTransactions(Request $request) {
         
         // note transactions done
@@ -1724,6 +1724,65 @@ class TransactionsController extends Controller
         return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => $transRecorded]);
 
     }   // end of function writeMonthlyTransactions
+
+
+    // save changes to default monthly transactions info
+    // public function saveMonthly($id, $name, $account, $dateOfMonth, $toFrom, $amount, $category, $bucket, $notes, $comments) {
+    public function saveMonthly(Request $request, $id) {
+    // public function saveMonthly(Request $request) {
+        $name = $request->query('name');
+        $account = $request->query('account');
+        $dateOfMonth = $request->query('dateOfMonth');
+        $category = $request->query('category');
+
+        //  ... left off here ...
+        // $amount = $request->query('amount');
+        // echo $amount;
+
+        // init new monthlies data
+        $monthliesTrans = [];
+        $monthliesTrans['name'] = $name;
+        $monthliesTrans['account'] = $account;
+        $monthliesTrans['dateOfMonth'] = $dateOfMonth;
+        // $monthliesTrans['toFrom'] = $toFrom;
+        // $monthliesTrans['amount'] = $amount;
+        $monthliesTrans['category'] = $category;
+        // $monthliesTrans['bucket'] = $bucket;
+        // $monthliesTrans['notes'] = str_replace('|', ' ', $notes);
+        // $monthliesTrans['comments'] = str_replace('|', ' ', $comments);
+
+        // $monthliesTrans['name'] = "TestName";
+        // $monthliesTrans['account'] = "MauraDisc";
+        // $monthliesTrans['dateOfMonth'] = 16;
+        $monthliesTrans['toFrom'] = "Test tofrom";
+        $monthliesTrans['amount'] = 0.00;
+        // $monthliesTrans['category'] = '';
+        $monthliesTrans['bucket'] = '';
+        $monthliesTrans['notes'] = "test route notes";
+        $monthliesTrans['comments'] = "test route comments";
+
+        // clean up data
+        if($monthliesTrans['notes']  == null) $monthliesTrans['notes'] = '';
+        if($monthliesTrans['comments'] == null) $monthliesTrans['comments'] = '';
+        if($monthliesTrans['account'] != 'DiscSavings') $monthliesTrans['bucket'] = '';
+        if($monthliesTrans['amount'] == null | $monthliesTrans['amount'] == 0) $monthliesTrans['amount'] = '0.00';
+        if($monthliesTrans['dateOfMonth'] > 29) $monthliesTrans['dateOfMonth'] = '28';  // work for all months, incl Feb
+
+        DB::table('monthlies')
+            ->where('id', $id)
+            ->update($monthliesTrans);
+
+        // // used to redisplay monthlies with updated info
+        // $monthlies = $request->input('monthlies');
+        // $monthlies = json_decode($monthlies);
+
+
+        // reload the page with the new monthlies
+        // return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => $transRecorded]);
+        // return "ID: " . $id . "; Name: " . $name . "; Account: " . $account . "; dateOfMonth: " . $dateOfMonth . "; toFrom: " . $toFrom . "; amount: " . $amount . "; category: " . $category;
+        return "ID: " . $id . "; Name: " . $name . "; Account: " . $account . "; dateOfMonth: " . $dateOfMonth . "; category: " . $category;
+
+    }   // end of function saveMonthly
 
 
     // write transactions to database for GB Limo pay & spending
