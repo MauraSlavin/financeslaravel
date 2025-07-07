@@ -31,11 +31,13 @@
             @endforeach
         </div>
 
-        <form id="monthliesForm" action="{{ route('writeMonthlyTransactions') }}" method="GET">
+        <!-- <form id="monthliesForm" action="" method="GET"> -->
+            <!-- @csrf -->
             
             <!-- button w/ explanation -->
             <span style="margin-left: 10px;">Click <b>RECORD</b> to record the <b>checked</b> transactions in the transactions table.</span><br>
-            <button class="btn btn-success" type="submit" style="margin-left: 10px; margin-bottom: 10px;">Record</button>
+            <!-- <button id="recordMonthlies" class="btn btn-success" type="submit" data-action="doublecurly route('writeMonthlyTransactions') doublecurly" style="margin-left: 10px; margin-bottom: 10px;">Record</button> -->
+            <button id="recordMonthlies" class="btn btn-success" type="submit" style="margin-left: 10px; margin-bottom: 10px;">Record</button>
 
             <!-- monthlies data -->
             <input type="hidden" id="monthlies-data" name="monthlies" value="{{ json_encode($monthlies) }}">
@@ -65,90 +67,61 @@
                 <tbody>
                     <!-- transactions saved in monthlies table -->
                     @foreach($monthlies as $sequence=>$monthly)
-                        @php 
-                            $amount = $monthly->amount ?? 0.00; 
-                            echo "\nGenerated Route: " . route('saveMonthly', [
-                                    'id' => $monthly->id,
-                                    'name' => $monthly->name,
-                                    'account' => $monthly->account,
-                                    'dateOfMonth' => $monthly->dateOfMonth,
-                                    'toFrom' => $monthly->toFrom,
-                                    'amount' => number_format($amount, 2, '.', '')
-                                ]);
-                        @endphp
-                        <p>{{ $amount . " -- type: " . gettype($amount) }}</p>
-                        <tr data-id={{ $monthly->id }}>
-                            <td style="text-align: center;">
-                                <input type="checkbox" name="checkbox[]" class="check" style="width: 10px;">
-                                <input hidden class="chosen" name="chosen[]" value=false>
-                                <input hidden class="dotrans" name="dotrans[]" value="{{ $monthly->doTrans ? true : false }}">
-                            </td>
-                            <!-- ... left off here -->
-                            <td>
-                                <!-- <a href="{{ route('saveMonthly', 
-                                    [
-                                        'id' => $monthly->id, 
-                                        'name' => str_replace(' ', '|', $monthly->name),
-                                        'account' => $monthly->account,
-                                        'dateOfMonth' => $monthly->dateOfMonth,
-                                        'toFrom' => str_replace(' ', '|', $monthly->toFrom),
-                                        'amount' => $monthly->amount,
-                                        'category' => $monthly->category,
-                                        'bucket' => $monthly->bucket,
-                                        'notes' => str_replace(' ', '|', $monthly->notes),
-                                        'comments' => str_replace(' ', '|', $monthly->comments)
-                                    ]) }}" class="btn btn-primary"> -->
-                                <a href="{{ route('saveMonthly', [
-                                        'id' => $monthly->id
-                                    ]) }}?name={{$monthly->name}}&account={{$monthly->account}}&dateOfMonth={{$monthly->dateOfMonth}}&&category={{$monthly->category ?? ''}}"
-                                    class="btn btn-primary">
-                                    Save
-                                </a>
-                            </td>
-                            <td>
-                                <input type="text" name="name[]" class="name" style="width: 130px;" value="{{ $monthly->name ?? NULL  }}">
-                                <hidden class="origName" value="{{ $monthly->name ?? NULL  }}"></hidden>
-                                <hidden class="recentName" value="{{ $monthly->name ?? NULL  }}"></hidden>
-                                <hidden class="sequence" style="display: none;">{{ $sequence }}</hidden>
-                            </td>
-                            <td>
-                                <input type="text" name="dateOfMonth[]" class="date" style="text-align: center; width: 40px;" value="{{ $monthly->dateOfMonth ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="transDate[]" class="transDate" style="width: 90px;" value="{{ $monthly->trans_date ?? NULL }}">
-                                <input hidden class="completedDate" value="{{ $monthly->trans_date ?? NULL }}">
-                            </td>
-                            <td>
-                                <input type="text" name="status[]" class="status" style="width: 90px;" value="{{ $monthly->status ?? NULL }}">
-                            </td>
-                            <td>
-                                <input type="text" name="account[]" class="account" style="width: 100px;" value="{{ $monthly->account ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="toFrom[]" class="toFrom" style="width: 100px;" value="{{ $monthly->toFrom ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="amount[]" class="amount" style="text-align: right; width: 75px;" value="{{ number_format(round($monthly->amount,2), 2, '.', '') ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="category[]" class="category" style="width: 110px;" value="{{ $monthly->category ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="bucket[]" class="bucket" style="width: 100px;" value="{{ $monthly->bucket ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="notes[]" class="notes" style="width: 160px;" value="{{ $monthly->notes ?? NULL  }}">
-                            </td>
-                            <td>
-                                <input type="text" name="comments[]" class="comments" style="width: 300px;" value="{{ $monthly->comments ?? NULL  }}">
-                            </td>
-                        </tr>
+                        <!-- <form id="changeMonthly" action="" method="GET"> -->
+                            <tr data-id={{ $monthly->id }}>
+                                <td style="text-align: center;">
+                                    <input type="checkbox" name="checkbox[]" class="check" style="width: 10px;">
+                                    <input hidden class="chosen" name="chosen[]" value=false>
+                                    <input hidden class="dotrans" name="dotrans[]" value="{{ $monthly->doTrans ? true : false }}">
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary save-button" data-item-id="{{ $monthly->id }}">Save</button>
+                                </td>
+                                <td>
+                                    <input type="text" name="name" class="name" data-field="name" style="width: 130px;" value="{{ $monthly->name ?? NULL  }}">
+                                    <hidden class="origName" value="{{ $monthly->name ?? NULL  }}"></hidden>
+                                    <hidden class="recentName" value="{{ $monthly->name ?? NULL  }}"></hidden>
+                                    <hidden class="sequence" style="display: none;">{{ $sequence }}</hidden>
+                                </td>
+                                <td>
+                                    <input type="text" name="dateOfMonth" class="date" data-field="dateOfMonth" style="text-align: center; width: 40px;" value="{{ $monthly->dateOfMonth ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="transDate" class="transDate" data-field="transDate" style="width: 90px;" value="{{ $monthly->trans_date ?? NULL }}">
+                                    <input hidden class="completedDate" value="{{ $monthly->trans_date ?? NULL }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="status" class="status" data-field="status" style="width: 90px;" value="{{ $monthly->status ?? NULL }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="account" class="account" data-field="account" style="width: 100px;" value="{{ $monthly->account ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="toFrom" class="toFrom" data-field="toFrom" style="width: 100px;" value="{{ $monthly->toFrom ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="amount" class="amount" data-field="amount" style="text-align: right; width: 75px;" value="{{ number_format(round($monthly->amount,2), 2, '.', '') ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="category" class="category" data-field="category" style="width: 110px;" value="{{ $monthly->category ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="bucket" class="bucket" data-field="bucket" style="width: 100px;" value="{{ $monthly->bucket ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="notes" class="notes" data-field="notes" style="width: 160px;" value="{{ $monthly->notes ?? NULL  }}">
+                                </td>
+                                <td>
+                                    <input type="text" name="comments" class="comments" data-field="comments" style="width: 300px;" value="{{ $monthly->comments ?? NULL  }}">
+                                </td>
+                            </tr>
+                        <!-- </form> -->
                     @endforeach
 
                 </tbody>
             </table>
 
-        </form>
+        <!-- </form> -->
         
         <script>
             
@@ -239,6 +212,10 @@
                 // parse the json
                 monthlies = JSON.parse(monthlies);
 
+                // set background colors of grouped transactions the same; 
+                //  highlight $0
+                //  highlight missing Buckets
+                //  color-code Pending/Completed statuses
                 var colorId = -1;
                 $('tbody tr').each(function(index, element) {
                     var row = $(this);
@@ -350,14 +327,93 @@
 
                 });
 
-                $('#monthliesForm').on('submit', function(e) {
-                    // e.preventDefault(e); // Prevent immediate submission
 
-                    const data = JSON.stringify(monthlies);
-                    $('.monthlies-data').val( JSON.stringify(monthlies) );
 
-                    // this.submit;
+
+
+
+
+
+                $('#recordButton').on('click', function(e) {
+                    const formData = new FormData();
+                    
+                    $('input[type="checkbox"]:checked').each(function() {
+                        formData.append(`checked_items[${$(this).data('item-id')}]`, $(this).prop('checked'));
+                    });
+                    
+                    $.ajax({
+                        url: '{{ route('writeMonthlyTransactions') }}',
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            console.log(response);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                        }
+                    });
                 });
+
+                // Handle individual row saves
+                $('.save-button').on('click', function() {
+                    const itemId = $(this).data('item-id');
+                    const $row = $(this).closest('tr');
+                    
+                    const updates = {};
+                    $row.find('[data-field]').each(function() {
+                        updates[$(this).data('field')] = $(this).val();
+                    });
+
+                    console.log("updates: ", updates);
+                    
+                    $.ajax({
+                        // url: `doublecurly url('/items/${itemId}') doublecurly/update`,
+                        url: `{{ url('/transactions/saveMonthly/${itemId}') }}`,
+                        method: 'PUT',
+                        data: JSON.stringify(updates),
+                        contentType: 'application/json',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            // console.log(response);
+                            alert("Save completed");
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Error occurred:', error);
+                        }
+                    });
+                });
+
+
+
+
+
+
+
+
+
+
+
+                // $('#monthliesForm').on('submit', function(e) {
+                //     // e.preventDefault(e); // Prevent immediate submission
+
+                //     const data = JSON.stringify(monthlies);
+                //     $('.monthlies-data').val( JSON.stringify(monthlies) );
+
+                //     // this.submit;
+                // });
+
+                // // shouldn't be needed
+                // $('#changeMonthly').on('submit', function(e) {
+                //     alert("Submitting change to one monthly");
+                //     this.submit;
+                // })
 
             });
 

@@ -16,6 +16,9 @@
             <br> --- <u>Mileage</u> has recently been updated in carcostdetails (add input for this to this page), and
             <br> --- <u>gas</u> or <u>charging</u> purchased en route are up to date in the transactions table,
             <br> --- and (for gas car) other <u>recent gas purchases</u> are recorded.
+            <br>
+            <br> When done do this in MySQL Workbench and copy results to Trips file in Google Drive:
+            <br> --- select who, begin, end, trip, car, totalCost, tolls, mileage, sharePurchase, shareIns, shareMaint, gallonsKwHused, gasChargingDollars, other from trips where tripName = ...;
         </p>
         <p style="color:red; margin-left:20px; white-space: pre-wrap;">{{ $errMsg ?? '' }}</p>
         <p style="margin-left:20px;">* Indicates a required field.</p>

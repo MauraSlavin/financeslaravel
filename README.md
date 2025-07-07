@@ -6,25 +6,36 @@
 
 <h2>Working on - Branch 2025-05-01-monthly-bills</h2>
 
-  <p>Un-committed changes...<p>
+  <p>Un-committed changes...</p>
   <ul>
-    <li>Search "left off here"<br>
-    I think each row has to be a form ... ask Phind<br>
+    <li>SEEMS to be working</li>
+    <li>    -- NEED TO TEST "Record" button with re-written code</li>
+    <li></li>
+    <li>Working on ability to save changes to a monthly transaction to update monthlies table</li>
+    <li>Search "left off here"</li>
+    <li>Copy of monthlies in "2025-05-16 monthlies backup" in downloads file</li>
+    <li>CAN'T have nested forms<br>
+    -- see https://www.phind.com/search/cmb75v5e90000357hlvdok0w2<br>
+    -- old https://www.phind.com/search/cmb5xf53g0000357ibz1jcy9z<br>
+    -- for possible fix
+    </li>
+    <li>-- HAVE button</li>
+    <li>Keep this just in case ... ask Phind<br>
     May be in: https://www.phind.com/search/cmarnium80000357i4khyop9k
     </li>
-    <li>Save changes to a monthly transaction (need save buttons) to update monthlies table</li>
-    <li>Fix "Eversource" entry in "monthlies" table</li>
-    <li>-- HAVE button</li>
-    <li>-- getting .. <br>
-    Missing required parameters for [Route: saveMonthly] [URI: transactions/saveMonthly/{id}/{name}/{account}/{dateOfMonth}/{toFrom}/{amount}/{category}/{bucket}/{notes}/{comments}] [Missing parameters: amount, bucket, comments].<br>
-    ** See laravel log
-    </li>
+  </ul>
+
+  <p>DONE</p>
+  <ul>
+    <li>Fixed column widths when transactions editted.</li>
+    <li>Fixed "Eversource" entry in "monthlies" table (get() missing from SQL query)</li>
+    <li>Added note to put Trip in Google Drive file</li>
   </ul>
 
   <p>Need to...</p>
   <ul>
+    <li>Do I need 2 Eversource entries - one if there's a credit, and one if payment comes from Checking?</li>
     <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>
-    <li>Completed date might be different for each transaction in the group.  Save an array of transDates, not just the first.</li>
   </ul>
   
   <br>
@@ -81,6 +92,8 @@
     
 <h2>To do:</h2>
     <ul>
+      <li>Fix GB Limo - add field for IncomeOtherWH</li>
+      <li>Not everyplace puts the whole amt in amtMike/amtMaura for SpendingMike/SpendingMaura</li>
       <li>Copy a transaction (new one in edit mode)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>

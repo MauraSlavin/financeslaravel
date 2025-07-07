@@ -184,3 +184,60 @@ h5, h6 {
 #backToAccount, #uploadTransactions, #addTransaction {
     margin-left: 10px;
 }
+
+/* transactions table column widths */
+.transId, .total_key, .total_keyEdit {
+    width: 52px;
+}
+
+.transDate, .transDateEdit {
+    width: 100px;
+}
+
+.clearDate, .clearDateEdit {
+    width: 100px;
+}
+
+.toFrom, .toFromEdit {
+    width: 150px;
+}
+
+.amount, .amountEdit, .amtMike, .amtMikeEdit, .amtMaura, .amtMauraEdit, .total_amt, .total_amtEdit, .split_total {
+    width: 100px;
+}
+
+.category, .categoryEdit {
+    width: 150px;
+}
+
+.notes, .notesEdit {
+    width: 200px;
+}
+
+.method, .methodEdit {
+    width: 50px;
+}
+
+.tracking, .trackingEdit {
+    width: 50px;
+}
+
+.saveTransaction, .editTransaction, .splitTransaction, .deleteTransaction {
+    width: 50px;
+}
+
+.editTransaction {
+    padding-left: 10px !important;
+}
+
+.saveTransaction {
+    padding-left: 8px !important;
+}
+
+.splitTransaction {
+    padding-left: 8px !important;
+}
+
+.stmtDate, .stmtDateEdit {
+    width: 60px;
+}
