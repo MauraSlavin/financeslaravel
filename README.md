@@ -4,7 +4,12 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on - new branch</h2>
+<h2>DONE - branch 2025-07-06-gb-incomeotherwh</h2>
+<h2>Start new branch</h2>
+
+  <br>
+  <hr>
+  <br>
 
   <p>Check at some point...</p>
   <ul>
