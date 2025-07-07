@@ -4,35 +4,9 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>Working on - Branch 2025-05-01-monthly-bills</h2>
+<h2>Working on - new branch</h2>
 
-  <p>Un-committed changes...</p>
-  <ul>
-    <li>SEEMS to be working</li>
-    <li>    -- NEED TO TEST "Record" button with re-written code</li>
-    <li></li>
-    <li>Working on ability to save changes to a monthly transaction to update monthlies table</li>
-    <li>Search "left off here"</li>
-    <li>Copy of monthlies in "2025-05-16 monthlies backup" in downloads file</li>
-    <li>CAN'T have nested forms<br>
-    -- see https://www.phind.com/search/cmb75v5e90000357hlvdok0w2<br>
-    -- old https://www.phind.com/search/cmb5xf53g0000357ibz1jcy9z<br>
-    -- for possible fix
-    </li>
-    <li>-- HAVE button</li>
-    <li>Keep this just in case ... ask Phind<br>
-    May be in: https://www.phind.com/search/cmarnium80000357i4khyop9k
-    </li>
-  </ul>
-
-  <p>DONE</p>
-  <ul>
-    <li>Fixed column widths when transactions editted.</li>
-    <li>Fixed "Eversource" entry in "monthlies" table (get() missing from SQL query)</li>
-    <li>Added note to put Trip in Google Drive file</li>
-  </ul>
-
-  <p>Need to...</p>
+  <p>Check at some point...</p>
   <ul>
     <li>Do I need 2 Eversource entries - one if there's a credit, and one if payment comes from Checking?</li>
     <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>
@@ -40,36 +14,6 @@
   
   <br>
   
-  <ul><u>DONE</u>
-    <li>Reminder to DO THE TRANS!</li>
-    <li>Update monthlies when changed so refreshed page reflects status & date changes</li>
-    <li>Writes monthly to transactions table.</li>
-    <li>Is stmtDate getting set correctly for cc payments??</li>
-    <li>Highlights amount if it's 0</li>
-    <li>Highlights & changes bucket if <br>
-    -- account is DiscSavings and bucket is blank (changes to 'Misc')<br>
-    -- account is NOT DiscSavings and bucket has a value (changes to '')</li>  
-    <li>Writes the transactions checked in the view when "Record" clicked to the transactions table - fields like MikeAmt, MauraAmt are filled in</li>
-    <li>"Pending" transactions don't have a checkbox</li>
-    <li>when transaction clicked, if it's been completed, updates the status to Chosen and the date to the following month<br>
-    when unchecked, back to "Completed" and most recent completed date<br>
-    changes dates for all transactions in the group (same transaction name) when checkbox clicked</li>
-    <li>Created table "monthlies"</li>
-    <li>Put some transactions in "monthlies" table</li>
-    <li>Created button "Monthly Transactions" on landing page.</li>
-    <li>Created view "monthlies"</li>
-    <li>Clicking "Monthly Transactions" displays the view</li>
-    <li>Filled in transaction date and status</li>
-    <li>Ordered by status & date</li>
-    <li>Add anyCategory and doTrans to monthlies table</li>
-    <li>Color rows</li>
-    <li>Color "Pending" and "Completed" differently</li>
-    <li>Add check boxes</li>
-    <li>fields are all input fields</li>
-    <li>Have submit button which calls writeMonthlyTransactions</li>
-    <li>Enable editting of the rows in the monthlies view - to save to monthlies table<br>
-  </ul>
-
 <p>NOTES:</p>
   <ul>
     <li>NOTE: Catch up on GB Limo paystubs</li>
@@ -78,10 +22,6 @@
     -- IncomeOtherWH is SS and Medicare withholdings
   </ul>
 
-  <p>NEXT:  Monthly bills, other monthly transactions<br>
-  -- store in a table (monthly?)<br>
-  -- interface to update<br>
-  -- needs day of month (for trans_date), toFrom, category, notes. That might be it.</p>
 
 <h2>BUGS</h2>
   <ul>
@@ -93,8 +33,9 @@
 <h2>To do:</h2>
     <ul>
       <li>Fix GB Limo - add field for IncomeOtherWH</li>
-      <li>Not everyplace puts the whole amt in amtMike/amtMaura for SpendingMike/SpendingMaura</li>
       <li>Copy a transaction (new one in edit mode)</li>
+      <li>Is changing Monthlies working??<li>
+      <li>Not everyplace puts the whole amt in amtMike/amtMaura for SpendingMike/SpendingMaura</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
