@@ -1776,7 +1776,8 @@ class TransactionsController extends Controller
             $transaction['clear_date'] = $request->input('gbpaycheckdate');
             $transaction['account'] = "Checking";
             $transaction['toFrom'] = "Great Bay Limo";
-            $grossPay = $request->input('gbnetpay') + $request->input('gbtaxwh');
+            // gross includes net + tax w/h + ss w/h + medicare w/h
+            $grossPay = $request->input('gbnetpay') + $request->input('gbtaxwh') + $request->input('gbsswh') + $request->input('gbmcwh');
             $transaction['amount'] = $grossPay;
             $transaction['amtMike'] = $grossPay / 2;
             $transaction['amtMaura'] = $grossPay / 2;
@@ -1798,27 +1799,54 @@ class TransactionsController extends Controller
             return $payId;
         }
 
-        // transaction for tax withheld from deposit to checking
+        // transaction for tax withheld from deposit to checking and
+        // transaction for ss and medicare withheld
         function writeGBtaxWH($request, $payId) {
-            $transaction = [];
-            $transaction['trans_date'] = $request->input('gbpaycheckdate');
-            $transaction['clear_date'] = $request->input('gbpaycheckdate');
-            $transaction['account'] = "Checking";
-            $transaction['toFrom'] = "Great Bay Limo";
-            $transaction['amount'] = -$request->input('gbtaxwh');
-            $transaction['amtMike'] = -$request->input('gbtaxwh') / 2;
-            $transaction['amtMaura'] = -$request->input('gbtaxwh') / 2;
-            $transaction['method'] = 'ACH';
-            $transaction['category'] = 'IncomeTaxes';
-            $transaction['stmtDate'] = $request->input('gbstmtdate');
-            $transaction['total_amt'] = $request->input('gbnetpay');
-            $transaction['total_key'] = $payId;
-            $transaction['notes'] = $request->input('gbpayperiodnote');
-           
-            $result = DB::table("transactions")
-                ->insert($transaction);
 
-            if(!$result) error_log("ERROR inserting TAX WITHHELD to transactions table: " . json_encode($result));
+            // tax withheld (if any)
+            if($request->input('gbtaxwh') != 0) {
+                $transaction = [];
+                $transaction['trans_date'] = $request->input('gbpaycheckdate');
+                $transaction['clear_date'] = $request->input('gbpaycheckdate');
+                $transaction['account'] = "Checking";
+                $transaction['toFrom'] = "Great Bay Limo";
+                $transaction['amount'] = -$request->input('gbtaxwh');
+                $transaction['amtMike'] = -$request->input('gbtaxwh') / 2;
+                $transaction['amtMaura'] = -$request->input('gbtaxwh') / 2;
+                $transaction['method'] = 'ACH';
+                $transaction['category'] = 'IncomeTaxes';
+                $transaction['stmtDate'] = $request->input('gbstmtdate');
+                $transaction['total_amt'] = $request->input('gbnetpay');
+                $transaction['total_key'] = $payId;
+                $transaction['notes'] = $request->input('gbpayperiodnote');
+            
+                $result = DB::table("transactions")
+                    ->insert($transaction);
+                if(!$result) error_log("ERROR inserting TAX WITHHELD to transactions table: " . json_encode($result));
+            }
+
+            // ss & medicare withheld (if any)
+            $otherWithheld = $request->input('gbsswh') + $request->input('gbmcwh');
+            if($otherWithheld <> 0) {
+                $transaction = [];
+                $transaction['trans_date'] = $request->input('gbpaycheckdate');
+                $transaction['clear_date'] = $request->input('gbpaycheckdate');
+                $transaction['account'] = "Checking";
+                $transaction['toFrom'] = "Great Bay Limo";
+                $transaction['amount'] = -$otherWithheld;
+                $transaction['amtMike'] = -$otherWithheld / 2;
+                $transaction['amtMaura'] = -$otherWithheld / 2;
+                $transaction['method'] = 'ACH';
+                $transaction['category'] = 'IncomeOtherWH';
+                $transaction['stmtDate'] = $request->input('gbstmtdate');
+                $transaction['total_amt'] = $request->input('gbnetpay');
+                $transaction['total_key'] = $payId;
+                $transaction['notes'] = $request->input('gbpayperiodnote');
+            
+                $result = DB::table("transactions")
+                    ->insert($transaction);
+                if(!$result) error_log("ERROR inserting TAX WITHHELD to transactions table: " . json_encode($result));
+            }
 
             return;
         }
@@ -1869,7 +1897,7 @@ class TransactionsController extends Controller
         //      used as total_amt to tie this and the next record as a split transaction
         $payId = writeGBgrossPay($request);
 
-        // transaction for tax withheld from deposit to checking
+        // transaction for ss, medicare, & tax withheld from deposit to checking
         writeGBtaxWH($request, $payId);
 
         // write spending transactions for Mike (checking to spending)

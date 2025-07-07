@@ -27,6 +27,18 @@
                 <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay"  step="0.01" required>
             </div>
 
+            <!-- SS withheld -->
+            <div class="form-row">
+                <label class="gbsswhlabel" for="gbnetpay">SS withheld (from paystub): </label><br>
+                <input class="form-control gbsswhinput" type="number" id="gbsswh" name="gbsswh"  step="0.01" required>
+            </div>
+
+            <!-- Net paycheck amt -->
+            <div class="form-row">
+                <label class="gbmcwhlabel" for="gbmcwh">Medicare withheld (from paystub): </label><br>
+                <input class="form-control gbmcwhinput" type="number" id="gbmcwh" name="gbmcwh"  step="0.01" required>
+            </div>
+
             <!-- Federal taxes -->
             <div class="form-row">
                 <label class="gbtaxwhlabel" for="gbtaxwh">Federal taxes withheld (from paystub): </label><br>
