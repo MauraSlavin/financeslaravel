@@ -119,7 +119,7 @@
                             <button class="btn btn-warning splitTransaction" data-id={{ $newTransaction["id"] }}>Split</button>
                         </td>                       
                         <td>
-                            <button class="btn btn-danger deleteTransaction" data-id={{ $newTransaction["id"] }}>Delete</button>
+                            <button class="btn btn-danger deleteTransaction" data-id={{ $newTransaction["id"] }}>Dlt</button>
                         </td>
                         <td class="stmtDate">{{ $newTransaction["stmtDate"] ?? NULL  }}</td>
                         <td class="amtMike" style="text-align: right;">{{ $newTransaction["amtMike"] ?? NULL  }}</td>
@@ -207,7 +207,7 @@
                             <button class="btn btn-warning splitTransaction" data-id={{ $transaction->id }}>Split</button>
                         </td>                       
                         <td>
-                            <button class="btn btn-danger deleteTransaction" data-id={{ $transaction->id }}>Delete</button>
+                            <button class="btn btn-danger deleteTransaction" data-id={{ $transaction->id }}>Dlt</button>
                         </td> 
                         <td class="stmtDate">{{ $transaction->stmtDate }}</td>
                         <td class="amtMike" style="text-align: right;">{{ $transaction->amtMike }}</td>

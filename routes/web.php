@@ -82,7 +82,6 @@ Route::get('/transactions/add', 'App\Http\Controllers\TransactionsController@add
 Route::post('/transactions/insert', 'App\Http\Controllers\TransactionsController@writeTransaction')->name("writeTransaction");
 Route::get('/transactions/monthlies', 'App\Http\Controllers\TransactionsController@writeMonthlyTransactions')->name('writeMonthlyTransactions');
 Route::get('/temp/splitMandM', 'App\Http\Controllers\TransactionsController@splitMandM');
-// left off here  -- save changes to monthly transaction
-// Route::get('/transactions/saveMonthly/{id}/{name}/{account}/{dateOfMonth}/{toFrom}/{amount}/{category}/{bucket}/{notes}/{comments}', 'App\Http\Controllers\TransactionsController@saveMonthly')->name('saveMonthly');
-Route::get('/transactions/saveMonthly/{id}', 'App\Http\Controllers\TransactionsController@saveMonthly')->name('saveMonthly');
+// save changes to monthly transaction
+Route::put('/transactions/saveMonthly/{id}', 'App\Http\Controllers\TransactionsController@saveMonthly')->name('saveMonthly');
 ?>

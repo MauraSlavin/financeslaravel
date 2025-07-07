@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Monthly;
 
 use Carbon\Carbon;
 
@@ -1729,59 +1730,34 @@ class TransactionsController extends Controller
     // save changes to default monthly transactions info
     // public function saveMonthly($id, $name, $account, $dateOfMonth, $toFrom, $amount, $category, $bucket, $notes, $comments) {
     public function saveMonthly(Request $request, $id) {
-    // public function saveMonthly(Request $request) {
-        $name = $request->query('name');
-        $account = $request->query('account');
-        $dateOfMonth = $request->query('dateOfMonth');
-        $category = $request->query('category');
 
-        //  ... left off here ...
-        // $amount = $request->query('amount');
-        // echo $amount;
+        $monthlyTransaction = Monthly::find($id);
+        \Log::info('Request Details:', [
+            // 'headers' => $request->header(),
+            // 'method' => $request->method(),
+            // 'content_type' => $request->header('Content-Type'),
+            // 'raw_content' => $request->getContent(),
+            'all_data' => $request->all()
+        ]);
+        $result = $monthlyTransaction->update(
+            $request->only(
+                ['name', 
+                'dateOfMonth',
+                'trans_date',
+                'account',
+                'toFrom',
+                'amount',
+                'category',
+                'bucket',
+                'notes',
+                'comments']
+            )
+        );
 
-        // init new monthlies data
-        $monthliesTrans = [];
-        $monthliesTrans['name'] = $name;
-        $monthliesTrans['account'] = $account;
-        $monthliesTrans['dateOfMonth'] = $dateOfMonth;
-        // $monthliesTrans['toFrom'] = $toFrom;
-        // $monthliesTrans['amount'] = $amount;
-        $monthliesTrans['category'] = $category;
-        // $monthliesTrans['bucket'] = $bucket;
-        // $monthliesTrans['notes'] = str_replace('|', ' ', $notes);
-        // $monthliesTrans['comments'] = str_replace('|', ' ', $comments);
-
-        // $monthliesTrans['name'] = "TestName";
-        // $monthliesTrans['account'] = "MauraDisc";
-        // $monthliesTrans['dateOfMonth'] = 16;
-        $monthliesTrans['toFrom'] = "Test tofrom";
-        $monthliesTrans['amount'] = 0.00;
-        // $monthliesTrans['category'] = '';
-        $monthliesTrans['bucket'] = '';
-        $monthliesTrans['notes'] = "test route notes";
-        $monthliesTrans['comments'] = "test route comments";
-
-        // clean up data
-        if($monthliesTrans['notes']  == null) $monthliesTrans['notes'] = '';
-        if($monthliesTrans['comments'] == null) $monthliesTrans['comments'] = '';
-        if($monthliesTrans['account'] != 'DiscSavings') $monthliesTrans['bucket'] = '';
-        if($monthliesTrans['amount'] == null | $monthliesTrans['amount'] == 0) $monthliesTrans['amount'] = '0.00';
-        if($monthliesTrans['dateOfMonth'] > 29) $monthliesTrans['dateOfMonth'] = '28';  // work for all months, incl Feb
-
-        DB::table('monthlies')
-            ->where('id', $id)
-            ->update($monthliesTrans);
-
-        // // used to redisplay monthlies with updated info
-        // $monthlies = $request->input('monthlies');
-        // $monthlies = json_decode($monthlies);
-
-
-        // reload the page with the new monthlies
-        // return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => $transRecorded]);
-        // return "ID: " . $id . "; Name: " . $name . "; Account: " . $account . "; dateOfMonth: " . $dateOfMonth . "; toFrom: " . $toFrom . "; amount: " . $amount . "; category: " . $category;
-        return "ID: " . $id . "; Name: " . $name . "; Account: " . $account . "; dateOfMonth: " . $dateOfMonth . "; category: " . $category;
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Item updated successfully!'
+        ]);
     }   // end of function saveMonthly
 
 
@@ -2739,11 +2715,11 @@ class TransactionsController extends Controller
         // get last cleared_date (or last trans_date if cleared is null) for each monthly transaction
         // if cleared_date is null, transaction is Pending, else it is Completed.
         foreach($monthlies as $monIdx=>$month) {
-
             // basic query to get most recent monthly transactions
             $dates = DB::table('transactions')
                 ->where('toFrom', $month->toFrom)
                 ->where('account', $month->account)
+                ->where('notes', 'LIKE', $month->notes . '%')
                 // ->where('amount', $month->amount)        -- only do this (below) when amount is consistent
                 // ->where('category', $month->category)    -- only do this (below) if category is consistent
                 ->select(
@@ -2759,8 +2735,9 @@ class TransactionsController extends Controller
                 ->orderByRaw("CASE 
                     WHEN clear_date IS NOT NULL THEN clear_date
                     ELSE trans_date
-                END DESC"); // puts the most recent first
-                
+                END DESC") // puts the most recent first
+                ->get();
+
             // if amount is set, filter by that
             if(!is_null($month->amount)) {
                 $dates->where('amount', $month->amount);
@@ -2773,7 +2750,7 @@ class TransactionsController extends Controller
 
             // get the first transaction (they've been sorted by most recent first)
             $dates = $dates->first();
-            
+
             if($dates == NULL) {
                 // this shouldn't happen - means there's probably an error in the database
                 $monthlies[$monIdx]->trans_date = 'not found';
@@ -2786,10 +2763,10 @@ class TransactionsController extends Controller
 
         }
 
-        // Sort by status and transaction date to display in an orderly fashion
+        // Sort by status and regular date to display in an orderly fashion
         usort($monthlies, function($a, $b) {
             if ($a->status === $b->status) {
-                return strcmp($a->trans_date, $b->trans_date);
+                return (int) $a->dateOfMonth > (int) $b->dateOfMonth;
             }
             return strcmp($a->status, $b->status);
         });
