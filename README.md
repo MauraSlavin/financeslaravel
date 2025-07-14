@@ -5,7 +5,8 @@
   </ul>
 
 <h2>DONE - branch 2025-07-06-gb-incomeotherwh</h2>
-<h2>Start new branch</h2>
+<h2>new branch 2025-07-06-copy-transaction</h2>
+  <p>Only README changed</p>
 
   <br>
   <hr>
@@ -19,15 +20,6 @@
   
   <br>
   
-<p>NOTES:</p>
-  <ul>
-    <li>NOTE: Catch up on GB Limo paystubs</li>
-    <li>NOTE: Make sure IncomeTaxes and IncomeOtherWH are done correctly<br>
-    -- IncomeTaxes is taxes withheld, paid, refunded<br>
-    -- IncomeOtherWH is SS and Medicare withholdings
-  </ul>
-
-
 <h2>BUGS</h2>
   <ul>
     <li>On BUCKETS page, Goal Totals missing RetSavings amt</li>
@@ -37,7 +29,6 @@
     
 <h2>To do:</h2>
     <ul>
-      <li>Fix GB Limo - add field for IncomeOtherWH</li>
       <li>Copy a transaction (new one in edit mode)</li>
       <li>Is changing Monthlies working??<li>
       <li>Not everyplace puts the whole amt in amtMike/amtMaura for SpendingMike/SpendingMaura</li>

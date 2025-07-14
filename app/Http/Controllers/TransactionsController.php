@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Monthly;
+use Illuminate\Support\Facades\Route;
+
 
 use Carbon\Carbon;
 
@@ -3163,8 +3165,12 @@ class TransactionsController extends Controller
 
 
     // see spending transactions
-    public function spending($who) {
+    public function spending() {
 
+        $routeName = Route::currentRouteName();
+        $who = str_replace("spending", "", $routeName);
+        $who = strtolower($who);
+        
         // will need to identify month by number
         $months = [
             'january',

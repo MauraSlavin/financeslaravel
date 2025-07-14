@@ -11,15 +11,53 @@
     @if(session()->has('acctsMsg'))
         <h2 id="acctsMsg">{{ session('acctsMsg') }}</h2>
     @endif
-    <button type="button" id="assets" class="btn btn-primary">Assets</button>
-    <button type="button" id="gblimo" class="btn btn-primary">GB Limo</button>
-    <button type="button" id="trips" class="btn btn-info trips">Trips</button>
-    <button type="button" id="buckets" class="btn btn-success">Buckets</button>
-    <button type="button" id="mikeSpending" class="btn btn-primary mike">Mike Spending</button>
-    <button type="button" id="mauraSpending" class="btn btn-primary maura">Maura Spending</button>
-    <button type="button" id="investmentsindex" class="btn btn-warning">Update Investments</button>
-    <button type="button" id="budget" class="btn btn-danger">Budget</button>
-    <button type="button" id="monthly" class="btn btn-primary monthly">Monthly Transactions</button>
+
+    <div style="margin-bottom: 10px;">
+        <!-- Assets button -->
+        <a href="{{ route('assets') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Assets.png') }}" alt="Clickable Assets Image" class="image-button">
+        </a>
+        
+        <!-- GB Limo button -->
+        <a href="{{ route('gblimo') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/GBLimo.png') }}" alt="Clickable Limo Image" class="image-button">
+        </a>
+        
+        <!-- Trips button -->
+        <a href="{{ route('trips') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Trips.png') }}" alt="Clickable Trips Image" class="image-button">
+        </a>
+        
+        <!-- Buckets button -->
+        <a href="{{ route('buckets') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Buckets.png') }}" alt="Clickable Buckets Image" class="image-button">
+        </a>
+        
+        <!-- mikeSpending button -->
+        <a href="{{ route('spendingMike') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Mike.png') }}" alt="Clickable Mike Image" class="image-button">
+        </a>
+
+        <!-- mauraSpending button -->
+        <a href="{{ route('spendingMaura') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Maura.png') }}" alt="Clickable Maura Image" class="image-button">
+        </a>
+        
+        <!-- investments button -->
+        <a href="{{ route('investmentsindex') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Investments.png') }}" alt="Clickable Investments Image" class="image-button">
+        </a>
+        
+        <!-- budget button -->
+        <a href="{{ route('budget') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Budget.png') }}" alt="Clickable Budget Image" class="image-button">
+        </a>
+        
+        <!-- Monthly Transactions button -->
+        <a href="{{ route('monthly') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Monthly.png') }}" alt="Clickable Calendar Image" class="image-button">
+        </a>
+    </div>
 
         <table>
             <thead>
@@ -52,81 +90,81 @@
 
         <script>
 
-            $(document).ready(function() {
+            // $(document).ready(function() {
 
                 // Assets button
-                $('#assets').on('click', function(e) {
-                    e.preventDefault();
+                // $('#assets').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/assets';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/assets';
+                //     window.location.href = url;
+                // });
 
                 // GB Limo button
-                $('#gblimo').on('click', function(e) {
-                    e.preventDefault();
+                // $('#gblimo').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/gblimo';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/gblimo';
+                //     window.location.href = url;
+                // });
 
                 // Update Investments button
-                $('#investmentsindex').on('click', function(e) {
-                    e.preventDefault();
+                // $('#investmentsindex').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/investmentsindex';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/investmentsindex';
+                //     window.location.href = url;
+                // });
 
                 // See Buckets and balances, etc.
-                $('#buckets').on('click', function(e) {
-                    e.preventDefault();
+                // $('#buckets').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/buckets';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/buckets';
+                //     window.location.href = url;
+                // });
 
                 // Budget page
-                $('#budget').on('click', function(e) {
-                    e.preventDefault();
+                // $('#budget').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/budget';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/budget';
+                //     window.location.href = url;
+                // });
 
                 // Mike Spending
-                $('#mikeSpending').on('click', function(e) {
-                    e.preventDefault();
+                // $('#mikeSpending').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/spending/mike';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/spending/mike';
+                //     window.location.href = url;
+                // });
 
                 // Maura Spending
-                $('#mauraSpending').on('click', function(e) {
-                    e.preventDefault();
+                // $('#mauraSpending').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/spending/maura';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/spending/maura';
+                //     window.location.href = url;
+                // });
 
                 // Trips
-                $('#trips').on('click', function(e) {
-                    e.preventDefault();
+                // $('#trips').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/trips';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/trips';
+                //     window.location.href = url;
+                // });
 
                 // Monthly transactions page
-                $('#monthly').on('click', function(e) {
-                    e.preventDefault();
+                // $('#monthly').on('click', function(e) {
+                //     e.preventDefault();
 
-                    const url = '/accounts/monthly';
-                    window.location.href = url;
-                });
+                //     const url = '/accounts/monthly';
+                //     window.location.href = url;
+                // });
 
-            });
+            // });
 
         </script>
 

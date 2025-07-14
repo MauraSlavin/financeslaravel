@@ -42,7 +42,8 @@ Route::get('/accounts/moveBuckets', 'App\Http\Controllers\TransactionsController
 // write records to move the funds betwen buckets
 Route::post('/accounts/moveFundsBetweenBuckets', 'App\Http\Controllers\TransactionsController@moveFundsBetweenBuckets')->name('moveFundsBetweenBuckets');
 // see spending for Mike/Maura
-Route::get('/accounts/spending/{who}', 'App\Http\Controllers\TransactionsController@spending')->name('spending');
+Route::get('/accounts/spending/mike', 'App\Http\Controllers\TransactionsController@spending')->name('spendingMike');
+Route::get('/accounts/spending/maura', 'App\Http\Controllers\TransactionsController@spending')->name('spendingMaura');
 // Monthly transactions
 Route::get('/accounts/monthly', 'App\Http\Controllers\TransactionsController@monthly')->name('monthly');
 // calc cost for a trip
