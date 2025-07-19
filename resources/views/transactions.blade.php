@@ -74,6 +74,7 @@
                     <th style="width: 100px; word-break: break-word;">Edit/Save</th>
                     <th style="width: 100px; word-break: break-word;">Split</th>
                     <th style="width: 100px; word-break: break-word;">Delete</th>
+                    <th style="width: 100px; word-break: break-word;">Copy</th>
                     <th style="width: 100px; word-break: break-word;">stmtDate</th>
                     <th style="width: 100px; word-break: break-word;">amtMike</th>
                     <th style="width: 100px; word-break: break-word;">amtMaura</th>
@@ -121,6 +122,9 @@
                         <td>
                             <button class="btn btn-danger deleteTransaction" data-id={{ $newTransaction["id"] }}>Dlt</button>
                         </td>
+                        <td>
+                            <button class="btn btn-info copyTransaction" data-id={{ $newTransaction["id"] }}>Copy</button>
+                        </td>
                         <td class="stmtDate">{{ $newTransaction["stmtDate"] ?? NULL  }}</td>
                         <td class="amtMike" style="text-align: right;">{{ $newTransaction["amtMike"] ?? NULL  }}</td>
                         <td class="amtMaura" style="text-align: right;">{{ $newTransaction["amtMaura"] ?? NULL  }}</td>
@@ -165,6 +169,7 @@
                     <td class="fw-bold">Edit/Save</td>    
                     <td class="fw-bold">Split</td>    
                     <td class="fw-bold">Delete</td>    
+                    <td class="fw-bold">Copy</td>    
                     <td class="fw-bold">stmtDate</td>
                     <td class="fw-bold">amtMike</td>
                     <td class="fw-bold">amtMaura</td>
@@ -208,6 +213,9 @@
                         </td>                       
                         <td>
                             <button class="btn btn-danger deleteTransaction" data-id={{ $transaction->id }}>Dlt</button>
+                        </td> 
+                        <td>
+                            <button class="btn btn-info copyTransaction" data-id={{ $transaction->id }}>Copy</button>
                         </td> 
                         <td class="stmtDate">{{ $transaction->stmtDate }}</td>
                         <td class="amtMike" style="text-align: right;">{{ $transaction->amtMike }}</td>
@@ -811,6 +819,7 @@
                                 $record.find('.editTransaction').attr('data-id', response.recordId);
                                 $record.find('.splitTransaction').attr('data-id', response.recordId);
                                 $record.find('.deleteTransaction').attr('data-id', response.recordId);
+                                $record.find('.copyTransaction').attr('data-id', response.recordId);
 
                                 // if the total_key was resolved response.newTotalKey has the new key), change that on the page
                                 var useEdit = true;
@@ -2193,7 +2202,7 @@
 
                     // get the id of the transaction being editted
                     var id = $(this).data('id');
-                    console.log("id (editting): " + id);
+                    // console.log("id (editting): " + id);
 
                     // get the original account, toFrom, amount
                     // var origAccount = $cell.closest("tr").find('.account').text();
@@ -2467,6 +2476,7 @@
                     $clonedTransaction.find(".saveTransaction").attr("data-id", "null");
                     $clonedTransaction.find(".splitTransaction").attr("data-id", "null");
                     $clonedTransaction.find(".deleteTransaction").attr("data-id", "null");
+                    $clonedTransaction.find(".copyTransaction").attr("data-id", "null");
 
                     // add to page  --  gets saved when "Save" clicked on page.
                     $origTransaction.after($clonedTransaction);
@@ -2520,6 +2530,85 @@
                         });
                     }
             
+                });
+
+                // listen for "Copy" being clicked
+                $(document).on('click', '.copyTransaction', function(e) {
+                    e.preventDefault();
+
+                    // get id and row to be deleted
+                    var $row = $(this).closest('tr');
+                    // var id = $(this).data('id');
+                    // // if id not found on button, look in tr element ($row)
+                    // if(id == null) {
+                    //     id = $row.data('id');
+                    // }
+
+                    // get other info to identify transaction being deleted
+                    // var trans_date = $row.find('td:nth-child(2)').text();
+                    // var account = $row.find('td:nth-child(4)').text();
+                    // var toFrom = $row.find('td:nth-child(5)').text();
+                    // var amount = $row.find('td:nth-child(6)').text();
+
+                    // get a copy of the row
+                    $newRow = $row.clone();
+                    // remove the old row's ids
+                    $newRow.find('td:nth-child(1)').text('null');
+                    $newRow.attr('data-id', 'null');
+                    $newRow.find('.editTransaction').attr('data-id', 'null');
+                    $newRow.find('.splitTransaction').attr('data-id', 'null');
+                    $newRow.find('.deleteTransaction').attr('data-id', 'null');
+                    $newRow.find('.copyTransaction').attr('data-id', 'null');
+
+                    // clear stmtDate, total_amt, total_key, and lastBalanced
+                    $newRow.find('.stmtDate').text(null);
+                    $newRow.find('.total_amt').text(null);
+                    $newRow.find('.total_key').text(null);
+                    $newRow.find('.lastBalanced').text(null);
+
+                    // add new row to top of transactions
+                    $("tbody").prepend($newRow);
+
+                    // make it edittable
+                    // left off here
+
+                    // get the original account, toFrom, amount
+                    // var origAccount = $cell.closest("tr").find('.account').text();
+                    // if (origAccount == '') origAccount = "{{$accountName}}";
+
+                    // make new row edittable
+                    var origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes;
+                    [
+                        origTransDate,
+                        origClearDate,
+                        origToFrom,
+                        origAmount,
+                        origAmtMike,
+                        origAmtMaura,
+                        origMethod,
+                        origCategory,
+                        origTracking,
+                        origStmtDate,
+                        origTotalAmt,
+                        origTotalKey,
+                        origNotes
+                    ] = getOrigValues($newRow);
+
+                    // change all the cells to inputs, except the "Edit" button
+                    changeCellsToInputs($newRow, origTransDate, origClearDate, origToFrom, origAmount, origAmtMike, origAmtMaura, origMethod, origCategory, origTracking, origStmtDate, origTotalAmt, origTotalKey, origNotes);
+           
                 });
 
                 // when amount entered, fill in 1/2 amtMike, 1/2 amtMaura
