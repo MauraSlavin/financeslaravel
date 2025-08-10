@@ -1570,14 +1570,31 @@
                         var thisRcdCategory = $input.parent().parent().find(".categoryEdit").first().val();
 
                         // if not MikeSpendinng or MauraSpending, split between amtMike & amtMaura
+                        // NOTE:  if account is Mike's or Maura's, doesn't get split between amtMike & amtMaura
+                        var mikeAcct, mauraAcct = false;
+                        if( $("#accountName").text().slice(0, 5) == "Maura") mauraAcct = true;
+                        else if( $("#accountName").text().slice(0, 4) == "Mike") mikeAcct = true;
+
                         if(!["MikeSpending", "MauraSpending"].includes(thisRcdCategory)) {
 
                             // recalc Mike & Maura splits
                             var $amtMikeEdit = $input.parent().parent().find('.amtMikeEdit').first();
-                            $amtMikeEdit.val($input.val() / 2);
-
                             var $amtMauraEdit = $input.parent().parent().find('.amtMauraEdit').first();
-                            $amtMauraEdit.val($input.val() / 2);
+
+                            if(mikeAcct) {
+                                $amtMikeEdit.val($input.val());
+                                $amtMauraEdit.val(0);
+                            }
+                            
+                            else if(mauraAcct) {
+                                $amtMauraEdit.val($input.val());
+                                $amtMikeEdit.val(0);
+                            }
+
+                            else {
+                                $amtMikeEdit.val($input.val() / 2);
+                                $amtMauraEdit.val($input.val() / 2);
+                            }
 
                         // if MikeSpending, total is set to amtMike
                         } else if( thisRcdCategory == "MikeSpending") {
