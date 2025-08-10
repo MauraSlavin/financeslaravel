@@ -4,13 +4,7 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>DONE - branch 2025-07-06-gb-incomeotherwh</h2>
-<h2>new branch 2025-07-06-copy-transaction</h2>
-  <p>Only README changed</p>
-
-  <br>
-  <hr>
-  <br>
+<h2>last branch 2025-07-18-fix-spending-defaults</h2>
 
   <p>Check at some point...</p>
   <ul>
@@ -23,25 +17,20 @@
 <h2>BUGS</h2>
   <ul>
     <li>On BUCKETS page, Goal Totals missing RetSavings amt</li>
-    <li>Error msg: The GET method is not supported for route transactions/insertTrans. Supported methods: POST.<br>
-    GET /transactions/insertTrans</li>
   </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Copy a transaction (new one in edit mode)</li>
       <li>Is changing Monthlies working??<li>
-      <li>Not everyplace puts the whole amt in amtMike/amtMaura for SpendingMike/SpendingMaura</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
-      <li>duplicate a transaction and put in edit mode (when transactions repeat)</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
       <li>fix saving new aliases</li>
       <li><b>Manually</b> add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
-      <li>button to write M/M spending to a CSV, Google sheets, etc. so I can send Mike a copy</li>
+      <li>button to write M/M spending to a CSV, Google sheets, etc. so I can send Mike a copy (this is not urgent - easy to cut/paste to a google sheet)</li>
       <li>Button to add or delete notes</li>
       <li>Update account totals at top on page for specific account when transaction added/deleted (Cleared balance; Register balance)</li>
       <br>
@@ -54,9 +43,6 @@
       <li>adjust split_total when amount or total_key or total_amt changes.  Search: // handle splitTotal if amount is changed</li>
       <li>Set up column matches for all accounts (DiscCC and Checking done) - is this worth it?  Maybe Disc svgs?? I don't usually do a bulk upload for other accounts.</li>
       <li>Get saving aliases to work.  Include extraDefaults.</li>
-      <li>Automate:<br>
-      trips<br>
-      </li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
       <li>Different users so Mike can have copy of the application?</li>
