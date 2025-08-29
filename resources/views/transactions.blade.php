@@ -21,8 +21,8 @@
         @if($accountName != "all")
             <p id="accountId" style="display: none;"></p>
         @endif
-        <h3>Cleared balance: {{ $clearedBalance }}</h3>
-        <h3>Register balance: {{ $registerBalance }}</h3>
+        <h3>Cleared balance: <span id="clrBal">{{ $clearedBalance }}</span></h3>
+        <h3>Register balance: <span id="regBal">{{ $registerBalance }}</span></h3>
         <h3>Last Balanced: {{ $lastBalanced }}</h3>
         @if($upload)
             <h5>Transactions just loaded have an id in <span class="newtransaction">red</span>.</h5>
@@ -61,12 +61,14 @@
                     <th style="width: 100px; word-break: break-word;">id</th>
                     <th style="width: 100px; word-break: break-word;">trans_date</th>
                     <th style="width: 100px; word-break: break-word;">clear_date</th>
+                    <th hidden style="width: 1px; word-break: break-word;">Orig clear date</th>
                     @if($accountName == 'all')
                         <th style="width: 100px; word-break: break-word;">account</th>
                         <th style="display: none;">id</th>
                     @endif
                     <th style="width: 100px; word-break: break-word;">toFrom</th>
                     <th style="width: 100px; word-break: break-word;">amount</th>
+                    <th hidden style="width: 1px; word-break: break-word;">Orig amt</th>
                     <th style="width: 100px; word-break: break-word;">category</th>
                     <th style="width: 100px; word-break: break-word;">notes</th>
                     <th style="width: 100px; word-break: break-word;">method</th>
@@ -102,12 +104,14 @@
                         <td class="newtransaction">{{ $newTransaction["id"] ?? NULL }}</td>
                         <td class="transDate">{{ $newTransaction["trans_date"] ?? NULL }}</td>
                         <td class="clearDate">{{ $newTransaction["clear_date"] ?? NULL  }}</td>
+                        <td hidden class="originalClearDate">{{ $newTransaction["clear_date"] ?? NULL  }}</td>
                         @if($accountName == 'all')
                             <td class="account">{{ $newTransaction["account"] ?? NULL  }}</td>
                             <td style="display: none;" class="accountId">{{ $newTransaction["accountId"] ?? "id"  }}</td>
                         @endif
                         <td class="toFrom">{{ $newTransaction["toFrom"] ?? NULL  }}</td>
                         <td class="amount" style="text-align: right;">{{ $newTransaction["amount"] ?? NULL  }}</td>
+                        <td hidden class="originalAmt" style="text-align: right;">{{ $newTransaction['amount'] ?? NULL  }}</td>
                         <td class="category">{{ $newTransaction["category"] ?? NULL  }}</td>
                         <td class="notes">{{ $newTransaction["notes"] ?? NULL  }}</td>
                         <td class="method">{{ $newTransaction["method"] ?? NULL  }}</td>
@@ -192,6 +196,7 @@
                         <td class="transId">{{ $transaction->id}}</td>
                         <td class="transDate">{{ $transaction->trans_date}}</td>
                         <td class="clearDate">{{ $transaction->clear_date }}</td>
+                        <td hidden class="originalClearDate">{{ $transaction->clear_date }}</td>
                         @if($accountName == 'all')
                             <td class="account">{{ $transaction->account }}</td>
                             <!-- <td class="accountId">{{ $transaction->account }}</td> -->
@@ -199,6 +204,7 @@
                         @endif
                         <td class="toFrom">{{ $transaction->toFrom }}</td>
                         <td class="amount" style="text-align: right;">{{ $transaction->amount }}</td>
+                        <td hidden class="originalAmt" style="text-align: right;">{{ $transaction->amount }}</td>
                         <td class="category">{{ $transaction->category }}</td>
                         <td class="notes">{{ $transaction->notes }}</td>
                         <td class="method">{{ $transaction->method }}</td>
@@ -709,6 +715,7 @@
                 }
                 
 
+                // update transaction in the database
                 function updateTransactionRecord($record) {
 
                     // make array to send to ajax
@@ -866,6 +873,166 @@
 
                         });
                     }
+                }
+
+                // update register balance and cleared balance when transaction is saved or deleted
+                // action can be "Save" or "Dlt"
+
+                // left off here
+
+
+                // NOTE:  clearDateChanged means it was either added or removed, NOT that the actual date changed!!
+                function updateTotals($record, action) {
+                    // update the register & cleared balances as follows:
+                    
+                    // ref | action  | amount     | clear_date | orig clear_date |	what to do
+                    //     |         |            | exists     | exists          |
+                    // -----------------------------------------------------------------------------------
+                    // 1   | new     | n/a        | no	       | n/a	         | Add amount to register
+                    //     |         |            |            |                 |
+                    // 1   | new     | n/a        | yes	       | n/a	         | Add amount to register, 
+                    //     |         |            |            |                 | Add amount to cleared
+                    //     |         |            |            |                 |
+                    // 3   | Save    | changed    | no	       | no	             | Subt orig from register, 
+                    //     |         |            |            |                 | add amount to register
+                    //     |         |            |            |                 |
+                    // 6   | Save    | changed    | yes	       | no    	         | Subt orig from register, 
+                    //     |         |            |            |                 | add amount to register, 
+                    //     |         |            |            |                 | add amount to cleared
+                    //     |         |            |            |                 |
+                    // 6   | Save    | changed    | no	       | yes             | Subt orig from register, 
+                    //     |         |            |            |                 | add amount to register, 
+                    //     |         |            |            |                 | subt orig from cleared
+                    //     |         |            |            |                 |
+                    // 3   | Save    | changed    | yes        | yes	         | Subt orig from register, 
+                    //     |         |            |            |                 | add amount to register; 
+                    //     |         |            |            |                 | subt orig from cleared, 
+                    //     |         |            |            |                 | add amount to cleared
+                    //     |         |            |            |                 |
+                    // 2   | Save    | unchanged  | no         | no              | no changes
+                    //     |         |            |            |                 |
+                    // 5   | Save    | unchanged  | yes        | no              | Add amount to cleared
+                    //     |         |            |            |                 |
+                    // 5   | Save    | unchanged  | no         | yes             | subt amount from cleared
+                    //     |         |            |            |                 |
+                    // 2   | Save    | unchanged  | yes        | yes	         | no changes
+                    //     |         |            |            |                 |
+                    // 4   | Dlt     | n/a	      | n/a	       | no	             | Add original amount from register
+                    //     |         |            |            |                 |
+                    // 4   | Dlt     | n/a	      | n/a	       | yes             | sub original amount from register
+                    //     |         |            |            |                 | subt original amount from cleared
+                    
+                    // get needed data from the page
+                    var registerBalance = $('#regBal').text();
+                    var clearedBalance = $('#clrBal').text();
+                    var id = $record.attr('data-id');
+                    var originalAmt = $record.find('.originalAmt').text();
+                    var amount = $record.find('.amount').text();
+                    var origClearDate = $record.find('.originalClearDate').text();
+                    var clearDate = $record.find('.clearDate').text();
+
+                    // action passed in is either "Save" or "Dlt".  If there's no ID, it's a new transaction.
+                    if(id == null || id == 'null') action = 'New';
+
+                    // make amount and balances float numbers
+                    amount = parseFloat(amount);
+                    originalAmt = parseFloat(originalAmt);
+                    registerBalance = parseFloat(registerBalance);
+                    clearedBalance = parseFloat(clearedBalance);
+
+                    // figure what's changed.
+                    var amtChanged, clearDateChanged;
+
+                    if(amount == originalAmt) amtChanged = false;
+                    else amtChanged = true;
+                    
+                    if(clearDate == origClearDate) clearDateChanged = false;
+                    else clearDateChanged = true;
+
+                    // ref: 1
+                    // if action is "New", it's a new transaction.
+                    // update register balance, and if there's a cleared date, update cleared balance, too
+                    if(action == "New") {
+                        registerBalance += amount;
+                        if(clearDate != '') {
+                            clearedBalance += amount;
+                        }                   
+
+
+                    // ref: 2
+                    // if action is "Save" and amt is unchanged and EXISTENCE of clear date is unchanged, nothing needs to be updated
+                    } else if(action == "Save" && !amtChanged && !clearDateChanged) {
+                        // do nothing
+                        return;
+
+
+                    // ref: 5
+                    // if action is "Save" and amt hasn't changed, but clear date existence has changed
+                    // clear date added;
+                    //      add origAmt to cleared balance
+                    // clear date removed:
+                    //      subtract origAmt from cleared balance
+                    } else if(action == "Save" && !amtChanged && clearDateChanged) {
+                        // clear date added
+                        if(origClearDate == '' || origClearDate == null) {
+                            clearedBalance += originalAmt;
+                        } else {
+                        // clear date removed
+                            clearedBalance -= originalAmt;
+                        }
+
+
+                    // ref: 6
+                    // if action is "Save" and amt HAS changed, AND existence of clear date has changed
+                    // clear date added:
+                    //      subtract orig amt from register balance
+                    //      add amount to register balance and cleared balance
+                    // clear date removed:
+                    //      subtract orig amt from cleared balance and register balance
+                    //      add amount to register balance
+                    } else if (action == "Save" && amtChanged && clearDateChanged) {
+                        // clear date added
+                        if(origClearDate == '' || origClearDate == null) {
+                            registerBalance -= originalAmt;
+                            registerBalance += amount;
+                            clearedBalance += amount;
+                        } else {
+                        // clear date removed
+                            clearedBalance -= originalAmt;
+                            registerBalance -= originalAmt;
+                            registerBalance += amount;
+                        }
+
+
+                    // ref: 3
+                    // if action is "Save" and amt has changed and EXISTENCE of clear date is unchanged
+                    //      subtract origAmt from register bal and add new balance
+                    //      if clearDate exists, also subtract origamt from clearbalance & add new amt to clearbalance
+                    } else if(action == "Save" && amtChanged && !clearDateChanged) {
+                        registerBalance -= originalAmt;
+                        registerBalance += amount;
+
+                        if(clearDate != '') {
+                            clearedBalance -= originalAmt;
+                            clearedBalance += amount;
+                        }
+                        
+                    // ref: 4
+                    // if action is "Dlt"
+                    //      add origAmt back to register bal
+                    //      if origCleardate exists, also add origAmt back to cleared balance
+                    } else if(action == "Dlt") {
+                        registerBalance -= originalAmt;
+                        if(!(origClearDate == '' || origClearDate == null)) {
+                            clearedBalance -= originalAmt;
+                        }
+                    }
+                    
+
+                    // write new balances to page
+                    $("#regBal").text(registerBalance);
+                    $("#clrBal").text(clearedBalance);
+
                 }
 
                 // change edittable cells in record to non-edittable
@@ -2087,11 +2254,43 @@
                     if(endHasDelimiterSlash) endDate = newDate[2] + "-" + newDate[0] + "-" + newDate[1];
                     else endDate = newDate.join('-');
                     
-                    // url to load page with new dates
-                    const url = `/accounts/${accountName}/${beginDate}/${endDate}`;
+                    var clearedBalance, registerBalance, lastBalanced;
 
-                    // load new page
-                    window.location.href = url;
+                    $.ajax({
+                        url: '/transactions/getBalances/' + accountName,
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+
+                            var clearedBalance, registerBalance, lastBalanced;
+
+                            if(response != null && Object.keys(response).length !== 0) {
+                                clearedBalance = Number.parseFloat(response['cleared_balance']).toFixed(2);
+                                registerBalance = Number.parseFloat(response['register_balance']).toFixed(2);
+                                lastBalanced = response['last_balanced'];
+                            }
+
+                            // url to load page with new transactions and balances
+                            const url = `/accounts/${accountName}/${beginDate}/${endDate}/${clearedBalance}/${registerBalance}/${lastBalanced}`;
+
+                            // load new page
+                            window.location.href = url;
+
+                        },
+                        error: function(xhr, status, error) {
+                            var errorMsg = "Error getting balances for account: " + accountName;
+                            console.error(errorMsg, error);
+
+                            // url to load page with new transactions w/out balances
+                            const url = `/accounts/${accountName}/${beginDate}/${endDate}/ERR/ERR/ERR`;
+
+                            // load new page
+                            window.location.href = url;
+                        }
+                    });
 
                 });
 
@@ -2128,6 +2327,13 @@
                     // clone the first transaction
                     $firstTransaction = $("tbody").children(':first-child');
                     $newTransaction = $firstTransaction.clone();
+
+                    // update hidden original values
+                    // $newTransaction.find('.originalAmt', $newTransaction.find('.amount').text());
+                    $newTransaction.find('.originalAmt').text('');
+
+                    // $newTransaction.find('.originalClearDate', $newTransaction.find('.originalClearDate').text());
+                    $newTransaction.find('.originalClearDate').text('');
 
                     // clear out info for new transaction
                     $newTransaction.attr('data-id', 'null');
@@ -2265,7 +2471,9 @@
                     e.preventDefault();
                     
                     // get the id
-                    var id = $(this).data('id');
+                    $(this).removeData(); // clear cached data (to get new value with  $(this).attr('data-id'))
+                    var id = $(this).attr('data-id');
+
                     if(id == 'null') id = null;
                     var thisElement = this;
 
@@ -2282,6 +2490,7 @@
                         if (account == '') account = "{{$accountName}}";
                         
                         // get needed data from record
+                        var clearDate = $record.find('.clearDate').children(':first-child').val();
                         var category = $record.find('.category').children(':first-child').val();
                         var amount = Number($record.find('.amount').children(':first-child').val());
                         var amtMike = Number($record.find('.amtMike').children(':first-child').val());
@@ -2292,21 +2501,8 @@
                         var notes = $record.find('.notes').children(':first-child').val();
                         var tracking = $record.find('.tracking').children(':first-child').val();
 
-                        // console.log("\naccount: ", account);
-                        // console.log("category: ", category);
-                        // console.log("amount: ", amount);
-                        // console.log("amtMike: ", amtMike);
-                        // console.log("amtMaura: ", amtMaura);
-                        // console.log("total_key: ", total_key);
-                        // console.log("total_amt: ", total_amt);
-                        // console.log("bucket: ", bucket);
-                        // console.log("notes: ", notes);
-                        // console.log("tracking: ", tracking);
-
-                        var errMsg;
-
                         // check notes for car transactions
-                        errMsg = checkCarNotes(category, tracking, notes);
+                        var errMsg = checkCarNotes(category, tracking, notes);
                         if(errMsg != '') {
                             alert(errMsg + "\nTransaction not updated in database.");
                             throw errMsg;
@@ -2361,6 +2557,13 @@
                         
                         // change edittable cells in record to non-edittable
                         makeNotEdittable(this);
+
+                        // update totals on page
+                        updateTotals($record, "Save");
+
+                        // update original hidden fields
+                        $record.find('.originalAmt').text(amount);
+                        $record.find('.originalClearDate').text(clearDate);
 
                     } catch (error) {
                         console.error("Error checking record: ", error);
@@ -2537,8 +2740,13 @@
                             },
                             success: function(response) {
                                 console.log('Transaction deleted successfully:', response.message);
+
+                                // update totals on page
+                                updateTotals($row, "Dlt");
+
                                 // remove the row from the page
                                 $row.remove();
+
                             },
                             error: function(xhr, status, error) {
                                 console.error("Error deleting record:", error);
@@ -2587,7 +2795,6 @@
                     $("tbody").prepend($newRow);
 
                     // make it edittable
-                    // left off here
 
                     // get the original account, toFrom, amount
                     // var origAccount = $cell.closest("tr").find('.account').text();

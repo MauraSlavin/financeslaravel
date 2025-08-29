@@ -78,6 +78,7 @@ Route::put('/transactions/updateInvBalances', 'App\Http\Controllers\Transactions
 Route::post('/transactions/insertTrans', 'App\Http\Controllers\TransactionsController@insert');
 Route::post('/transactions/insertAlias/{origToFrom}/{newValue}', 'App\Http\Controllers\TransactionsController@insertAlias');
 Route::get('/transactions/totalKey/{total_key}', 'App\Http\Controllers\TransactionsController@totalKey');
+Route::get('/transactions/getBalances/{account}', 'App\Http\Controllers\TransactionsController@getBalances');
 Route::get('/transactions/getDefaults/{account}/{toFrom}', 'App\Http\Controllers\TransactionsController@getDefaults');
 Route::get('/transactions/add', 'App\Http\Controllers\TransactionsController@addTransaction')->name("addTransaction");
 Route::post('/transactions/insert', 'App\Http\Controllers\TransactionsController@writeTransaction')->name("writeTransaction");
