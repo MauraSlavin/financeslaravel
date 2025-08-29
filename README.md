@@ -4,9 +4,21 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<h2>last branch 2025-07-18-fix-spending-defaults</h2>
+<hr>
+<hr>
+<h2>BUG</h2>
+<h2><bold>**** BUG - not calculating charing correctly in TRIPS ****</bold></h2>
+<h2>BUG</h2>
 
-  <p>Check at some point...</p>
+<hr>
+<hr>
+
+<h2>old branch 2025-08-10-update-account-totals-on-account-page -- DONE</h2>
+
+<h2>*** new branch to automate looking at retirement scenarios ***</h2>
+
+
+  <h2>Check at some point...</h2>
   <ul>
     <li>Do I need 2 Eversource entries - one if there's a credit, and one if payment comes from Checking?</li>
     <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>

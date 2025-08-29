@@ -1583,6 +1583,39 @@ class TransactionsController extends Controller
     }
 
 
+    // get clearedBalance, registerBalance, lastBalanced values for a given account
+    public function getBalances($account): JsonResponse
+    {
+
+        try {
+            $registerBalance = DB::table('transactions')
+                ->where('account', $account)
+                ->sum('amount');
+
+            $clearedBalance = DB::table('transactions')
+                ->where('account', $account)
+                ->whereNotNull('clear_date')
+                ->sum('amount');
+
+            $lastBalanced = DB::table('transactions')
+                ->where('account', $account)
+                ->max("LastBalanced");
+
+            return response()->json([
+                'register_balance' => $registerBalance,
+                'cleared_balance' => $clearedBalance,
+                'last_balanced' => $lastBalanced
+            ]);
+        } catch(\Exception $e) {
+            error_log("\nProblem getting balances for account: " . $account . ".");
+            error_log(json_encode(['exception' => $e, 'trace' => $e->getTraceAsString(),
+            ]));
+
+            return response()->json(['error' => 'An unexpected error occurred'], 500);
+        }
+    }
+
+
     // get total_key transactions
     public function totalKey($totalKey): JsonResponse
     {
