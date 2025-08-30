@@ -4,19 +4,11 @@
     <li>go to url: <em>localhost:8000</em> or <em>localhost:8000/accounts</em></li>
   </ul>
 
-<hr>
-<hr>
-<h2>BUG</h2>
-<h2><bold>**** BUG - not calculating charing correctly in TRIPS ****</bold></h2>
-<h2>BUG</h2>
 
 <hr>
 <hr>
 
-<h2>old branch 2025-08-10-update-account-totals-on-account-page -- DONE</h2>
-
-<h2>*** new branch to automate looking at retirement scenarios ***</h2>
-
+  <h2>NEXT:  ***  2025-08-29-retirement ***</h2>
 
   <h2>Check at some point...</h2>
   <ul>

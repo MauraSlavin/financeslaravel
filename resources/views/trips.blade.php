@@ -36,7 +36,6 @@
                 <input class="form-control tripInput" type="text" required id="tripName" name="tripName" maxlength="16">
                 <div style="margin-top: 5px;">
                     <button type="button" class="btn btn-success uploadTollsButton">Upload Tolls</button>
-                        <button type="button" class="btn btn-success tallyTollsButton">Tally Tolls</button>
                 </div>
             </div>
             
@@ -110,7 +109,8 @@
                 </div>
                 
                 <div class="col-md-6">
-                    <label class="tripLabel" for="tripTolls">Tolls tallied: * (via Tally Tolls button)</label>
+                    <label class="tripLabel" for="tripTolls" style="width: 300px;">Tolls tallied: * (via Tally Tolls button)</label>
+                    <button type="button" class="btn btn-success tallyTollsButton" style="margin-bottom: 5px;">Tally Tolls</button>
                     <br>
                     <input class="tripInput form-control" type="number" id="tripTolls" name="tripTolls" disabled>
                 </div>
