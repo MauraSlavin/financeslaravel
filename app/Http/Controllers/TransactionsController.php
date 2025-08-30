@@ -161,15 +161,6 @@ class TransactionsController extends Controller
                 ->where(DB::raw('`Transaction Date`'), '<=', $maxDate)
                 // ->where('`Transaction Date`', '>=', $minDate)
                 ->get()->toArray();
-            // error_log("\n\nTable tolls:  (type: " . gettype($tableTolls) . ")");
-            // error_log(json_encode($tableTolls));
-            // foreach($tableTolls as $key=>$tableToll) {
-            //     error_log(" - " . $key . ":");
-            //     error_log(" --- date: " . $tableToll->date);
-            //     error_log(" --- time: " . $tableToll->time);
-            //     error_log(" --- transponder: " . $tableToll->transponder);
-            //     error_log(" --- amount: " . $tableToll->amount);
-            // }
 
             // toll data with duplicates removed
             $noDupsTollData = [];
@@ -615,14 +606,6 @@ class TransactionsController extends Controller
             // else $newRecords[$rcdIdx]['dupMaybe'] = false;
             else $newRecords[$rcdIdx]->dupMaybe = false;
             
-            // error_log("\ndupsMaybe: ");
-            // if(count($dupsMaybe) > 0) {
-            //     foreach($dupsMaybe as $dup) error_log(json_encode($dup));
-            // } else {
-            //     error_log("none");
-            // }
-            // error_log("--- for " . $record['account'] . "; " . $record['toFrom'] . "; " . $record['trans_date'] . "; " . $record['amount']);
-
         }
         
         return $newRecords;
@@ -1987,7 +1970,6 @@ class TransactionsController extends Controller
 
     // calculate share of maintenance costs for this trip
     function calcShareMaint($tripData, $beginMiles, $recentMileage) {
-        // error_log("\n\n--------------------");
 
         // sum total cost of maintenance 2022 or later.
         // result is negative, so sign needs to be reversed.
@@ -2038,15 +2020,10 @@ class TransactionsController extends Controller
         // error_log("*** totMaint: " . $totMaint);
 
         // calc maint cost per mile
-        // error_log("recentMileage: " . $recentMileage);
-        // error_log("beginMiles: " . $beginMiles);
-        // error_log("diff: " . ($recentMileage - $beginMiles));
         $costPerMile = $totMaint/($recentMileage - $beginMiles);
-        // error_log("cost per mile: " . $costPerMile);
         
         // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
         $shareMaint = round($costPerMile * $tripData['tripmiles'], 2);
-        error_log("shareMaint: " . $shareMaint);
 
         return [$shareMaint, $checkRecentMaint];
         
@@ -2090,12 +2067,6 @@ class TransactionsController extends Controller
             }
         }
 
-        // error_log("begins: " . json_encode($begins));
-        // error_log("ends: " . json_encode($ends));
-        // error_log("premiums: " . json_encode($premiums));
-        // error_log("miles: " . json_encode($miles));
-        // error_log("prefixes: " . json_encode($prefixes));
-
         // find which prefix for the key to use
         $found = false;
         foreach($prefixes as $prefixIdx=>$prefix) {
@@ -2107,13 +2078,6 @@ class TransactionsController extends Controller
                 break;
             }
         }
-        // error_log("\n----");
-        // error_log("found: " . ($found ? "true" : "false));
-        // error_log("prefix: " . $prefix);
-        // error_log("begin: " . $begins[$prefixIdx]);
-        // error_log("end: " . $ends[$prefixIdx]);
-        // error_log("miles: " . $miles[$prefixIdx]);
-        // error_log("premium: " . $premiums[$prefixIdx]);
 
         if(!$found) {
             $errMsg = "No Insurance Premium for this time frame was found in the carcostdetails table.";
@@ -2212,16 +2176,16 @@ class TransactionsController extends Controller
         // get fuel bought info (volume and cost)
         function getFuelBoughtInfo($tripData, $fuel) {
             $msg = null; // assume no msgs to start
-           
+
             // gets gas bought, if any
             $gasBought = DB::table('transactions')
                 ->where('tracking', $tripData['tripCar'])
-                ->where('notes', 'like', '%gas - trips - ' . $tripData['tripName'] . '%');
+                ->where('notes', 'like', '%gas% trips - ' . $tripData['tripName'] . '%');
 
             // gets kwh bought, if any
             $kwhBought = DB::table('transactions')
                 ->where('tracking', $tripData['tripCar'])
-                ->where('notes', 'like', '%charg% - trips - ' . $tripData['tripName'] . '%');
+                ->where('notes', 'like', '%charg% trips - ' . $tripData['tripName'] . '%');
 
             // all fuel bought (should be just all gas or kwh)
             $fuelBoughtEnRoute = $gasBought ->unionAll($kwhBought)->get()->toArray();
@@ -2306,11 +2270,6 @@ class TransactionsController extends Controller
         // get fuel bought info (volume and cost)
         [$fuelVolumeEnRoute, $fuelCostEnRoute, $msg] = getFuelBoughtInfo($tripData, $fuel);
         if($msg != null) $errMsg .= "  " . $msg;
-        // error_log("\n\nfuel vol en route: " . $fuelVolumeEnRoute);
-        // error_log("\n\nfuel cost en route: " . $fuelCostEnRoute);
-        // error_log("\n\nerrMsg: " . $errMsg);
-
-
 
         // get last time gas was bought (not on a trip) BEFORE this trip
         // if($tripData['tripCar'] == 'CRZ') {
@@ -2349,19 +2308,12 @@ class TransactionsController extends Controller
             // Need est kWh used: Total miles / MPK
             $totalKwhUsed = $tripData['tripmiles'] / $MPK;
             $gallonsKwHused = $totalKwhUsed;
-            error_log("total kwh used: " . $totalKwhUsed);
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalKwhUsed - $fuelVolumeEnRoute;
-            // error_log("totalkwhused: " . $totalKwhUsed);
-            // error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
-            // error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
 
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
-            
-            error_log("fuel cost bought en route (kwh): " . $fuelCostEnRoute);
-            error_log("fuel cost not bought en route (kwh): " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
@@ -2371,7 +2323,6 @@ class TransactionsController extends Controller
             // Need est gallons used: Total miles / MPG
             $totalGalUsed = $tripData['tripmiles'] / $MPG; 
             $gallonsKwHused = $totalGalUsed;   
-            error_log("total gallons used: " . $totalGalUsed);
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalGalUsed - $fuelVolumeEnRoute;
@@ -2381,10 +2332,9 @@ class TransactionsController extends Controller
 
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
-            error_log("recent unit price/gal: " . $recentUnitPrice);
             
-            error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
-            error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
+            // error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
+            // error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
@@ -2515,11 +2465,6 @@ class TransactionsController extends Controller
         // error_log("completeTripInfo (sharIns): " . $completeTripInfo);
 
         $errMsg .= $msg;
-        // error_log("sharePurchase: " . $tripData['sharePurchase']);
-        // error_log("shareMaint: " . $tripData['shareMaint']);
-        // error_log("shareIns: " . $tripData['shareIns']);
-        // error_log(" -------------- ");
-        // error_log("errMsg:" . $errMsg);
         
         // fuel (gas or charging) for this trip
         //      handle gas/charging purchased during trip
@@ -2531,7 +2476,7 @@ class TransactionsController extends Controller
         // error_log("errMsg (after calcFuel): " . $errMsg);
 
         // error_log("Fuel cost: " . $tripData['fuelCost']);
-        error_log("gallonsKwHused: " . $tripData['gallonsKwHused']);
+        // error_log("gallonsKwHused: " . $tripData['gallonsKwHused']);
 
         // error_log("errMsg:" . $errMsg);
         $newTripRcd = [];
