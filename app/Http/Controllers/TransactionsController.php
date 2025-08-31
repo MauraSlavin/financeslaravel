@@ -2188,11 +2188,10 @@ class TransactionsController extends Controller
                 ->where('notes', 'like', '%charg% trips - ' . $tripData['tripName'] . '%');
 
             // all fuel bought (should be just all gas or kwh)
-            $fuelBoughtEnRoute = $gasBought ->unionAll($kwhBought)->get()->toArray();
+            $fuelBoughtEnRoute = $gasBought->unionAll($kwhBought)->get()->toArray();
+            error_log("fuelBoughtEnRoute: ");
+            error_log(json_encode($fuelBoughtEnRoute));
 
-            // error_log("------ fuelBought:");
-            // error_log(json_encode($fuelBoughtEnRoute));
-    
             // put in usable format
             $fuelVolumeEnRoute = 0;
             $fuelCostEnRoute = 0;
@@ -2211,10 +2210,14 @@ class TransactionsController extends Controller
         // get how much purchase (amt) and what cost from record where fuel was purchase en route
         function findFuelCostAndAmt($fuelEvent, $fuel, $needUnitCost) {
             $msg = '';  // assume no msg's until something found.
+            error_log("findFuelCostAndAmt... passed in:");
+            error_log("  fuelEvent: " . json_encode($fuelEvent) . ";\n  fuel: " . $fuel . ";\n needUnitCost: " . ($needUnitCost ? 'true' : 'false'));
 
             if(!$needUnitCost) {
+                error_log("in !needUnitCost block");
                 // get cost of fuel from record
                 $cost = $fuelEvent->amount;
+                error_log("cost: " . $cost);
 
                 // get amt from "notes" column
                 if($fuel == 'electric') {
@@ -2227,10 +2230,15 @@ class TransactionsController extends Controller
                 }
 
                 preg_match($volPattern, $fuelEvent->notes, $matches);
-                // error_log("matches: " . json_encode($matches));
-
+                error_log("matches: " . json_encode($matches));
                 // Get the matched number
-                $amt = $matches[1]; // Will contain string of volume purchased
+                if($fuel == 'gas') {
+                    $unitCost = -$matches[1]; // Will contain string of volume purchased
+                    $amt = $cost/$unitCost;
+                } else if($fuel == 'electric') {
+                    $amt = $matches[1];
+                }
+                error_log("amt (from matches): " . $amt);
                 if($amt == '' || $amt == null) {
                     $msg = "No amount found.";
                 } else {
@@ -2241,7 +2249,8 @@ class TransactionsController extends Controller
                 $cost = null; // not requested
                 $amt = null;  // not requested
             }
-
+            error_log("amt (in findFuelCostAndAmt): " . $amt);
+           
             if($needUnitCost) {
                 // get unit cost
                 $unitPattern = '/@ *([\d.]+)/';
@@ -2257,6 +2266,7 @@ class TransactionsController extends Controller
                 $unitCost = null;   // not requested
             }
 
+            error_log("in findFuelCostAndAmt, returning.. \n  cost: " . $cost . "\n  amt: " . $amt . "\n  unitCost: " . $unitCost . "\n  msg: " . $msg);
             return [$cost, $amt, $unitCost, $msg];
         }   // end of function findFuelCostAndAmt
     
@@ -2290,12 +2300,12 @@ class TransactionsController extends Controller
                 $recentUnitPrice = 0;
             } else {
                 $lastGas = $lastGases[0];
-                // error_log("------ lastGas:");
-                // error_log(json_encode($lastGas));
 
                 $needUnitCost = true;
                 // recentGasCost and recentGasVolume not needed, should be null
                 [$recentGasCost, $recentGasVolume, $recentUnitPrice, $msg] = findFuelCostAndAmt($lastGas, $fuel, $needUnitCost); 
+                error_log("------ recentUnitPrice:");
+                error_log(json_encode($recentUnitPrice));
                 $errMsg .= $msg;
 
                 // error_log("-- recentUnitPrice: " . $recentUnitPrice);
@@ -2311,12 +2321,15 @@ class TransactionsController extends Controller
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalKwhUsed - $fuelVolumeEnRoute;
-
+            error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
+            
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
+            error_log("fuelCostNotBoughtEnRoute: " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
+            error_log("total fuel volume: " . ($fuelVolumeEnRoute + $fuelVolumeNotBoughtEnRoute));
 
         } else if($fuel == 'gas') {
             // Gas bought en route + gas already in tank that was used
@@ -2326,15 +2339,19 @@ class TransactionsController extends Controller
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalGalUsed - $fuelVolumeEnRoute;
-            // error_log("totalGalused: " . $totalGalUsed);
-            // error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
-            // error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
-
+            error_log("---");
+            error_log("totalGalused: " . $totalGalUsed);
+            error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
+            error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
+            error_log("---");
+            
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
             
-            // error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
-            // error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
+            error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
+            error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
+            error_log("total cost (gas): " . ($fuelCostEnRoute + $fuelCostNotBoughtEnRoute));
+            error_log("---");
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
