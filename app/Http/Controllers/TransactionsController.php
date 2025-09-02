@@ -2798,6 +2798,109 @@ class TransactionsController extends Controller
         
         // no recorded transactions to show here
         return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => [] ]);
+    }   // end of function monthly
+
+
+    // Retirement analysis
+    public function retirement() {
+
+        // get existing retirement data:
+        //   x   savingsBalance      Big Bills (Disc)
+        //   x   checkingBalance     SCU checking
+        //   x   retirementDisc      Disc
+        //   x   retirementTIAA      TIAA CREF
+        //   x   retirementWFIRA     Total WF IRAs
+        //   x   retirementWFinv     WF non-IRA
+        //   x   retirementEJ        EJ
+        //      LTC                 Inherited IRA + Disc LTC
+        //      incomeNHRet         last NH Retirement deposit
+        //      incomeSSMike        last SS dep for Mike
+        //      incomeSSMaura       last SS dep for Maura (or retirement table or input)
+        //      incomeIBMMike       last IBM dep for Mike
+        //      incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
+        //      incomeGBLimoYTD     sum from transactions table
+        //      incomeGBLimoAnnual  pro-rated for year
+        //      incomeTownYTD       sum from transactions table
+        //      incomeTownAnnual    pro-rated for year
+        //      incomeRentalYTD     sum from transactions table
+        //      houseAssessed       from retirement table or input
+        //      houseEqRatio        from retirement table or input
+
+        function getRetirementData() {
+            $retirementData = [];
+
+            // accounts that need to sum transactions to get current balance
+            $sumAccountsDB = ['DiscSavings', 'Checking', 'DiscRet'];
+            $sumAccountsOutlook = ['Savings', 'Checking', 'RetirementDisc'];
+
+            // accounts to find latest balanced entered in DB
+            $lastBalanceDB = ['TIAA', 'WF-Inv', 'WF-IRA', 'EJ'];
+            $lastBalanceString = '"'. implode('", "', $lastBalanceDB) . '"';
+
+            // accounts to find last deposit
+            $lastDeposit = ['NHRetirement' , 'MTS IBM Retirement', 'MMS IBM Retirement', 'SSMike', 'SSMaura' ];
+
+            // get sum of balances
+            // Savings, Checking, Discover Retirement (DiscRet)
+            $dbbalances = DB::table('transactions')
+                ->selectRaw('SUM(amount) as amount, account, max(clear_date) as date')
+                ->whereIn('account',$sumAccountsDB)
+                ->groupBy('account')
+                ->get()->toArray();
+
+            $balances = [];
+            foreach($dbbalances as $balance) {
+                $balances[$balance->account] = [$balance->amount, $balance->date];
+            }
+
+            foreach($sumAccountsDB as $key => $acct) {
+                $retirementData[$sumAccountsOutlook[$key]] = $balances[$acct];
+            }
+            
+            // get latest balances
+            $dbbalances = DB::table('transactions as t1')
+                ->join(DB::raw('(SELECT account, MAX(clear_date) as max_date 
+                    FROM transactions 
+                    WHERE account IN (' . $lastBalanceString . ')
+                    GROUP BY account) as t2'), 
+                  function($join) {
+                      $join->on('t1.account', '=', 't2.account')
+                           ->on('t1.clear_date', '=', 't2.max_date');
+                  })
+                ->select('t1.account', 't1.amount', 't1.clear_date as date')
+                ->get();
+
+            $balances = [];
+            foreach($dbbalances as $balance) {
+                $balances[$balance->account] = [$balance->amount, $balance->date];
+            }
+
+            foreach($lastBalanceDB as $acct) {
+                $retirementData[$acct] = $balances[$acct];
+            }
+
+
+
+            // left off here   -- see comments at top of function to see what's left to get from DB
+            // $lastDeposit
+            // LTC
+            // GBLimo income
+            // Town of Durham income
+            // house
+
+
+            return $retirementData;
+        }
+
+
+        // get existing retirement data
+        $retirementData = getRetirementData();
+        
+        error_log("\n\nretirementData:");
+        error_log(json_encode($retirementData));
+        
+        // return view with input data to calc retirement outlook
+        return view('retirement', ['retirement' => $retirementData]);
     }
 
 

@@ -46,6 +46,8 @@ Route::get('/accounts/spending/mike', 'App\Http\Controllers\TransactionsControll
 Route::get('/accounts/spending/maura', 'App\Http\Controllers\TransactionsController@spending')->name('spendingMaura');
 // Monthly transactions
 Route::get('/accounts/monthly', 'App\Http\Controllers\TransactionsController@monthly')->name('monthly');
+// Retirement analysis
+Route::get('/accounts/retirement', 'App\Http\Controllers\TransactionsController@retirement')->name('retirement');
 // calc cost for a trip
 Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
 // sum tolls for a specific trip, using records in tolls table

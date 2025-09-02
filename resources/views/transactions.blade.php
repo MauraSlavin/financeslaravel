@@ -878,9 +878,6 @@
                 // update register balance and cleared balance when transaction is saved or deleted
                 // action can be "Save" or "Dlt"
 
-                // left off here
-
-
                 // NOTE:  clearDateChanged means it was either added or removed, NOT that the actual date changed!!
                 function updateTotals($record, action) {
                     // update the register & cleared balances as follows:

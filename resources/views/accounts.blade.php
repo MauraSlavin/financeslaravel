@@ -57,6 +57,11 @@
         <a href="{{ route('monthly') }}" class="image-button-href">
             <img src="{{ asset('images/buttons/Monthly.png') }}" alt="Clickable Calendar Image" class="image-button">
         </a>
+
+        <!-- Retirement button -->
+        <a href="{{ route('retirement') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Retirement.png') }}" alt="Clickable Retirement Image" class="image-button">
+        </a>
     </div>
 
         <table>

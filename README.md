@@ -9,6 +9,12 @@
 <hr>
 
   <h2>NEXT:  ***  2025-08-29-retirement ***</h2>
+    <ul>
+      <li>Working on getting data from database</li>
+      <li>Ability to update/input/correct data</li>
+      <li>Save things like Maura SS & Maura IBM & when started</li>
+      <li>See "Retirement in app" in Google Drive for beginning of design</li>
+    </ul>
 
   <h2>Check at some point...</h2>
   <ul>
@@ -25,7 +31,8 @@
     
 <h2>To do:</h2>
     <ul>
-      <li>Is changing Monthlies working??<li>
+      <li>Is changing Monthlies working??</li>
+      <li>Add charges en route to trips table - alert if 0 (may not be getting charges)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
