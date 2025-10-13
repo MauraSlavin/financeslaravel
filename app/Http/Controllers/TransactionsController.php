@@ -8,6 +8,8 @@ use Illuminate\Support\facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Monthly;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\App;
+
 
 
 use Carbon\Carbon;
@@ -157,6 +159,7 @@ class TransactionsController extends Controller
                     DB::raw('`Transponder/Plate` as transponder'),
                     DB::raw('`Outgoing` as amount')
                 )
+                ->whereNull('deleted_at')
                 ->where(DB::raw('`Transaction Date`'), '>=', $minDate)
                 ->where(DB::raw('`Transaction Date`'), '<=', $maxDate)
                 // ->where('`Transaction Date`', '>=', $minDate)
@@ -334,6 +337,7 @@ class TransactionsController extends Controller
 
         // get prefixes of toFrom's from banks to ignore
         $ignore = DB::table("tofromaliases")
+            ->whereNull('deleted_at')
             ->where('transToFrom', 'IGNORE')
             ->pluck('origToFrom');
                     
@@ -341,6 +345,8 @@ class TransactionsController extends Controller
         $mapping = DB::table("accounts")
             ->leftJoin("uploadmatch", "accounts.id", '=', "uploadmatch.account_id")
             ->select("csvField", "transField", "formulas")
+            ->whereNull('accounts.deleted_at')
+            ->whereNull('uploadmatch.deleted_at')
             ->where("accountName", $accountName)
             ->get()->toArray();
         
@@ -430,6 +436,7 @@ class TransactionsController extends Controller
             // handle different length origToFrom values
             $toFrom = $newRecord->toFrom;
             $toFromAlias = DB::table("tofromaliases")
+                ->whereNull('deleted_at')
                 ->where('origToFrom', '=', DB::raw('LEFT(?, LENGTH(origToFrom))'))
                 ->setBindings([$toFrom])
                 // ->dumpRawSql()
@@ -591,6 +598,7 @@ class TransactionsController extends Controller
             ];
 
             $dupsMaybe = DB::table('transactions')
+                ->whereNull('deleted_at')
                 ->where('account', $record->account)
                 ->where('toFrom', $record->toFrom )
                 ->whereIn('trans_date', $formattedDates)
@@ -668,13 +676,55 @@ class TransactionsController extends Controller
     }
 
 
+    // return msg if remote and local databases don't appear to be in sync
+    public function checkDbDiscrep() {
+
+        $outOfSyncTables = [];
+
+        $tables = DB::table('lastsync')
+            ->whereNot('tablename', 'test')
+            ->get()->toArray();
+
+        // number of records, last created_at, updated_at and deleted_at should match
+        foreach($tables as $table) {
+            $lastdatesRemote = DB::table($table->tablename)
+                ->selectRaw('count(*) as total_rcds')
+                ->selectRaw('max(created_at) as max_created_at')
+                ->selectRaw('max(updated_at) as max_updated_at')
+                ->selectRaw('max(deleted_at) as max_deleted_at')
+                ->first();
+
+            $lastdatesLocal = DB::connection('mysqllocal')
+                ->table($table->tablename)
+                ->selectRaw('count(*) as total_rcds')
+                ->selectRaw('max(created_at) as max_created_at')
+                ->selectRaw('max(updated_at) as max_updated_at')
+                ->selectRaw('max(deleted_at) as max_deleted_at')
+                ->first();
+
+            if($lastdatesRemote != $lastdatesLocal) $outOfSyncTables[] = $table->tablename;
+        }
+
+        // return msg to SYNC databases, if discrepencies found.
+        if(count($outOfSyncTables) > 0) {
+            return "Tables " . implode(", ", $outOfSyncTables) . " are out of sync. May want to SYNC.";
+        } else {
+            return null;
+        }
+    }
+
+
     // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
     //      includes line "all" for all transactions
     public function index($acctsMsg = null) {
         
+        // Show alert if mismatch between databases found when connected to remote database
+        if(App::environment('remote')) $acctsMsg .= $this->checkDbDiscrep();
+
         // get all account names & ids
         $results = DB::table('accounts')
             ->select("id", "accountName")
+            ->whereNull('deleted_at')
             ->where("type", "trans")
             ->get()->toArray();
         $accountNames = array_column($results, 'accountName');
@@ -687,6 +737,7 @@ class TransactionsController extends Controller
                 DB::raw('SUM(amount) AS register'),
                 DB::raw('MAX(lastBalanced) AS max_last_balanced')
             )
+            ->whereNull('deleted_at')
             ->whereIn(
                 'account',
                 $accountNames
@@ -730,6 +781,7 @@ class TransactionsController extends Controller
         $ids = array_column($transactions, 'id');
 
         $extraSplitTransactions = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->whereIn("total_key", $splitKeys)
             ->whereNotIn("id", $ids)
             ->get()->toArray();
@@ -784,18 +836,21 @@ class TransactionsController extends Controller
 
         // get the accounts information for all accounts
         $accounts = DB::table("accounts")
+            ->whereNull('deleted_at')
             ->get()->toArray();
         // error_log("\naccounts: ");
         // foreach($accounts as $thisOne) error_log(" - " . json_encode($thisOne));
 
         // get all previously used toFrom values
         $toFroms = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("toFrom")->toArray();
         $toFroms = array_column($toFroms, 'toFrom');
         $toFroms = str_replace(" ", "%20", json_encode($toFroms));
 
         // get tofromaliases (auto converts what the "bank" uses to what's in the database)
         $tofromaliases = DB::table("tofromaliases")
+            ->whereNull('deleted_at')
             ->get()->toArray();
         $tofromaliases = str_replace(" ", "%20", json_encode($tofromaliases));
         // error_log("\ntofromaliases:");
@@ -827,18 +882,21 @@ class TransactionsController extends Controller
 
         // get all defined categories
         $categories = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("category")->toArray();
         $categories = array_column($categories, 'category');
         $categories = str_replace(" ", "%20", json_encode($categories));
 
         // get all used tracking values
         $trackings = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("tracking")->toArray();
         $trackings = array_column($trackings, 'tracking');
         $trackings = str_replace(" ", "%20", json_encode($trackings));
 
         // get all bucket names
         $buckets = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->whereNotNull('bucket')
             ->distinct()->get("bucket")->toArray();
         $buckets = array_column($buckets, 'bucket');
@@ -849,6 +907,7 @@ class TransactionsController extends Controller
             ->when($accountName != 'all', function ($query) use ($accountName) {
                 return $query->where('account', $accountName);
             })
+            ->whereNull('deleted_at')
             ->whereNull('clear_date')
             ->orderBy('trans_date', 'desc')
             ->orderBy('total_key', 'desc')
@@ -860,6 +919,7 @@ class TransactionsController extends Controller
             ->when($accountName != 'all', function ($query) use ($accountName) {
                 return $query->where('account', $accountName);
             })
+            ->whereNull('deleted_at')
             ->where('trans_date', '>=', $beginDate)
             ->where('trans_date', '<=', $endDate)
             ->whereNotNull('clear_date')
@@ -882,6 +942,7 @@ class TransactionsController extends Controller
         // get amount spent for this category this year
         $spentTotals = DB::table('transactions')
             ->selectRaw('category, SUM(amount) as spent')
+            ->whereNull('deleted_at')
             ->where('trans_date', '>=', $firstDay)
             ->groupBy('category')
             ->get()
@@ -908,6 +969,7 @@ class TransactionsController extends Controller
         
         $ytmBudgets = DB::table('budget')
             ->selectRaw("year, category, " . implode(' + ', array_map(fn($m) => "COALESCE($m, 0)", $selectedMonths)) . " as total_budget")
+            ->whereNull('deleted_at')
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
             ->get()->toArray();
@@ -916,6 +978,7 @@ class TransactionsController extends Controller
         // get full year budgets by category
         $yearBudgets = DB::table('budget')
             ->select('year', 'category', 'total as total_budget')
+            ->whereNull('deleted_at')
             ->where('year', $thisYear)
             ->groupBy()
             ->get()
@@ -939,6 +1002,7 @@ class TransactionsController extends Controller
 
         // get cars
         $cars = DB::table('carcostdetails')
+            ->whereNull('deleted_at')
             ->where('key', 'Purchase')
             ->pluck('car');
 
@@ -955,11 +1019,23 @@ class TransactionsController extends Controller
         $now = date('Y-m-d H:i:s', $now);
 
         try {
-            DB::table('transactions')
+            $results = DB::table('transactions')
                 ->where('account', $accountName)
                 ->whereNull('lastBalanced')
                 ->whereNotNull('clear_date')
+                ->whereNull('deleted_at')
                 ->update(['lastBalanced' => $now]);
+
+            // if no records were updated, change the newest lastBalanced to today
+            if($results == 0) {
+            DB::table('transactions')
+                ->where('account', $accountName)
+                ->whereNotNull('clear_date')
+                ->whereNull('deleted_at')
+                ->orderBy('id', 'desc')
+                ->limit(1)
+                ->update(['lastBalanced' => now()]);
+            }
             return redirect()->route('accounts')->with("acctsMsg", "Last balances updated.");
 
         } catch (\Exception $e) {
@@ -1005,6 +1081,7 @@ class TransactionsController extends Controller
 
         // get the accounts information for all accounts
         $accounts = DB::table("accounts")
+            ->whereNull('deleted_at')
             ->get()->toArray();
         // error_log("\naccounts: ");
         // foreach($accounts as $thisOne) error_log(" - " . json_encode($thisOne));
@@ -1012,12 +1089,14 @@ class TransactionsController extends Controller
 
         // get all previously used toFrom values
         $toFroms = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("toFrom")->toArray();
         $toFroms = array_column($toFroms, 'toFrom');
         $toFroms = str_replace(" ", "%20", json_encode($toFroms));
         
         // get tofromaliases (auto converts what the "bank" uses to what's in the database)
         $tofromaliases = DB::table("tofromaliases")
+            ->whereNull('deleted_at')
             ->get()->toArray();
         $tofromaliases = str_replace(" ", "%20", json_encode($tofromaliases));
 
@@ -1044,12 +1123,14 @@ class TransactionsController extends Controller
 
         // get all defined categories
         $categories = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("category")->toArray();
         $categories = array_column($categories, 'category');
         $categories = str_replace(" ", "%20", json_encode($categories));
 
         // get all used tracking values
         $trackings = DB::table("transactions")
+            ->whereNull('deleted_at')
             ->distinct()->get("tracking")->toArray();
         $trackings = array_column($trackings, 'tracking');
         $trackings = str_replace(" ", "%20", json_encode($trackings));
@@ -1057,6 +1138,7 @@ class TransactionsController extends Controller
         // get all bucket names
         $buckets = DB::table("transactions")
             ->whereNotNull('bucket')
+            ->whereNull('deleted_at')
             ->distinct()->get("bucket")->toArray();
         $buckets = array_column($buckets, 'bucket');
         $buckets = str_replace(" ", "%20", json_encode($buckets));
@@ -1066,6 +1148,7 @@ class TransactionsController extends Controller
             ->where("account", $accountName)
             ->where("trans_date", ">=", $beginDate)
             ->where("trans_date", "<=", $endDate)
+            ->whereNull('deleted_at')
             ->orderBy('trans_date', 'desc')
             ->orderBy('total_key', 'desc')
             ->orderBy("toFrom")
@@ -1084,6 +1167,7 @@ class TransactionsController extends Controller
         $spentTotals = DB::table('transactions')
             ->selectRaw('category, SUM(amount) as spent')
             ->where('trans_date', '>=', $firstDay)
+            ->whereNull('deleted_at')
             ->groupBy('category')
             ->get()
             ->toArray();
@@ -1110,6 +1194,7 @@ class TransactionsController extends Controller
         $ytmBudgets = DB::table('budget')
             ->selectRaw("year, category, " . implode(' + ', array_map(fn($m) => "COALESCE($m, 0)", $selectedMonths)) . " as total_budget")
             ->where('year', $thisYear)
+            ->whereNull('deleted_at')
             ->groupBy('year', 'category')
             ->get()->toArray();
         // error_log("new var: \n" . json_encode($ytmBudgets));
@@ -1118,6 +1203,7 @@ class TransactionsController extends Controller
         $yearBudgets = DB::table('budget')
             ->select('year', 'category', 'total as total_budget')
             ->where('year', $thisYear)
+            ->whereNull('deleted_at')
             ->groupBy()
             ->get()
             ->toArray();
@@ -1152,6 +1238,7 @@ class TransactionsController extends Controller
         // need record ids, first.
         // get max id in transactions table
         $maxId = DB::table('transactions')
+            ->whereNull('deleted_at')
             ->max('id');
 
         $nextId = $maxId + 1;
@@ -1198,6 +1285,7 @@ class TransactionsController extends Controller
         // get cars
         $cars = DB::table('carcostdetails')
             ->where('key', 'Purchase')
+            ->whereNull('deleted_at')
             ->pluck('car');
 
         // TO DO:  order transactions by trans_date descending, toFrom ascending
@@ -1241,6 +1329,7 @@ class TransactionsController extends Controller
         // get sum of tolls (Outgoing) from tolls table for this trip
         $tolls = DB::table('tolls')
                 ->where("trip", $trip)
+                ->whereNull('deleted_at')
                 ->get()->toArray();
 
         // from each toll record, sum total tolls; pass back each toll record for user to verify
@@ -1293,16 +1382,18 @@ class TransactionsController extends Controller
         try {
             $response = DB::table('transactions')
                 ->where("id", $id)
-                ->delete();
+                ->whereNull('deleted_at')
+                // ->delete();
+                ->update(['deleted_at' => now()]);
 
             if($response == 1) {
                 return response()->json([
-                    'message' => 'Number records deleted: ' . $response,
+                    'message' => 'Number records soft deleted: ' . $response,
                     'status' => 'success'
                 ]);
             } else {
                 return response()->json([
-                    'message' => 'Unexpected number of records deleted: ' . $response,
+                    'message' => 'Unexpected number of records soft deleted: ' . $response,
                     'status' => 'error'
                 ]);
             }
@@ -1349,6 +1440,7 @@ class TransactionsController extends Controller
 
             $response = DB::table("transactions")
                 ->where('id', $id)
+                ->whereNull('deleted_at')
                 ->update($dataToUpdate);
 
             return response()->json([
@@ -1507,6 +1599,7 @@ class TransactionsController extends Controller
                 $newTotalKey = $recordId;
                 $response = DB::table('transactions')
                     ->where('total_key', $transaction['total_key'])
+                    ->whereNull('deleted_at')
                     ->update(['total_key' => $newTotalKey]);
             } else {
                 $newTotalKey = false;
@@ -1538,6 +1631,7 @@ class TransactionsController extends Controller
         try {
             $accountId = DB::table('accounts')
                 ->where('accountName', $account)
+                ->whereNull('deleted_at')
                 ->pluck('id');
             $accountId = $accountId[0];
             $lowerToFrom = strtolower($toFrom);
@@ -1545,6 +1639,7 @@ class TransactionsController extends Controller
             $defaults = DB::table('tofromaliases')
                 ->where('account_id', $accountId)
                 ->whereRaw("LOWER(transToFrom) = ?", [$lowerToFrom])
+                ->whereNull('deleted_at')
                 ->first();
 
             // if none found, look in origToFrom
@@ -1552,6 +1647,7 @@ class TransactionsController extends Controller
                 $defaults = DB::table('tofromaliases')
                 ->where('account_id', $accountId)
                 ->whereRaw("LOWER(origToFrom) = ?", [$lowerToFrom])
+                ->whereNull('deleted_at')
                 ->first();
             }
 
@@ -1573,15 +1669,18 @@ class TransactionsController extends Controller
         try {
             $registerBalance = DB::table('transactions')
                 ->where('account', $account)
+                ->whereNull('deleted_at')
                 ->sum('amount');
 
             $clearedBalance = DB::table('transactions')
                 ->where('account', $account)
                 ->whereNotNull('clear_date')
+                ->whereNull('deleted_at')
                 ->sum('amount');
 
             $lastBalanced = DB::table('transactions')
                 ->where('account', $account)
+                ->whereNull('deleted_at')
                 ->max("LastBalanced");
 
             return response()->json([
@@ -1605,6 +1704,7 @@ class TransactionsController extends Controller
         try {
             $totalKeyTransactions = DB::table('transactions')
                 ->where('total_key', $totalKey)
+                ->whereNull('deleted_at')
                 ->select('id', 'amount', 'total_amt')
                 ->get();
             return response()->json($totalKeyTransactions);
@@ -1812,6 +1912,7 @@ class TransactionsController extends Controller
             // set the total_key to the id of the record just inserted.
             DB::table("transactions")
                 ->where("total_key", "ggg")
+                ->whereNull('deleted_at')
                 ->update(["total_key" => $payId]);
 
             return $payId;
@@ -1977,6 +2078,7 @@ class TransactionsController extends Controller
             ->where('tracking', $tripData['tripCar'])
             ->where('notes', 'like', 'maint%')
             ->where('trans_date', '<=', $tripData['tripBegin'])
+            ->whereNull('deleted_at')
             ->get()->toArray();
         
         // sum recent maint costs (those in transactions) for this car to $recentMaintTotAmt
@@ -2004,6 +2106,7 @@ class TransactionsController extends Controller
         $oldMaint = DB::table('carcostdetails')
             ->where('car', $tripData['tripCar'])
             ->where('key', 'OldMaint')
+            ->whereNull('deleted_at')
             ->pluck('value');
         // error_log("*** oldMaint: " . $oldMaint);
         
@@ -2044,6 +2147,7 @@ class TransactionsController extends Controller
         $insTableData = DB::table('carcostdetails')
             ->where('car', $tripData['tripCar'])
             ->where('key', 'like', 'InsPay%')
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         // init vars to organize data
@@ -2138,6 +2242,7 @@ class TransactionsController extends Controller
             $carCostInfo = DB::table('carcostdetails')
                 ->where('car', $tripData['tripCar'])
                 ->whereIn('key', $keys)
+                ->whereNull('deleted_at')
                 ->get()->toArray();
             // error_log("------ carCostInfo:");
             // error_log(json_encode($carCostInfo));
@@ -2180,12 +2285,14 @@ class TransactionsController extends Controller
             // gets gas bought, if any
             $gasBought = DB::table('transactions')
                 ->where('tracking', $tripData['tripCar'])
-                ->where('notes', 'like', '%gas% trips - ' . $tripData['tripName'] . '%');
+                ->where('notes', 'like', '%gas% trips - ' . $tripData['tripName'] . '%')
+                ->whereNull('deleted_at');
 
             // gets kwh bought, if any
             $kwhBought = DB::table('transactions')
                 ->where('tracking', $tripData['tripCar'])
-                ->where('notes', 'like', '%charg% trips - ' . $tripData['tripName'] . '%');
+                ->where('notes', 'like', '%charg% trips - ' . $tripData['tripName'] . '%')
+                ->whereNull('deleted_at');
 
             // all fuel bought (should be just all gas or kwh)
             $fuelBoughtEnRoute = $gasBought->unionAll($kwhBought)->get()->toArray();
@@ -2290,6 +2397,7 @@ class TransactionsController extends Controller
                 ->where('notes', 'like', 'gas%')
                 ->where('notes', 'not like', '%- trips %')
                 ->where('notes', 'not like', '%- trip %')
+                ->whereNull('deleted_at')
                 ->orderBy('trans_date', 'desc')
                 ->get()->toArray();
             // need at least one lastGases record
@@ -2433,6 +2541,7 @@ class TransactionsController extends Controller
             ->select("key", "value")
             ->where("car", $tripData["tripCar"])
             ->whereIn("key", ["Purchase", "BeginMiles", "ExpMiles"])
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         // get most recent mileage
@@ -2440,6 +2549,7 @@ class TransactionsController extends Controller
             ->select("key", "value")
             ->where("car", $tripData["tripCar"])
             ->where("key", "like", "Mileage%")
+            ->whereNull('deleted_at')
             ->max("value");
         // error_log("recentMileage: " . json_encode($recentMileage));
 
@@ -2631,12 +2741,14 @@ class TransactionsController extends Controller
         // get all transactional account names
         $transAccountNames = DB::table('accounts')
             ->where("type", "trans")
+            ->whereNull('deleted_at')
             ->distinct()->get("accountName")->toArray();
         $transAccountNames = array_column($transAccountNames, 'accountName');
 
         // get all investment account names
         $invAccountNames = DB::table('accounts')
             ->where("type", "inv")
+            ->whereNull('deleted_at')
             ->distinct()->get("accountName")->toArray();
         $invAccountNames = array_column($invAccountNames, 'accountName');
 
@@ -2654,6 +2766,7 @@ class TransactionsController extends Controller
                 $transAccountNames
             )
             ->whereDate('clear_date', '<=', $endDate)       // new
+            ->whereNull('deleted_at')
             ->groupBy('account')
             ->get()
             ->toArray();
@@ -2677,6 +2790,7 @@ class TransactionsController extends Controller
                 $invAccountNames
             )
             ->where('clear_date', '<=', $endDate)
+            ->whereNull('deleted_at')
             ->get()
             ->toArray();
 
@@ -2711,6 +2825,7 @@ class TransactionsController extends Controller
         // paycheck date - one week since last one
         $gboldpaycheckdate = DB::table('transactions')
             ->where('toFrom', 'Great Bay Limo')
+            ->whereNull('deleted_at')
             ->max('trans_date');
 
             // add a week to it
@@ -2735,6 +2850,7 @@ class TransactionsController extends Controller
 
         // get monthly transactions set up
         $monthlies = DB::table('monthlies')
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         // get last cleared_date (or last trans_date if cleared is null) for each monthly transaction
@@ -2745,6 +2861,7 @@ class TransactionsController extends Controller
                 ->where('toFrom', $month->toFrom)
                 ->where('account', $month->account)
                 ->where('notes', 'LIKE', $month->notes . '%')
+                ->whereNull('deleted_at')
                 // ->where('amount', $month->amount)        -- only do this (below) when amount is consistent
                 // ->where('category', $month->category)    -- only do this (below) if category is consistent
                 ->select(
@@ -2812,14 +2929,14 @@ class TransactionsController extends Controller
         //   x   retirementWFIRA     Total WF IRAs
         //   x   retirementWFinv     WF non-IRA
         //   x   retirementEJ        EJ
-        //      LTC                 Inherited IRA + Disc LTC
-        //      incomeNHRet         last NH Retirement deposit
-        //      incomeSSMike        last SS dep for Mike
-        //      incomeSSMaura       last SS dep for Maura (or retirement table or input)
-        //      incomeIBMMike       last IBM dep for Mike
-        //      incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
+        //   x   LTC                 Inherited IRA + Disc LTC (input for Inherited; Disc LTC separate)
+        //   x  incomeNHRet         last NH Retirement deposit
+        //   x  incomeSSMike        last SS dep for Mike
+        //   x  incomeSSMaura       last SS dep for Maura (or retirement table or input)
+        //   x  incomeIBMMike       last IBM dep for Mike
+        //   x  incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
         //      incomeGBLimoYTD     sum from transactions table
-        //      incomeGBLimoAnnual  pro-rated for year
+        //      incomeGBLimoAnnual  pro-rated for year (or max allowed by SS)
         //      incomeTownYTD       sum from transactions table
         //      incomeTownAnnual    pro-rated for year
         //      incomeRentalYTD     sum from transactions table
@@ -2827,41 +2944,101 @@ class TransactionsController extends Controller
         //      houseEqRatio        from retirement table or input
 
         function getRetirementData() {
-            $retirementData = [];
 
+            // get constants, assumptions, etc. from retirementdata table
+            // get retirement income
+            $dbdata = DB::table('retirementdata')
+                ->select('id', 'description', 'type', 'data', 'UOM', 'updated_at')
+                ->whereNull('deleted_at')
+                ->orderBy('type', 'asc')
+                ->orderBy('order', 'asc')
+                ->get()->toArray();
+
+            // get in useful formate
+            // each element in each of these arrays is a 4 element array with:
+            //      order,  value,  unit of measure (UOM),   date of value (may be null if n/a)
+            // EXCEPT retirementDataInfo - which just has the json for that description
+            $retirementDataAcctNums = [];
+            $retirementDataAssumptions = [];
+            $retirementDataConstants = [];
+            $retirementDataIncomes = [];
+            $retirementDataValues = [];
+            $retirementDataBalances = [];
+            $retirementDataRents = [];
+            $retirementDataInfo = [];
+
+            // current year & month - delete rental income before this
+            $yearMonth = date("y") . date("m");
+
+            foreach($dbdata as $dataPoint) {
+                $date = substr( $dataPoint->updated_at, 0, 10);
+                switch ($dataPoint->type) {
+                    case 'acct':
+                        $retirementDataAcctNums[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        break;
+                    case 'assm':
+                        $retirementDataAssumptions[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        break;
+                    case 'con':
+                        $retirementDataConstants[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        break;
+                    case 'inc':
+                        $retirementDataIncomes[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        break;
+                    case 'val':
+                        $retirementDataValues[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        break;
+                    case 'rent':
+                        $retirementDataRents[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->id];
+                        break;   
+                    case 'info':
+                        $retirementDataInfo[$dataPoint->description] = $dataPoint->data;
+                        break;   
+                }
+            }   
+                      
             // accounts that need to sum transactions to get current balance
-            $sumAccountsDB = ['DiscSavings', 'Checking', 'DiscRet'];
-            $sumAccountsOutlook = ['Savings', 'Checking', 'RetirementDisc'];
+            $sumAccountsDB = json_decode($retirementDataInfo['sumAccountsDB']);
+            $sumAccountsVerbiage = json_decode($retirementDataInfo['sumAccountsVerbiage']);
+            // error_log("sumAccountsDB: " . json_encode($sumAccountsDB));
 
             // accounts to find latest balanced entered in DB
-            $lastBalanceDB = ['TIAA', 'WF-Inv', 'WF-IRA', 'EJ'];
+            $lastBalanceDB = json_decode($retirementDataInfo['lastBalanceDB']);
             $lastBalanceString = '"'. implode('", "', $lastBalanceDB) . '"';
+            // error_log("lastBalanceDB: " . json_encode($lastBalanceDB));
 
             // accounts to find last deposit
-            $lastDeposit = ['NHRetirement' , 'MTS IBM Retirement', 'MMS IBM Retirement', 'SSMike', 'SSMaura' ];
+            $lastDeposit = json_decode($retirementDataInfo['lastDeposit']);
+            // error_log("lastDeposit: " . json_encode($lastDeposit));
 
             // get sum of balances
             // Savings, Checking, Discover Retirement (DiscRet)
             $dbbalances = DB::table('transactions')
                 ->selectRaw('SUM(amount) as amount, account, max(clear_date) as date')
                 ->whereIn('account',$sumAccountsDB)
+                ->whereNull('deleted_at')
                 ->groupBy('account')
                 ->get()->toArray();
 
             $balances = [];
             foreach($dbbalances as $balance) {
-                $balances[$balance->account] = [$balance->amount, $balance->date];
+                $balances[$balance->account] = [$balance->amount, "$", $balance->date];
             }
+            // error_log("dbbalances 1:");
+            // foreach($dbbalances as $bal) error_log(json_encode($bal));
 
             foreach($sumAccountsDB as $key => $acct) {
-                $retirementData[$sumAccountsOutlook[$key]] = $balances[$acct];
+                $retirementDataBalances[$sumAccountsVerbiage[$key]] = $balances[$acct];
             }
-            
+            // error_log("retirementDataBalances:");
+            // foreach($retirementDataBalances as $data) error_log(json_encode($data));
+
             // get latest balances
             $dbbalances = DB::table('transactions as t1')
                 ->join(DB::raw('(SELECT account, MAX(clear_date) as max_date 
                     FROM transactions 
                     WHERE account IN (' . $lastBalanceString . ')
+                    AND deleted_at IS NULL
                     GROUP BY account) as t2'), 
                   function($join) {
                       $join->on('t1.account', '=', 't2.account')
@@ -2870,37 +3047,105 @@ class TransactionsController extends Controller
                 ->select('t1.account', 't1.amount', 't1.clear_date as date')
                 ->get();
 
+            // error_log("dbbalances 2:");
+            // foreach($dbbalances as $bal) error_log(json_encode($bal));
+
             $balances = [];
             foreach($dbbalances as $balance) {
-                $balances[$balance->account] = [$balance->amount, $balance->date];
+                $balances[$balance->account] = [$balance->amount, "$", $balance->date];
             }
+            // error_log("balances:");
+            // foreach($balances as $bal) error_log(json_encode($bal));
 
             foreach($lastBalanceDB as $acct) {
-                $retirementData[$acct] = $balances[$acct];
+                // error_log("acct: " . $acct);
+                // error_log("balances[acct]: " . json_encode($balances[$acct]));
+                $retirementDataBalances[$acct] = $balances[$acct];
+            }
+
+            // get retirement income
+            $dbretincomes = DB::table('transactions')
+                ->whereIn('toFrom', $lastDeposit)
+                ->whereNull('deleted_at')
+                ->select([
+                    'toFrom',
+                    DB::raw('MAX(trans_date) as max_trans_date'),
+                    'amount',
+                    'total_amt'
+                ])
+                ->groupBy('toFrom')
+                ->get()->toArray();
+
+            // get in useful formate
+            $incomes = [];
+            foreach($dbretincomes as $acct) {
+                $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->max_trans_date];
+            }
+
+            // add retirement incomes to retirementData array
+            foreach($dbretincomes as $acct) {
+                $retirementDataIncomes[$acct->toFrom] = $incomes[$acct->toFrom];
+            }
+
+            foreach($lastDeposit as $acct) {
+                // error_log("\n\nacct: " . $acct);
+                // error_log("retirementData[acct]: " );
+                // error_log(json_encode($retirementData[$acct]));
+                if(!isset($retirementData[$acct])) $retirementData[$acct] = [0, "$", null];
             }
 
 
+            // delete old rental records
+            $yearMonth = date("y") . date("m");
+            foreach($retirementDataRents as $description=>$rentalRcd) {
+                $date = substr($description, 12, 4);
+                if($date <= $yearMonth) {
+                    error_log(json_encode($rentalRcd));
+                    $result = DB::table('retirementdata')
+                        ->where('id', $rentalRcd[3])
+                        ->whereNull('deleted_at')
+                        ->update([
+                            'deleted_at' => now()
+                        ]);
+                }
+            }
 
-            // left off here   -- see comments at top of function to see what's left to get from DB
-            // $lastDeposit
-            // LTC
-            // GBLimo income
-            // Town of Durham income
-            // house
-
-
-            return $retirementData;
+            return [
+                $retirementDataAcctNums,
+                $retirementDataAssumptions,
+                $retirementDataConstants,
+                $retirementDataIncomes,
+                $retirementDataValues,
+                $retirementDataBalances,
+                $retirementDataRents
+            ];
         }
 
 
         // get existing retirement data
-        $retirementData = getRetirementData();
+        [
+            $retirementDataAcctNums,
+            $retirementDataAssumptions,
+            $retirementDataConstants,
+            $retirementDataIncomes,
+            $retirementDataValues,
+            $retirementDataBalances,
+            $retirementDataRents
+        ] = getRetirementData();
         
-        error_log("\n\nretirementData:");
-        error_log(json_encode($retirementData));
+        // error_log("\n\nretirementData:");
+        // error_log(json_encode($retirementData));
         
         // return view with input data to calc retirement outlook
-        return view('retirement', ['retirement' => $retirementData]);
+        return view('retirement', [
+            'retirementDataAcctNums' => $retirementDataAcctNums,
+            'retirementDataAssumptions' => $retirementDataAssumptions,
+            'retirementDataConstants' => $retirementDataConstants,
+            'retirementDataIncomes' => $retirementDataIncomes,
+            'retirementDataValues' => $retirementDataValues,
+            'retirementDataBalances' => $retirementDataBalances,
+            'retirementDataRents' => $retirementDataRents
+        ]);
     }
 
 
@@ -2932,6 +3177,7 @@ class TransactionsController extends Controller
         $dbinvestments = DB::table('transactions')
             ->where('toFrom', 'Value')
             ->where('lastBalanced', '>=', $threeMonthsAgo)
+            ->whereNull('deleted_at')
             ->orderBy('account', 'asc')
             ->orderBy('lastBalanced', 'desc')
             ->get()->toArray();
@@ -2971,6 +3217,7 @@ class TransactionsController extends Controller
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
                 ->where('goalDate', '<=', Carbon::now())
+                ->whereNull('deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3003,6 +3250,7 @@ class TransactionsController extends Controller
                 ->whereDate('goalDate', '>', Carbon::today())
                 ->whereNotNull('goalDate')
                 ->whereYear('goalDate', '=', Carbon::now()->year)
+                ->whereNull('deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3033,6 +3281,7 @@ class TransactionsController extends Controller
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
                 ->whereNull('goalDate')
+                ->whereNull('deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3063,6 +3312,7 @@ class TransactionsController extends Controller
                 ->leftJoin('transactions', function($join) {
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
+                ->whereNull('deleted_at')
                 ->select(
                     DB::raw('SUM(transactions.amount) as balance'),
                 )
@@ -3084,6 +3334,7 @@ class TransactionsController extends Controller
                 ->whereIn("bucket", [
                     'BigItems', 'College', 'CC', 'Holiday', 'Insurance', 'LTC', 'Misc', 'PropertyTax', 'RetSavings', 'Vacation', 'Water'
                 ])
+                ->whereNull('deleted_at')
                 ->select(
                     DB::raw('SUM(amount) as balance')
                 )
@@ -3172,6 +3423,7 @@ class TransactionsController extends Controller
         // update total_key with newId
         DB::table('transactions')
             ->where('id', $newId)
+            ->whereNull('deleted_at')
             ->update(['total_key' => $newId]);
 
         // creat to transaction
@@ -3206,6 +3458,7 @@ class TransactionsController extends Controller
     function getCategories($IorE) {
         $categories = DB::table('categories')
             ->where('ie', '=', $IorE)
+            ->whereNull('deleted_at')
             ->select('name')
             ->orderBy('name')
             ->get()->toArray();
@@ -3218,7 +3471,11 @@ class TransactionsController extends Controller
 
     public function getBudgetData($year) {
         $budgetRecords = DB::table("budget")
+            ->select(["id", "year", "category", "inflationFactor", "january", "february",
+                "march", "april", "may", "june", "july", "august", "september", "october",
+                "november", "december", "total"])
             ->where("year", $year)
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         $budgetData = [];
@@ -3239,6 +3496,7 @@ class TransactionsController extends Controller
         $db_notes = DB::table("notes")
             ->where("type_of_note", $typeOfNote)
             ->whereBetween("trans_date", [$year . "-01-01", $year . "-12-31"])
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         foreach($db_notes as $note) {
@@ -3311,8 +3569,10 @@ class TransactionsController extends Controller
                 'category'
             ])
             ->where('trans_date', '>=', $thisYear . "-01-01")
+            ->whereNull('deleted_at')
             ->where(function ($query) use ($category, $who) {
                 $query->where('category', $category)
+                      ->whereNull('deleted_at')             // left off here - test this
                         //  Mike has only account "Mike"
                         //  Maura has "MauraSCU" and "MauraDisc"
                       ->orWhere('account', 'like', $who . '%');
@@ -3327,6 +3587,7 @@ class TransactionsController extends Controller
         $monthlySpendingBudget = DB::table('budget')
             ->where("year", $thisYear)
             ->where("category", $category)
+            ->whereNull('deleted_at')
             ->get()
             ->toArray();
 
@@ -3404,6 +3665,7 @@ class TransactionsController extends Controller
         // get cars, drivers, and most recent mileage from carcostdetails table
         $DBCarsDriversMileages = DB::table('carcostdetails')
             ->where('key', 'Driver')
+            ->whereNull('deleted_at')       // left off here ... test this
             ->orWhere('key', 'like', 'Mileage%')
             ->get()->toArray();
             
@@ -3450,6 +3712,7 @@ class TransactionsController extends Controller
 
         // get an array of all the trip names
         $tripNames = DB::table('trips')
+            ->whereNull('deleted_at')
             ->pluck('trip');
         // error_log("tripnames:");
         // foreach($DBtripNames as $tripName) error_log($tripName);   
@@ -3567,6 +3830,7 @@ class TransactionsController extends Controller
 
         $actualsTransactions = DB::table("transactions")
             ->whereBetween("trans_date", [$year . "-01-01", $year . "-12-31"])
+            ->whereNull('deleted_at')
             ->get()->toArray();
 
         // init actual income and expense data
@@ -3762,14 +4026,15 @@ class TransactionsController extends Controller
     
                     // change transaction to MikeSpending part & update
                     DB::table('transactions')
-                    ->where('id', '=', $id)
-                    ->update([
-                        'total_key' => $total_key,
-                        'total_amt' => $total_amt,
-                        'amount' => DB::raw('CAST(amount / 2 AS FLOAT)'),
-                        'amtMaura' => 0,
-                        'category' => 'MikeSpending'
-                    ]);
+                        ->where('id', '=', $id)
+                        ->whereNull('deleted_at')
+                        ->update([
+                            'total_key' => $total_key,
+                            'total_amt' => $total_amt,
+                            'amount' => DB::raw('CAST(amount / 2 AS FLOAT)'),
+                            'amtMaura' => 0,
+                            'category' => 'MikeSpending'
+                        ]);
                 
                     
                     // insert new MauraSpending transaction
@@ -3817,6 +4082,327 @@ class TransactionsController extends Controller
         });
 
         return "Done split M and M.";
+    }
+
+    // blade to enter balances for each WF account, so Trad, Roth, and Inh accounts can be treated appropriately
+    public function splitIRAs(Request $request) {
+
+        error_log("------------------------------ split IRAS ----------------------------------");
+        error_log("Mikes: " . json_encode($request->query("mikes")));
+        error_log("Mauras: " . json_encode($request->query("mauras")));
+
+        // get ira account info in a useable form
+        $rothAccounts = collect();
+        for ($index = 1; $index <= $request->query("numberRoth"); $index++) {
+            $rothAccounts[$index] = $request->query("roth_$index");
+            // error_log("index: " . $index . ":  roth_<index>: " . $request->query("roth_$index"));
+        }
+        
+        $tradAccounts = collect();
+        for ($index = 1; $index <= $request->query("numberTrad"); $index++) {
+            $tradAccounts[$index] = $request->query("trad_$index");
+            // error_log("index: " . $index . ":  trad_<index>: " . $request->query("trad_$index"));
+        }
+        
+        $inhAccount = $request->query('inh');
+        $investmentAcct = $request->query('invest');
+
+        $mikes = $request->query('mikes');
+        $mauras = $request->query('mauras');
+
+        // get view with input for each WF account
+        return view('splitiras', compact(
+            'rothAccounts',
+            'tradAccounts',
+            'inhAccount',
+            'investmentAcct',
+            'mikes',
+            'mauras'
+        ));
+    }
+
+    public function addwfparts(Request $request) {
+
+        // init vars
+        $rothTotal = 0;
+        $tradTotal = 0;
+
+        // calc total of trad ira accts
+        $numberTrad = $request->input("numberTrad");
+        for($iraIdx = 1; $iraIdx <= $numberTrad; $iraIdx++) {
+            $tradBalance = $request->input("Trad{$iraIdx}");
+            $tradTotal += $tradBalance;
+        }
+        // calc total of roth ira accts
+        $numberRoth = $request->input("numberRoth");
+        for($iraIdx = 1; $iraIdx <= $numberRoth; $iraIdx++) {
+            $rothBalance = $request->input("Roth{$iraIdx}");
+            $rothTotal += $rothBalance;
+        }
+
+        $inhTotal = $request->input("Inh");
+        $wfInv = $request->input("wfInv");
+        $insertRcds = [
+            ['description' =>'WF-IRA-non-taxable-Roth', 'data' => $rothTotal],
+            ['description' =>'WF-IRA-Taxable-Trad', 'data' => $tradTotal],
+            ['description' =>'WF-Inherited (for LTC)',  'data' => $inhTotal],
+            ['description' =>'WF-Inv-Bal', 'data' => $wfInv]
+        ];
+
+        $response = DB::table('retirementdata')
+            ->upsert(
+                $insertRcds,
+                ['description'],
+                ['data']
+            );
+
+        return redirect()->route('retirement');
+
+    }
+
+    // Upload database changes from local to remote tables
+    public function syncdbchanges() {
+       
+        $msg = '';      // to be displayed on page when this is done
+    
+        // NOTE:  for testing, only use TEST table   
+        //      otherwise, skip TEST table    
+        
+        // get last date each table was uploaded
+        $lastTimeSynced = DB::table('lastsync')
+            ->whereNot('tablename', 'test')
+            ->select('tablename', 'matchfields', 'lastdate')
+            ->get()->toArray();
+
+
+        // process one table at a time
+        foreach($lastTimeSynced as $table) {
+
+            $msg .= 'TABLE: ' . $table->tablename . " (last synced: " . $table->lastdate . ")<br>";
+            $synced = false;  // change to true when table(s) updated
+
+            // get new records since last upload
+            // error_log("working on table........................................................................ " . $table->tablename);
+            // error_log("--- matchfields: " . $table->matchfields);
+
+            // change matchfields into an array
+            $matchfields = explode(", ", $table->matchfields);
+
+            // get new remote records
+            $newRemoteRcds = DB::table($table->tablename)
+                ->where("created_at", ">", $table->lastdate)
+                ->whereNull('deleted_at')
+                ->get()->toArray();
+
+            $newRemoteIds = array_column($newRemoteRcds, "id");
+            // error_log("newRemoteIds: " . json_encode($newRemoteIds));
+
+            // get new local records
+            $newLocalRcds = DB::connection('mysqllocal')
+                ->table($table->tablename)
+                ->where("created_at", ">", $table->lastdate)
+                ->whereNull('deleted_at')
+                ->get()->toArray();
+            $newLocalIds = array_column($newLocalRcds, "id");
+            // error_log("newLocalIds: " . json_encode($newLocalIds));
+
+            // get updated (but not new) remote records
+            $updatedRemoteRcds = DB::table($table->tablename)
+                ->where("updated_at", ">", $table->lastdate)
+                ->whereNotIn("id", $newRemoteIds)
+                ->whereNull('deleted_at')
+                ->get()->toArray();
+            $updatedRemoteIds = array_column($updatedRemoteRcds, "id");
+            // error_log("updatedRemoteIds: " . json_encode($updatedRemoteIds));
+
+            // get updated (but not new) local records
+            $updatedLocalRcds = DB::connection('mysqllocal')
+                ->table($table->tablename)
+                ->where("updated_at", ">", $table->lastdate)
+                ->whereNotIn("id", $newLocalIds)
+                ->whereNull('deleted_at')
+                ->get()->toArray();
+            $updatedLocalIds = array_column($updatedLocalRcds, "id");
+            // error_log("updatedLocalIds: " . json_encode($updatedLocalIds));
+
+            // get deleted records from remote table since last sync
+            $deletedRemoteRcds = DB::table($table->tablename)
+                ->where("deleted_at", ">", $table->lastdate)
+                ->get()->toArray();
+            $deletedRemoteIds = array_column($deletedRemoteRcds, "id");
+            // error_log("deletedRemoteIds: " . json_encode($deletedRemoteIds));
+
+            // get deleted records from local table since last sync
+            $deletedLocalRcds = DB::connection('mysqllocal')
+                ->table($table->tablename)
+                ->where("deleted_at", ">", $table->lastdate)
+                ->get()->toArray();
+            $deletedLocalIds = array_column($deletedLocalRcds, "id");
+            // error_log("deletedLocalIds: " . json_encode($deletedLocalIds));
+
+            // if no recent changes to local database, copy changes from remote to local
+            if( count($newLocalRcds) == 0 && count($updatedLocalRcds) == 0 && count($deletedLocalRcds) == 00 ) {
+
+                // insert new records
+                $insertRcds = [];
+                $insertIds = [];    // delete old records before inserting new ones
+
+                foreach($newRemoteRcds as $newRcd) {
+                    $insertRcd = [];
+                    foreach ($newRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                }
+
+                // NOTE: There are no records to update or delete in the remote tables,
+                // so insert those as well.
+                foreach($updatedRemoteRcds as $updatedRcd) {
+                    $insertRcd = [];
+                    foreach ($updatedRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                }
+                foreach($deletedRemoteRcds as $deletedRcd) {
+                    $insertRcd = [];
+                    foreach ($deletedRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                }
+
+                if(count($insertRcds) == 0) {
+                    $msg .= "No new changes found.  No records written.<br>";
+                } else {
+                    // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
+                    // foreach($insertIds as $rcd) error_log(json_encode($rcd));
+                    // delete old record before inserting the new one
+                    $result = DB::connection('mysqllocal')
+                        ->table($table->tablename)
+                        ->whereIn('id', $insertIds)
+                        ->delete();
+                    // error_log("result of deleting insertIds: " . json_encode($result));
+
+                    $result = DB::connection('mysqllocal')
+                        ->table($table->tablename)
+                        ->insert($insertRcds);
+                    if($result) $synced = true;
+                    // error_log("result of inserting newRemoteRcds: " . $result);
+
+                    $msg .= count($insertRcds) . " records written to LOCAL table " . $table->tablename . "<br>";
+                }
+
+            }
+
+            // if no recent changes to remote database, copy changes from local to remote
+            else if( count($newRemoteRcds) == 0 && count($updatedRemoteRcds) == 0 && count($deletedRemoteRcds) == 00 ) {
+
+                // insert new records
+                $insertRcds = [];
+                $insertIds = [];    // delete old records before inserting new ones
+
+                foreach($newLocalRcds as $newRcd) {
+                    $insertRcd = [];
+                    foreach ($newRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                }
+
+                // NOTE: There are no records to update or delete in the Local tables,
+                // so insert those as well.
+                foreach($updatedLocalRcds as $updatedRcd) {
+                    $insertRcd = [];
+                    foreach ($updatedRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                }
+                foreach($deletedLocalRcds as $deletedRcd) {
+                    $insertRcd = [];
+                    foreach ($deletedRcd as $key => $value) {
+                        $insertRcd[$key] = $value;
+                    }
+                    $insertRcds[] = $insertRcd;
+                    $insertIds[] = $insertRcd['id'];
+                    // error_log("**** -- id: " . $insertRcd['id'] . ";  insertIds: " . json_encode($insertIds));
+                }
+
+                // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
+                // delete old record before inserting the new one
+                $result = DB::table($table->tablename)
+                    ->whereIn('id', $insertIds)
+                    ->delete();
+                // error_log("ids deleted: " . json_encode($insertIds));
+                // error_log("result of deleting newLocalRcds: " . json_encode($result));
+
+                $result = DB::table($table->tablename)
+                    ->insert($insertRcds);
+                if($result) $synced = true;
+
+                // error_log("result of inserting newLocalRcds: " . $result);
+                $msg .= count($insertRcds) . " records written to REMOTE table " . $table->tablename . "<br>";
+
+            } else {
+                // show screen with differences found, to be reconciled manually (for now)
+                $msg .= "NO RECORDS WRITTEN.  Discrepancies found: <br>";
+
+                // recent new in remote table
+                if(count($newRemoteRcds) > 0) $msg .= "<br>" . count($newRemoteRcds) . " recent 'created_at' in REMOTE table for ids:<br>";
+                foreach($newRemoteRcds as $newrcd) {
+                    $msg .= "-- " . $newrcd->id . "<br>";
+                }
+                
+                // recent new in local table
+                if(count($newLocalRcds) > 0) $msg .= "<br>" . count($newLocalRcds) . " recent 'created_at' in LOCAL table for ids:<br>";
+                foreach($newLocalRcds as $newrcd) {
+                    $msg .= "-- " . $newrcd->id . "<br>";
+                }
+                
+                // recent updated in remote table
+                if(count($updatedRemoteRcds) > 0) $msg .= "<br>" . count($updatedRemoteRcds) . " recent 'updated_at' in REMOTE table for ids:<br>";
+                foreach($updatedRemoteRcds as $updatedrcd) {
+                    $msg .= "-- " . $updatedrcd->id . "<br>";
+                }
+                
+                // recent updated in local table
+                if(count($updatedLocalRcds) > 0) $msg .= "<br>" . count($updatedLocalRcds) . " recent 'updated_at' in LOCAL table for ids:<br>";
+                foreach($updatedLocalRcds as $updatedrcd) {
+                    $msg .= "-- " . $updatedrcd->id . "<br>";
+                }
+
+                // recent deleted in remote table
+                if(count($deletedRemoteRcds) > 0) $msg .= "<br>" . count($deletedRemoteRcds) . " recent 'deleted_at' in REMOTE table for ids:<br>";
+                foreach($deletedRemoteRcds as $deletedrcd) {
+                    $msg .= "-- " . $deletedrcd->id . "<br>";
+                }
+                
+                // recent deleted in local table
+                if(count($deletedLocalRcds) > 0) $msg .= "<br>" . count($deletedLocalRcds) . " recent 'deleted_at' in LOCAL table for ids:<br>";
+                foreach($deletedLocalRcds as $deletedrcd) {
+                    $msg .= "-- " . $deletedrcd->id . "<br>";
+                }
+
+            }
+
+            $msg .= '---------------------------------------<br><br>';    // to delimit between tables
+
+            // update date in lastsync table
+            if($synced) {
+                DB::table('lastsync')
+                    ->where('tablename', $table->tablename)
+                    ->update(['lastdate' => now()]);
+            }
+
+        }
+   
+        return $msg;
     }
 
 }

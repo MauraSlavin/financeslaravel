@@ -68,7 +68,12 @@ Route::get('/accounts/{accountName}/{beginDate}/{endDate}', 'App\Http\Controller
 Route::get('/accounts/{accountName}/{beginDate}/{endDate}/{clearedBalance}/{registerBalance}/{lastBalanced}', 'App\Http\Controllers\TransactionsController@transactions')->name('transactions');
 // List of accounts with balances (cleared & register), Last Balanced, and button to see transactions for that account
 //      includes line "all" for all transactions
-Route::get('/accounts/{acctsMSg?}', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
+Route::get('/accounts/{acctsMsg?}', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
+// Retirement routes
+// split IRAs
+Route::get('/retirement/splitIRAs', 'App\Http\Controllers\TransactionsController@splitIRAs')->name('splitIRAs');
+Route::post('/retirement/addwfparts', 'App\Http\Controllers\TransactionsController@addwfparts')->name('addwfparts');
+
 // "Dashboard"
 Route::get('/', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
 
@@ -88,4 +93,7 @@ Route::get('/transactions/monthlies', 'App\Http\Controllers\TransactionsControll
 Route::get('/temp/splitMandM', 'App\Http\Controllers\TransactionsController@splitMandM');
 // save changes to monthly transaction
 Route::put('/transactions/saveMonthly/{id}', 'App\Http\Controllers\TransactionsController@saveMonthly')->name('saveMonthly');
+
+// upload/download transactions between local and remote databases
+Route::get('/transactions/syncdbchanges', 'App\Http\Controllers\TransactionsController@syncdbchanges')->name('syncdbchanges');
 ?>

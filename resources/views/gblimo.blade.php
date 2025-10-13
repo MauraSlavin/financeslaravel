@@ -23,7 +23,7 @@
              
             <!-- Net paycheck amt -->
             <div class="form-row">
-                <label class="gbnetpaylabel" for="gbnetpay">Paycheck total (from checking): </label><br>
+                <label class="gbnetpaylabel" for="gbnetpay">Paycheck net (from checking): </label><br>
                 <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay"  step="0.01" required>
             </div>
 

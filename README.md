@@ -8,12 +8,23 @@
 <hr>
 <hr>
 
-  <h2>NEXT:  ***  2025-08-29-retirement ***</h2>
+  <h2>NEXT:  ***  2025-09-01-retirement ***</h2>
+    <p>Enhancements made in this branch...</p>
     <ul>
-      <li>Working on getting data from database</li>
+      <li>WORKING on retirement analysis</li>
+      <li>Duplicate local database - pushed 10/13</li>
+      <li>Always update 1+ lastBalanced when account balances - pushed 10/13</li>
+    </ul>
+    <p>Here's the retirement stuff...</p>
+    <ul>
+      <li>Need to do Rental button</li>
+      <li>DONE - SAVE WF splits</li>
+      <br>
+      <li>Working on getting data from database<br>
+        And splitting WF accounts into categories</li>
       <li>Ability to update/input/correct data</li>
-      <li>Save things like Maura SS & Maura IBM & when started</li>
-      <li>See "Retirement in app" in Google Drive for beginning of design</li>
+      <li>Save things like Maura SS & Maura IBM & by date started</li>
+      <li>See "Retirement in app" (FIN -> Retirement -> Retirement in app) in Google Drive for beginning of design</li>
     </ul>
 
   <h2>Check at some point...</h2>
@@ -305,7 +316,7 @@
     <li>* Prudential</li>
     <li>* TIAA</li>
     <li>VISA</li>
-    <li>* WF-Inv</li>
+    <li>* WF-Inv-Bal</li>
     <li>* WF-IRA</li>
   </ol>
   <p>* investment accounts (as opposed to transactional accounts).  A transactional account is something like a checking, savings, or cc; an investment account would be a CD or a retirement acct.
