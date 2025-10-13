@@ -8,7 +8,7 @@
     </head>
 
     <body>
-    <h1>Assets</h1>
+    <h1 style="color: green;">Assets <small>({{ env('APP_ENV', 'unknown') }})</small></h1>
 
         <table>
             <thead>

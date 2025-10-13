@@ -7,9 +7,12 @@
     </head>
 
     <body>
-    <h1>Accounts</h1>
+    <h1 style="color: green;">Accounts <small>({{ env('APP_ENV', 'unknown') }})</small></h1>
     @if(session()->has('acctsMsg'))
         <h2 id="acctsMsg">{{ session('acctsMsg') }}</h2>
+    @endif
+    @if( $acctsMsg != null )
+        <h2 id="acctsMsg">{{ $acctsMsg }}</h2>
     @endif
 
     <div style="margin-bottom: 10px;">
@@ -62,8 +65,16 @@
         <a href="{{ route('retirement') }}" class="image-button-href">
             <img src="{{ asset('images/buttons/Retirement.png') }}" alt="Clickable Retirement Image" class="image-button">
         </a>
-    </div>
 
+        @if(env('APP_ENV', 'unknown') == 'remote')
+            <!-- sync database changes between local and remote db button -->
+            <a href="{{ route('syncdbchanges') }}" class="image-button-href">
+                <img src="{{ asset('images/buttons/sync.png') }}" alt="Clickable sync Image" class="image-button">
+            </a>
+            
+        @endif
+    </div>
+    <p class="uploadnote" style=font="small">NOTE: Can only do database uploads/downloads using remote .env file.</p>
         <table>
             <thead>
                 <tr>
@@ -95,8 +106,14 @@
 
         <script>
 
-            // $(document).ready(function() {
+            $(document).ready(function() {
 
+                // If local database, highlight it
+                if( $("h1").text() == 'Accounts (local)') {
+                    $("h1").addClass('blinking');
+                } else {
+                    $(".uploadnote").hide();
+                }
                 // Assets button
                 // $('#assets').on('click', function(e) {
                 //     e.preventDefault();
@@ -169,7 +186,7 @@
                 //     window.location.href = url;
                 // });
 
-            // });
+            });
 
         </script>
 
