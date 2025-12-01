@@ -12,7 +12,7 @@
     <h2>Year: <span id="year">{{ $year }}</span> </h2>
     <form action="{{ route('actuals', $year ?? session('selected_year')) }}" method="GET">
         <select name="year">
-            @foreach(range('2022', date('Y')) as $y)
+            @foreach(range('2025', date('Y') + 1) as $y)
                 <option value="{{ $y }}" {{ $y == ($year ?? session('selected_year')) ? 'selected' : '' }}>
                     {{ $y }}
                 </option>

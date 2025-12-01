@@ -18,6 +18,7 @@ class Monthly extends Model
         'category',
         'bucket',
         'notes',
-        'comments'
+        'comments',
+        'copied'
     ];
 }

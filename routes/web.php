@@ -47,7 +47,7 @@ Route::get('/accounts/spending/maura', 'App\Http\Controllers\TransactionsControl
 // Monthly transactions
 Route::get('/accounts/monthly', 'App\Http\Controllers\TransactionsController@monthly')->name('monthly');
 // Retirement analysis
-Route::get('/accounts/retirement', 'App\Http\Controllers\TransactionsController@retirement')->name('retirement');
+Route::get('/accounts/retirementInput', 'App\Http\Controllers\TransactionsController@retirementInput')->name('retirementInput');
 // calc cost for a trip
 Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
 // sum tolls for a specific trip, using records in tolls table
@@ -73,6 +73,10 @@ Route::get('/accounts/{acctsMsg?}', 'App\Http\Controllers\TransactionsController
 // split IRAs
 Route::get('/retirement/splitIRAs', 'App\Http\Controllers\TransactionsController@splitIRAs')->name('splitIRAs');
 Route::post('/retirement/addwfparts', 'App\Http\Controllers\TransactionsController@addwfparts')->name('addwfparts');
+// Route::post('/retirement/saverentalincome', 'App\Http\Controllers\TransactionsController@saverentalincome')->name('saverentalincome');
+Route::post('/transactions/saveRents', 'App\Http\Controllers\TransactionsController@saveRents')->name("saveRents");
+Route::post('/retirement/forecast', 'App\Http\Controllers\TransactionsController@retirementForecast')->name("retirementForecast");
+
 
 // "Dashboard"
 Route::get('/', 'App\Http\Controllers\TransactionsController@index')->name('accounts');
@@ -90,6 +94,10 @@ Route::get('/transactions/getDefaults/{account}/{toFrom}', 'App\Http\Controllers
 Route::get('/transactions/add', 'App\Http\Controllers\TransactionsController@addTransaction')->name("addTransaction");
 Route::post('/transactions/insert', 'App\Http\Controllers\TransactionsController@writeTransaction')->name("writeTransaction");
 Route::get('/transactions/monthlies', 'App\Http\Controllers\TransactionsController@writeMonthlyTransactions')->name('writeMonthlyTransactions');
+// just one value to save
+Route::post('/transactions/writeRetirementDatum', 'App\Http\Controllers\TransactionsController@writeRetirementDatum')->name('writeRetirementDatum');
+// write all data being used for the forecast
+Route::post('/transactions/writeRetirementInput', 'App\Http\Controllers\TransactionsController@writeRetirementInput')->name('writeRetirementInput');
 Route::get('/temp/splitMandM', 'App\Http\Controllers\TransactionsController@splitMandM');
 // save changes to monthly transaction
 Route::put('/transactions/saveMonthly/{id}', 'App\Http\Controllers\TransactionsController@saveMonthly')->name('saveMonthly');

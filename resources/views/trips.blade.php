@@ -12,6 +12,7 @@
         <p style="color:red; margin-left:20px;"> NOTE: Make sure 
             <br> --- <u>Maintenance</u> (tracking is the car, notes begins with "maint"),
             <br> --- <u>Tolls</u> (can upload - "Upload Tolls" below - from EZPass download - beware of duplicate tolls records),
+            <br> --- --- NOTE: Can take at least 4 days to appear in EZPass for MA tolls.
             <br> --- <u>Insurance</u> (if there's been a recent car insurance payment),
             <br> --- <u>Mileage</u> has recently been updated in carcostdetails (add input for this to this page), and
             <br> --- <u>gas</u> or <u>charging</u> purchased en route are up to date in the transactions table,
