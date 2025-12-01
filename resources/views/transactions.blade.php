@@ -868,7 +868,6 @@
                             error: function(xhr, status, error) {
                                 console.log("** FAILED ** to insert transaction", error);
                                 alert("Failed to insert transaction");
-
                             }
 
                         });

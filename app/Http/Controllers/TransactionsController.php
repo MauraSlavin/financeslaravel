@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Monthly;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\App;
+use DateTime;
 
 
 
@@ -677,40 +678,106 @@ class TransactionsController extends Controller
 
 
     // return msg if remote and local databases don't appear to be in sync
+    //  look to see if copied field in any table is not 'new'
     public function checkDbDiscrep() {
 
         $outOfSyncTables = [];
+        $outOfSyncAccounts = [];
+        $msg = '';
 
-        $tables = DB::table('lastsync')
-            ->whereNot('tablename', 'test')
-            ->get()->toArray();
+        // delete "inpt" fields from retirementdata, first
+        $response = DB::table('retirementdata')
+            ->where('type', 'inpt')
+            ->delete();
+        error_log("Deleted from REMOTE retirementdata table: " . json_encode($response));
+        $response = DB::connection('mysqllocal')
+            ->table('retirementdata')
+            ->where('type', 'inpt')
+            ->delete();
+        error_log("Deleted from LOCAL retirementdata table: " . json_encode($response));
 
-        // number of records, last created_at, updated_at and deleted_at should match
+        $tables = [
+            'accounts',
+            'bucketgoals',
+            'budget',
+            'carcostdetails',
+            'categories',
+            'monthlies',
+            'notes',
+            'retirementdata',
+            'tofromaliases',
+            'tolls',
+            'transactions',
+            'trips',
+            'uploadmatch'
+        ];
+
+        // check for TABLES out of sync
+        // if copied field is not new, it's out of sync
         foreach($tables as $table) {
-            $lastdatesRemote = DB::table($table->tablename)
-                ->selectRaw('count(*) as total_rcds')
-                ->selectRaw('max(created_at) as max_created_at')
-                ->selectRaw('max(updated_at) as max_updated_at')
-                ->selectRaw('max(deleted_at) as max_deleted_at')
-                ->first();
+            // error_log("account: " . $table);
+            $uncopiedRemoteRcds = DB::table($table)
+                ->whereNot('copied', 'yes')
+                ->count();
+            // error_log("uncopiedRemoteRcds: " . $uncopiedRemoteRcds);
 
-            $lastdatesLocal = DB::connection('mysqllocal')
-                ->table($table->tablename)
-                ->selectRaw('count(*) as total_rcds')
-                ->selectRaw('max(created_at) as max_created_at')
-                ->selectRaw('max(updated_at) as max_updated_at')
-                ->selectRaw('max(deleted_at) as max_deleted_at')
-                ->first();
+            $uncopiedLocalRcds = DB::connection('mysqllocal')
+                ->table($table)
+                ->whereNot('copied', 'yes')
+                ->count();
+            // error_log("uncopiedLocalRcds: " . $uncopiedLocalRcds);
 
-            if($lastdatesRemote != $lastdatesLocal) $outOfSyncTables[] = $table->tablename;
+            if($uncopiedRemoteRcds != 0 || $uncopiedLocalRcds != 0) {
+                $outOfSyncTables[] = $table;
+            }
         }
+        // error_log("# outOfSyncTables: " . count($outOfSyncTables));
+        // error_log(json_encode($outOfSyncTables));
+        // error_log("\n\n");
+
+        // update msg, if needed.
+        if(count($outOfSyncTables) > 0) {
+            $msg = "Tables out of sync: " . implode(", ", $outOfSyncTables) . ".  ";
+        }
+        // error_log("msg: " . $msg);
+
+        // Check for ACCOUNT balances out of sync.
+        $accounts = DB::table('accounts')
+            ->whereNull('deleted_at')
+            ->pluck('accountName');
+
+        // check balances by account
+        foreach($accounts as $account) {
+            // error_log("------------- account: " . $account);
+            $balanceRemote = DB::table('transactions')
+                ->where('account', $account)
+                ->whereNull('deleted_at')
+                ->sum('amount');
+            // error_log("balanceRemote: " . $balanceRemote);
+
+            $balanceLocal = DB::connection('mysqllocal')
+                ->table('transactions')
+                ->where('account', $account)
+                ->whereNull('deleted_at')
+                ->sum('amount');
+            // error_log("balanceLocal: " . $balanceLocal);
+
+            if($balanceRemote != $balanceLocal) {
+                $outOfSyncAccounts[$account] = $account;
+            }
+        }
+        // error_log("-----------------------# outOfSyncAccounts: " . count($outOfSyncAccounts));
+        // foreach($outOfSyncAccounts as $acct) error_log(" --- " . $acct);
+        // error_log("\n\n");
+
+        // update msg, if needed
+        if(count($outOfSyncAccounts) > 0) {
+            $msg .= "Accounts out of sync: " . implode(", ", $outOfSyncAccounts) . ".  ";
+        }
+        // error_log("\nmsg: " . $msg . "\n");
 
         // return msg to SYNC databases, if discrepencies found.
-        if(count($outOfSyncTables) > 0) {
-            return "Tables " . implode(", ", $outOfSyncTables) . " are out of sync. May want to SYNC.";
-        } else {
-            return null;
-        }
+        return $msg;
     }
 
 
@@ -1024,7 +1091,7 @@ class TransactionsController extends Controller
                 ->whereNull('lastBalanced')
                 ->whereNotNull('clear_date')
                 ->whereNull('deleted_at')
-                ->update(['lastBalanced' => $now]);
+                ->update(['lastBalanced' => $now, 'copied'=>'needupt']);
 
             // if no records were updated, change the newest lastBalanced to today
             if($results == 0) {
@@ -1034,7 +1101,7 @@ class TransactionsController extends Controller
                 ->whereNull('deleted_at')
                 ->orderBy('id', 'desc')
                 ->limit(1)
-                ->update(['lastBalanced' => now()]);
+                ->update(['lastBalanced' => $now, 'copied'=>'needupt']);
             }
             return redirect()->route('accounts')->with("acctsMsg", "Last balances updated.");
 
@@ -1384,7 +1451,7 @@ class TransactionsController extends Controller
                 ->where("id", $id)
                 ->whereNull('deleted_at')
                 // ->delete();
-                ->update(['deleted_at' => now()]);
+                ->update(['deleted_at' => now(), 'copied' => 'needupt']);
 
             if($response == 1) {
                 return response()->json([
@@ -1435,7 +1502,8 @@ class TransactionsController extends Controller
                 'stmtDate' => $transaction->stmtDate,
                 'total_amt' => $transaction->total_amt,
                 'total_key' => $transaction->total_key,
-                'notes' => $transaction->notes
+                'notes' => $transaction->notes,
+                'copied' => 'needupt'
             ];
 
             $response = DB::table("transactions")
@@ -1600,7 +1668,7 @@ class TransactionsController extends Controller
                 $response = DB::table('transactions')
                     ->where('total_key', $transaction['total_key'])
                     ->whereNull('deleted_at')
-                    ->update(['total_key' => $newTotalKey]);
+                    ->update(['total_key' => $newTotalKey, 'copied' => 'needupt']);
             } else {
                 $newTotalKey = false;
             }
@@ -1845,6 +1913,90 @@ class TransactionsController extends Controller
     }   // end of function writeMonthlyTransactions
 
 
+    // update one change to retirement data
+    public function writeRetirementDatum(Request $request) {
+
+        // get inputs needed
+        $data = json_decode($request->getContent(), true);
+        $newValue = urldecode($data['newValue']);
+        $fieldChanged = urldecode($data['fieldChanged']);
+        $type = urldecode($data['type']);
+        
+        // set null strings to null; remove / in dates (stored in table without /s)
+        if( $newValue == "") $newValue = null;
+        elseif ($type == 'd') {
+            $newValue = str_replace("/", "", $newValue);
+        }
+
+        // save new value (has been set to null if it's the same as the original value)
+        $response = DB::table("retirementdata")
+            ->where("description", $fieldChanged)
+            ->update(["modified" => $newValue, 'copied' => 'needupt']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Retirement field updated.'
+        ], 200);        // $chosens = $request->input('chosen');
+
+    }   // end of function writeRetirementDatum
+
+
+    // update/save all retirement data to be used
+    public function writeRetirementInput(Request $request) {
+
+        // get inputs needed
+        $retirementInput = json_decode($request->getContent(), true);
+
+        $descriptions = array_keys($retirementInput);
+        // error_log("Descriptions: " . json_encode($descriptions));
+
+        // delete old forecast inputs (type w/Inp)
+        $response = DB::table('retirementdata')
+            ->where('type', 'inpt')
+            ->delete();
+        // error_log("response from delete: " . $response);
+
+        // insert new forecast inputs
+        // create array to insert (with type "Inpt")
+        $insertRetirementInput = [];
+        foreach($descriptions as $description) {
+            $retirementInput[$description] = str_replace("/", "", $retirementInput[$description]); // remove /s (specifically for dates)
+            $retirementInput[$description] = str_replace(",", "", $retirementInput[$description]); // remove ,s (specifically for numbers)
+            $insertRetirementInput[] = [
+                'description' => $description,
+                'data' => $retirementInput[$description],
+                'type' => 'inpt'
+            ];
+        }
+        // insert the array
+        DB::table('retirementdata')
+            ->insert($insertRetirementInput);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Retirement input data updated.'
+        ], 200);
+
+
+        // set null strings to null; remove / in dates (stored in table without /s)
+        if( $newValue == "") $newValue = null;
+        elseif ($type == 'd') {
+            $newValue = str_replace("/", "", $newValue);
+        }
+
+        // save new value (has been set to null if it's the same as the original value)
+        $response = DB::table("retirementdata")
+            ->where("description", $fieldChanged)
+            ->update(["modified" => $newValue, 'copied' => 'needupt']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Retirement input data updated.'
+        ], 200);
+
+    }   // end of function writeRetirementInput
+
+
     // save changes to default monthly transactions info
     // public function saveMonthly($id, $name, $account, $dateOfMonth, $toFrom, $amount, $category, $bucket, $notes, $comments) {
     public function saveMonthly(Request $request, $id) {
@@ -1871,6 +2023,8 @@ class TransactionsController extends Controller
                 'comments']
             )
         );
+
+        Monthly::update(['copied' => 'needupt']);
 
         return response()->json([
             'success' => true,
@@ -1913,7 +2067,7 @@ class TransactionsController extends Controller
             DB::table("transactions")
                 ->where("total_key", "ggg")
                 ->whereNull('deleted_at')
-                ->update(["total_key" => $payId]);
+                ->update(["total_key" => $payId, 'copied' => 'needupt']);
 
             return $payId;
         }
@@ -2919,22 +3073,21 @@ class TransactionsController extends Controller
 
 
     // Retirement analysis
-    public function retirement() {
-
+    public function retirementInput() {
         // get existing retirement data:
-        //   x   savingsBalance      Big Bills (Disc)
-        //   x   checkingBalance     SCU checking
-        //   x   retirementDisc      Disc
-        //   x   retirementTIAA      TIAA CREF
-        //   x   retirementWFIRA     Total WF IRAs
-        //   x   retirementWFinv     WF non-IRA
-        //   x   retirementEJ        EJ
-        //   x   LTC                 Inherited IRA + Disc LTC (input for Inherited; Disc LTC separate)
-        //   x  incomeNHRet         last NH Retirement deposit
-        //   x  incomeSSMike        last SS dep for Mike
-        //   x  incomeSSMaura       last SS dep for Maura (or retirement table or input)
-        //   x  incomeIBMMike       last IBM dep for Mike
-        //   x  incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
+        //       savingsBalance      Big Bills (Disc)
+        //       checkingBalance     SCU checking
+        //       retirementDisc      Disc
+        //       retirementTIAA      TIAA CREF
+        //       retirementWFIRA     Total WF IRAs
+        //       retirementWFinv     WF non-IRA
+        //       retirementEJ        EJ
+        //       LTC                 Inherited IRA + Disc LTC (input for Inherited; Disc LTC separate)
+        //      incomeNHRet         last NH Retirement deposit
+        //      incomeSSMike        last SS dep for Mike
+        //      incomeSSMaura       last SS dep for Maura (or retirement table or input)
+        //      incomeIBMMike       last IBM dep for Mike
+        //      incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
         //      incomeGBLimoYTD     sum from transactions table
         //      incomeGBLimoAnnual  pro-rated for year (or max allowed by SS)
         //      incomeTownYTD       sum from transactions table
@@ -2944,11 +3097,12 @@ class TransactionsController extends Controller
         //      houseEqRatio        from retirement table or input
 
         function getRetirementData() {
-
             // get constants, assumptions, etc. from retirementdata table
             // get retirement income
+            $beginOfMonth = $date = date('Y-m-01');;
+
             $dbdata = DB::table('retirementdata')
-                ->select('id', 'description', 'type', 'data', 'UOM', 'updated_at')
+                ->select('id', 'description', 'type', 'data', 'UOM', 'modified', 'updated_at')
                 ->whereNull('deleted_at')
                 ->orderBy('type', 'asc')
                 ->orderBy('order', 'asc')
@@ -2974,19 +3128,19 @@ class TransactionsController extends Controller
                 $date = substr( $dataPoint->updated_at, 0, 10);
                 switch ($dataPoint->type) {
                     case 'acct':
-                        $retirementDataAcctNums[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        $retirementDataAcctNums[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
                     case 'assm':
-                        $retirementDataAssumptions[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        $retirementDataAssumptions[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
                     case 'con':
-                        $retirementDataConstants[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        $retirementDataConstants[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
                     case 'inc':
-                        $retirementDataIncomes[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        $retirementDataIncomes[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
                     case 'val':
-                        $retirementDataValues[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date];
+                        $retirementDataValues[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
                     case 'rent':
                         $retirementDataRents[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->id];
@@ -2996,7 +3150,7 @@ class TransactionsController extends Controller
                         break;   
                 }
             }   
-                      
+
             // accounts that need to sum transactions to get current balance
             $sumAccountsDB = json_decode($retirementDataInfo['sumAccountsDB']);
             $sumAccountsVerbiage = json_decode($retirementDataInfo['sumAccountsVerbiage']);
@@ -3009,20 +3163,20 @@ class TransactionsController extends Controller
 
             // accounts to find last deposit
             $lastDeposit = json_decode($retirementDataInfo['lastDeposit']);
-            // error_log("lastDeposit: " . json_encode($lastDeposit));
 
             // get sum of balances
             // Savings, Checking, Discover Retirement (DiscRet)
             $dbbalances = DB::table('transactions')
                 ->selectRaw('SUM(amount) as amount, account, max(clear_date) as date')
                 ->whereIn('account',$sumAccountsDB)
+                ->where('trans_date', '<', $beginOfMonth)
                 ->whereNull('deleted_at')
                 ->groupBy('account')
                 ->get()->toArray();
 
             $balances = [];
             foreach($dbbalances as $balance) {
-                $balances[$balance->account] = [$balance->amount, "$", $balance->date];
+                $balances[$balance->account] = [$balance->amount, "$", $balance->date, null];
             }
             // error_log("dbbalances 1:");
             // foreach($dbbalances as $bal) error_log(json_encode($bal));
@@ -3035,7 +3189,7 @@ class TransactionsController extends Controller
 
             // get latest balances
             $dbbalances = DB::table('transactions as t1')
-                ->join(DB::raw('(SELECT account, MAX(clear_date) as max_date 
+                ->join(DB::raw('(SELECT account, MAX(clear_date) as max_date
                     FROM transactions 
                     WHERE account IN (' . $lastBalanceString . ')
                     AND deleted_at IS NULL
@@ -3052,7 +3206,7 @@ class TransactionsController extends Controller
 
             $balances = [];
             foreach($dbbalances as $balance) {
-                $balances[$balance->account] = [$balance->amount, "$", $balance->date];
+                $balances[$balance->account] = [$balance->amount, "$", $balance->date, null];
             }
             // error_log("balances:");
             // foreach($balances as $bal) error_log(json_encode($bal));
@@ -3070,7 +3224,7 @@ class TransactionsController extends Controller
                 ->select([
                     'toFrom',
                     DB::raw('MAX(trans_date) as max_trans_date'),
-                    'amount',
+                    DB::raw('MAX(amount) as amount'),
                     'total_amt'
                 ])
                 ->groupBy('toFrom')
@@ -3079,7 +3233,7 @@ class TransactionsController extends Controller
             // get in useful formate
             $incomes = [];
             foreach($dbretincomes as $acct) {
-                $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->max_trans_date];
+                $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->max_trans_date, null];
             }
 
             // add retirement incomes to retirementData array
@@ -3099,13 +3253,13 @@ class TransactionsController extends Controller
             $yearMonth = date("y") . date("m");
             foreach($retirementDataRents as $description=>$rentalRcd) {
                 $date = substr($description, 12, 4);
-                if($date <= $yearMonth) {
+                if($date < $yearMonth) {
                     error_log(json_encode($rentalRcd));
                     $result = DB::table('retirementdata')
                         ->where('id', $rentalRcd[3])
                         ->whereNull('deleted_at')
                         ->update([
-                            'deleted_at' => now()
+                            'deleted_at' => now(), 'copied' => 'needupt'
                         ]);
                 }
             }
@@ -3133,11 +3287,8 @@ class TransactionsController extends Controller
             $retirementDataRents
         ] = getRetirementData();
         
-        // error_log("\n\nretirementData:");
-        // error_log(json_encode($retirementData));
-        
         // return view with input data to calc retirement outlook
-        return view('retirement', [
+        return view('retirementInput', [
             'retirementDataAcctNums' => $retirementDataAcctNums,
             'retirementDataAssumptions' => $retirementDataAssumptions,
             'retirementDataConstants' => $retirementDataConstants,
@@ -3217,7 +3368,8 @@ class TransactionsController extends Controller
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
                 ->where('goalDate', '<=', Carbon::now())
-                ->whereNull('deleted_at')
+                ->whereNull('bucketgoals.deleted_at')
+                ->whereNull('transactions.deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3250,7 +3402,8 @@ class TransactionsController extends Controller
                 ->whereDate('goalDate', '>', Carbon::today())
                 ->whereNotNull('goalDate')
                 ->whereYear('goalDate', '=', Carbon::now()->year)
-                ->whereNull('deleted_at')
+                ->whereNull('bucketgoals.deleted_at')
+                ->whereNull('transactions.deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3281,7 +3434,8 @@ class TransactionsController extends Controller
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
                 ->whereNull('goalDate')
-                ->whereNull('deleted_at')
+                ->whereNull('bucketgoals.deleted_at')
+                ->whereNull('transactions.deleted_at')
                 ->select(
                     'bucketgoals.bucket',
                     'bucketgoals.goalAmount',
@@ -3312,7 +3466,8 @@ class TransactionsController extends Controller
                 ->leftJoin('transactions', function($join) {
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
-                ->whereNull('deleted_at')
+                ->whereNull('bucketgoals.deleted_at')
+                ->whereNull('transactions.deleted_at')
                 ->select(
                     DB::raw('SUM(transactions.amount) as balance'),
                 )
@@ -3424,7 +3579,7 @@ class TransactionsController extends Controller
         DB::table('transactions')
             ->where('id', $newId)
             ->whereNull('deleted_at')
-            ->update(['total_key' => $newId]);
+            ->update(['total_key' => $newId, 'copied' => 'needupt']);
 
         // creat to transaction
         $toTransaction = [];
@@ -3665,7 +3820,7 @@ class TransactionsController extends Controller
         // get cars, drivers, and most recent mileage from carcostdetails table
         $DBCarsDriversMileages = DB::table('carcostdetails')
             ->where('key', 'Driver')
-            ->whereNull('deleted_at')       // left off here ... test this
+            ->whereNull('deleted_at')       // left off here  test this
             ->orWhere('key', 'like', 'Mileage%')
             ->get()->toArray();
             
@@ -4033,7 +4188,8 @@ class TransactionsController extends Controller
                             'total_amt' => $total_amt,
                             'amount' => DB::raw('CAST(amount / 2 AS FLOAT)'),
                             'amtMaura' => 0,
-                            'category' => 'MikeSpending'
+                            'category' => 'MikeSpending',
+                            'copied' => 'needupt'
                         ]);
                 
                     
@@ -4121,6 +4277,7 @@ class TransactionsController extends Controller
         ));
     }
 
+
     public function addwfparts(Request $request) {
 
         // init vars
@@ -4156,253 +4313,1162 @@ class TransactionsController extends Controller
                 ['data']
             );
 
-        return redirect()->route('retirement');
+        return redirect()->route('retirementInput');
 
     }
+
+    
+    // replace monthly rental income in retirementdata table
+    public function saveRents(Request $request) {
+        // get input data
+        $results = DB::table('retirementdata')
+            ->where('description', 'like', 'RentalIncome%')
+            ->delete();
+
+        // build insert query
+        $monthlyRentals = [];
+
+        foreach([0, 1] as $tenant) {
+            foreach([0, 1, 2] as $yearIdx) {
+                $year = intval(date("y")) + $yearIdx;
+                for($monIdx = 0; $monIdx < 12; $monIdx++) {
+                    $rent = $request->input("t" . $tenant . "y" . $yearIdx . "m" . $monIdx);
+                    // only save non-0 values
+                    if($rent != 0) {
+                        $description = 'RentalIncome' . $year . str_pad( strval($monIdx+1), 2, "0", STR_PAD_LEFT) . "-" . $tenant;
+                        $newRental = ['description'=>$description, 'type'=>"rent", 'data'=>$rent];
+                        $monthlyRentals[] = $newRental;
+                    }
+                }
+            }
+        }
+
+        // do the insert
+        $results = DB::table("retirementdata")
+            ->insert($monthlyRentals);
+
+        // return to retirement data page (hides rental income details)
+        return redirect()->route('retirementInput');
+    }   // end function saveRents
+
 
     // Upload database changes from local to remote tables
     public function syncdbchanges() {
        
         $msg = '';      // to be displayed on page when this is done
     
-        // NOTE:  for testing, only use TEST table   
-        //      otherwise, skip TEST table    
-        
-        // get last date each table was uploaded
-        $lastTimeSynced = DB::table('lastsync')
-            ->whereNot('tablename', 'test')
-            ->select('tablename', 'matchfields', 'lastdate')
-            ->get()->toArray();
-
+        // tables to sync
+        $tables = [
+            'accounts',
+            'bucketgoals',
+            'budget',
+            'carcostdetails',
+            'categories',
+            'monthlies',
+            'notes',
+            'retirementdata',
+            'tofromaliases',
+            'tolls',
+            'transactions',
+            'trips',
+            'uploadmatch'
+        ];
 
         // process one table at a time
-        foreach($lastTimeSynced as $table) {
+        foreach($tables as $table) {
 
-            $msg .= 'TABLE: ' . $table->tablename . " (last synced: " . $table->lastdate . ")<br>";
-            $synced = false;  // change to true when table(s) updated
+            error_log("Table: " . $table);
+            $newMsg = '';
 
-            // get new records since last upload
-            // error_log("working on table........................................................................ " . $table->tablename);
-            // error_log("--- matchfields: " . $table->matchfields);
-
-            // change matchfields into an array
-            $matchfields = explode(", ", $table->matchfields);
-
-            // get new remote records
-            $newRemoteRcds = DB::table($table->tablename)
-                ->where("created_at", ">", $table->lastdate)
-                ->whereNull('deleted_at')
-                ->get()->toArray();
-
-            $newRemoteIds = array_column($newRemoteRcds, "id");
-            // error_log("newRemoteIds: " . json_encode($newRemoteIds));
-
-            // get new local records
-            $newLocalRcds = DB::connection('mysqllocal')
-                ->table($table->tablename)
-                ->where("created_at", ">", $table->lastdate)
-                ->whereNull('deleted_at')
-                ->get()->toArray();
-            $newLocalIds = array_column($newLocalRcds, "id");
-            // error_log("newLocalIds: " . json_encode($newLocalIds));
-
-            // get updated (but not new) remote records
-            $updatedRemoteRcds = DB::table($table->tablename)
-                ->where("updated_at", ">", $table->lastdate)
-                ->whereNotIn("id", $newRemoteIds)
-                ->whereNull('deleted_at')
-                ->get()->toArray();
-            $updatedRemoteIds = array_column($updatedRemoteRcds, "id");
-            // error_log("updatedRemoteIds: " . json_encode($updatedRemoteIds));
-
-            // get updated (but not new) local records
-            $updatedLocalRcds = DB::connection('mysqllocal')
-                ->table($table->tablename)
-                ->where("updated_at", ">", $table->lastdate)
-                ->whereNotIn("id", $newLocalIds)
-                ->whereNull('deleted_at')
-                ->get()->toArray();
-            $updatedLocalIds = array_column($updatedLocalRcds, "id");
-            // error_log("updatedLocalIds: " . json_encode($updatedLocalIds));
-
-            // get deleted records from remote table since last sync
-            $deletedRemoteRcds = DB::table($table->tablename)
-                ->where("deleted_at", ">", $table->lastdate)
-                ->get()->toArray();
-            $deletedRemoteIds = array_column($deletedRemoteRcds, "id");
-            // error_log("deletedRemoteIds: " . json_encode($deletedRemoteIds));
-
-            // get deleted records from local table since last sync
-            $deletedLocalRcds = DB::connection('mysqllocal')
-                ->table($table->tablename)
-                ->where("deleted_at", ">", $table->lastdate)
-                ->get()->toArray();
-            $deletedLocalIds = array_column($deletedLocalRcds, "id");
-            // error_log("deletedLocalIds: " . json_encode($deletedLocalIds));
-
-            // if no recent changes to local database, copy changes from remote to local
-            if( count($newLocalRcds) == 0 && count($updatedLocalRcds) == 0 && count($deletedLocalRcds) == 00 ) {
-
-                // insert new records
-                $insertRcds = [];
-                $insertIds = [];    // delete old records before inserting new ones
-
-                foreach($newRemoteRcds as $newRcd) {
-                    $insertRcd = [];
-                    foreach ($newRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
-                }
-
-                // NOTE: There are no records to update or delete in the remote tables,
-                // so insert those as well.
-                foreach($updatedRemoteRcds as $updatedRcd) {
-                    $insertRcd = [];
-                    foreach ($updatedRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
-                }
-                foreach($deletedRemoteRcds as $deletedRcd) {
-                    $insertRcd = [];
-                    foreach ($deletedRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
-                }
-
-                if(count($insertRcds) == 0) {
-                    $msg .= "No new changes found.  No records written.<br>";
-                } else {
-                    // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
-                    // foreach($insertIds as $rcd) error_log(json_encode($rcd));
-                    // delete old record before inserting the new one
-                    $result = DB::connection('mysqllocal')
-                        ->table($table->tablename)
-                        ->whereIn('id', $insertIds)
-                        ->delete();
-                    // error_log("result of deleting insertIds: " . json_encode($result));
-
-                    $result = DB::connection('mysqllocal')
-                        ->table($table->tablename)
-                        ->insert($insertRcds);
-                    if($result) $synced = true;
-                    // error_log("result of inserting newRemoteRcds: " . $result);
-
-                    $msg .= count($insertRcds) . " records written to LOCAL table " . $table->tablename . "<br>";
-                }
-
+            // for retirementData, delete local input records first
+            if($table == 'retirementdata') {
+                $response = DB::connection('mysqllocal')
+                    ->table('retirementdata')
+                    ->where('type', 'inpt')
+                    ->delete();
+                error_log("Deleted from LOCAL retirementdata table: " . json_encode($response));
             }
 
-            // if no recent changes to remote database, copy changes from local to remote
-            else if( count($newRemoteRcds) == 0 && count($updatedRemoteRcds) == 0 && count($deletedRemoteRcds) == 00 ) {
-
-                // insert new records
-                $insertRcds = [];
-                $insertIds = [];    // delete old records before inserting new ones
-
-                foreach($newLocalRcds as $newRcd) {
-                    $insertRcd = [];
-                    foreach ($newRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
+            // Get NEW records in REMOTE table
+            $newRemoteRecords = DB::table($table)
+                ->where('copied', 'new')
+                ->get()->toArray();
+            
+            // and write them (if any) to the local table
+            if(!empty($newRemoteRecords)) {
+                // format array
+                $recordsToInsert = array_map(function($record) {
+                    return (array) $record;
+                }, $newRemoteRecords);
+                // change 'copied' field to 'yes'
+                foreach($recordsToInsert as $idx=>$record) {
+                    $recordsToInsert[$idx]['copied'] = 'yes';
                 }
 
-                // NOTE: There are no records to update or delete in the Local tables,
-                // so insert those as well.
-                foreach($updatedLocalRcds as $updatedRcd) {
-                    $insertRcd = [];
-                    foreach ($updatedRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
+                // insert records
+                $insertResult = DB::connection('mysqllocal')
+                    ->table($table)
+                    ->insert($recordsToInsert);
+                error_log(count($recordsToInsert) . " inserted to Local. " . json_encode($insertResult));
+
+                // update 'copied' field in remote table
+                DB::table($table)
+                    ->whereIn('id', array_column($newRemoteRecords, 'id'))
+                    ->update(['copied' => 'yes']);
+                error_log("Updated 'copied' field in REMOTE table.");
+
+                $newMsg .= "Table " . $table . ": " . count($newRemoteRecords) . " records inserted to local.<br>";
+            }
+
+
+            // Get NEW records in LOCAL table
+            $newLocalRecords = DB::connection('mysqllocal')
+                ->table($table)
+                ->where('copied', 'new')
+                ->get()->toArray();
+            
+            // and write them (if any) to the remote table
+            if(!empty($newLocalRecords)) {
+                // format array
+                $recordsToInsert = array_map(function($record) {
+                    return (array) $record;
+                }, $newLocalRecords);
+                // change 'copied' field to 'yes'
+                foreach($recordsToInsert as $idx=>$record) {
+                    $recordsToInsert[$idx]['copied'] = 'yes';
                 }
-                foreach($deletedLocalRcds as $deletedRcd) {
-                    $insertRcd = [];
-                    foreach ($deletedRcd as $key => $value) {
-                        $insertRcd[$key] = $value;
-                    }
-                    $insertRcds[] = $insertRcd;
-                    $insertIds[] = $insertRcd['id'];
-                    // error_log("**** -- id: " . $insertRcd['id'] . ";  insertIds: " . json_encode($insertIds));
-                }
 
-                // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
-                // delete old record before inserting the new one
-                $result = DB::table($table->tablename)
-                    ->whereIn('id', $insertIds)
-                    ->delete();
-                // error_log("ids deleted: " . json_encode($insertIds));
-                // error_log("result of deleting newLocalRcds: " . json_encode($result));
+                // insert records to REMOTE
+                $insertResult = DB::table($table)
+                    ->insert($recordsToInsert);
+                error_log(count($recordsToInsert) . " inserted to Remote. " . json_encode($insertResult));
 
-                $result = DB::table($table->tablename)
-                    ->insert($insertRcds);
-                if($result) $synced = true;
+                // update 'copied' field in local table
+                DB::connection('mysqllocal')
+                    ->table($table)
+                    ->whereIn('id', array_column($newLocalRecords, 'id'))
+                    ->update(['copied' => 'yes']);
+                error_log("Updated 'copied' field in REMOTE table.");
 
-                // error_log("result of inserting newLocalRcds: " . $result);
-                $msg .= count($insertRcds) . " records written to REMOTE table " . $table->tablename . "<br>";
+                $newMsg .= "Table " . $table . ": " . count($newLocalRecords) . " records inserted to REMOTE.<br>";
+            }
+
+            // Get REMOTE records to UPDATE locally
+            $chgdRemoteRecords = DB::table($table)
+                ->where('copied', 'needupt')
+                ->get()->toArray();
+
+            // Get local records to UPDATE remotely
+            $chgdLocalRecords = DB::connection('mysqllocal')
+                ->table($table)
+                ->where('copied', 'needupt')
+                ->get()->toArray();
+
+            // If updates in both places, show differences, and settle manually
+            if(count($chgdRemoteRecords) > 0 && count($chgdLocalRecords) > 0) {
+                $newMsg .= '<br><br><span style="text-decoration: underline; font-weight: bold;">' . $table . "</span> table: Records need updating in BOTH Remote and Local database.<br>  Reconcile manually.<br>  Here are the changes:<br>";
+                $newMsg .= "<br>In LOCAL table " . $table . ":";
+                foreach($chgdLocalRecords as $rcd) {
+                    $newMsg .= "<br> - " . json_encode($rcd) . "<br>";
+                }  
+                $newMsg .= "<br>In REMOTE table " . $table . ":";
+                foreach($chgdRemoteRecords as $rcd) {
+                    $newMsg .= "<br> - " . json_encode($rcd) . "<br>";
+                }  
 
             } else {
-                // show screen with differences found, to be reconciled manually (for now)
-                $msg .= "NO RECORDS WRITTEN.  Discrepancies found: <br>";
 
-                // recent new in remote table
-                if(count($newRemoteRcds) > 0) $msg .= "<br>" . count($newRemoteRcds) . " recent 'created_at' in REMOTE table for ids:<br>";
-                foreach($newRemoteRcds as $newrcd) {
-                    $msg .= "-- " . $newrcd->id . "<br>";
-                }
                 
-                // recent new in local table
-                if(count($newLocalRcds) > 0) $msg .= "<br>" . count($newLocalRcds) . " recent 'created_at' in LOCAL table for ids:<br>";
-                foreach($newLocalRcds as $newrcd) {
-                    $msg .= "-- " . $newrcd->id . "<br>";
-                }
-                
-                // recent updated in remote table
-                if(count($updatedRemoteRcds) > 0) $msg .= "<br>" . count($updatedRemoteRcds) . " recent 'updated_at' in REMOTE table for ids:<br>";
-                foreach($updatedRemoteRcds as $updatedrcd) {
-                    $msg .= "-- " . $updatedrcd->id . "<br>";
-                }
-                
-                // recent updated in local table
-                if(count($updatedLocalRcds) > 0) $msg .= "<br>" . count($updatedLocalRcds) . " recent 'updated_at' in LOCAL table for ids:<br>";
-                foreach($updatedLocalRcds as $updatedrcd) {
-                    $msg .= "-- " . $updatedrcd->id . "<br>";
-                }
+                // ... left off here sync ...  Coding is done - needs further testing
+                // what happens if there is no matching id??
 
-                // recent deleted in remote table
-                if(count($deletedRemoteRcds) > 0) $msg .= "<br>" . count($deletedRemoteRcds) . " recent 'deleted_at' in REMOTE table for ids:<br>";
-                foreach($deletedRemoteRcds as $deletedrcd) {
-                    $msg .= "-- " . $deletedrcd->id . "<br>";
+
+                // Copy remote records to local
+                if(count($chgdRemoteRecords) > 0) {
+                    // let user see what's being copied.  Can save and switch back if it's not right. (Although not that easily)
+                    $newMsg .= "<br><br>" . $table . " Table; Records in the local table are being updated to match the remote table by id.";
+                    foreach($chgdRemoteRecords as $remoteRcd) {
+                        // set msg to what is being updated in local
+
+                        // get local record with that id
+                        $localRcd = DB::connection('mysqllocal')
+                            ->table($table)
+                            ->where('id', $remoteRcd->id)
+                            ->first();
+                        
+                        // add details to message
+                        $newMsg .= "<br><br>  Remote: " . json_encode($remoteRcd);
+                        $newMsg .= "<br><br>to local: " . json_encode($localRcd);
+                        
+                        // change copied to 'yes' before updating remote record
+                        $remoteRcd->copied = 'yes';
+                        DB::connection('mysqllocal')
+                            ->table($table)
+                            ->where('id', $remoteRcd->id)
+                            ->update((array)$remoteRcd);
+
+                        // the set copied in remote table to 'yes'
+                        DB::table($table)
+                            ->where('id', $remoteRcd->id)
+                            ->update(['copied' => 'yes']);
+
+                    }
+                } else if(count($chgdLocalRecords) > 0) {
+                    // let user see what's being copied.  Can save and switch back if it's not right. (Although not that easily)
+                    $newMsg .= "<br><br>" . $table . " Table; Records in the REMOTE table are being updated to match the local table by id.";
+                    foreach($chgdLocalRecords as $localRcd) {
+                        // set msg to what is being updated in REMOTE
+
+                        // get REMOTE record with that id
+                        $remoteRcd = table($table)
+                            ->where('id', $localRcd->id)
+                            ->first();
+                        
+                        // add details to message
+                        $newMsg .= "<br><br>   local:  " . json_encode($localRcd);
+                        $newMsg .= "<br><br>to Remote: " . json_encode($remoteRcd);
+                        
+                        // change copied to 'yes' before updating local record
+                        $localRcd->copied = 'yes';
+                        DB::table($table)
+                            ->where('id', $localRcd->id)
+                            ->update((array)$localRcd);
+
+                        // the set copied in local table to 'yes'
+                        DB::connection('mysqllocal')
+                            ->table($table)
+                            ->where('id', $localRcd->id)
+                            ->update(['copied' => 'yes']);
+
+                    }
                 }
                 
-                // recent deleted in local table
-                if(count($deletedLocalRcds) > 0) $msg .= "<br>" . count($deletedLocalRcds) . " recent 'deleted_at' in LOCAL table for ids:<br>";
-                foreach($deletedLocalRcds as $deletedrcd) {
-                    $msg .= "-- " . $deletedrcd->id . "<br>";
-                }
-
+                
+                // Update record in local table, changing 'copied' to 'yes'
+                // WON'T work - matching field might have changed... match records by 'matching' fields - put in db somewhere - need new "tables" table??
+                // look for by ID - write to a log file so mistakes can be traced.
+                
+                // Set 'copied' to 'yes' in REMOTE table
+                
+                
+                
+                // Update record in remote table, changing 'copied' to 'yes'
+                // WON'T work - matching field might have changed... match records by 'matching' fields - put in db somewhere - need new "tables" table??
+                // look for by ID - write to a log file so mistakes can be traced.
+                
+                // Set 'copied' to 'yes' in LOCAL table
+                
             }
 
-            $msg .= '---------------------------------------<br><br>';    // to delimit between tables
+
+            // ******************************************************
+            // ******************************************************
+            //
+            //  old code below
+            //
+            // ******************************************************
+            // ******************************************************
+
+            // DB::table
+            // $msg .= 'TABLE: ' . $table->tablename . " (last synced: " . $table->lastdate . ")<br>";
+            // $synced = false;  // change to true when table(s) updated
+
+            // // get new records since last upload
+            // // error_log("working on table........................................................................ " . $table->tablename);
+            // // error_log("--- matchfields: " . $table->matchfields);
+
+            // // change matchfields into an array
+            // $matchfields = explode(", ", $table->matchfields);
+
+            // // get new remote records
+            // $newRemoteRcds = DB::table($table->tablename)
+            //     ->where("created_at", ">", $table->lastdate)
+            //     ->whereNull('deleted_at')
+            //     ->get()->toArray();
+
+            // $newRemoteIds = array_column($newRemoteRcds, "id");
+            // // error_log("newRemoteIds: " . json_encode($newRemoteIds));
+
+            // // get new local records
+            // $newLocalRcds = DB::connection('mysqllocal')
+            //     ->table($table->tablename)
+            //     ->where("created_at", ">", $table->lastdate)
+            //     ->whereNull('deleted_at')
+            //     ->get()->toArray();
+            // $newLocalIds = array_column($newLocalRcds, "id");
+            // // error_log("newLocalIds: " . json_encode($newLocalIds));
+
+            // // get updated (but not new) remote records
+            // $updatedRemoteRcds = DB::table($table->tablename)
+            //     ->where("updated_at", ">", $table->lastdate)
+            //     ->whereNotIn("id", $newRemoteIds)
+            //     ->whereNull('deleted_at')
+            //     ->get()->toArray();
+            // $updatedRemoteIds = array_column($updatedRemoteRcds, "id");
+            // // error_log("updatedRemoteIds: " . json_encode($updatedRemoteIds));
+
+            // // get updated (but not new) local records
+            // $updatedLocalRcds = DB::connection('mysqllocal')
+            //     ->table($table->tablename)
+            //     ->where("updated_at", ">", $table->lastdate)
+            //     ->whereNotIn("id", $newLocalIds)
+            //     ->whereNull('deleted_at')
+            //     ->get()->toArray();
+            // $updatedLocalIds = array_column($updatedLocalRcds, "id");
+            // // error_log("updatedLocalIds: " . json_encode($updatedLocalIds));
+
+            // // get deleted records from remote table since last sync
+            // $deletedRemoteRcds = DB::table($table->tablename)
+            //     ->where("deleted_at", ">", $table->lastdate)
+            //     ->get()->toArray();
+            // $deletedRemoteIds = array_column($deletedRemoteRcds, "id");
+            // // error_log("deletedRemoteIds: " . json_encode($deletedRemoteIds));
+
+            // // get deleted records from local table since last sync
+            // $deletedLocalRcds = DB::connection('mysqllocal')
+            //     ->table($table->tablename)
+            //     ->where("deleted_at", ">", $table->lastdate)
+            //     ->get()->toArray();
+            // $deletedLocalIds = array_column($deletedLocalRcds, "id");
+            // // error_log("deletedLocalIds: " . json_encode($deletedLocalIds));
+
+            // // if no recent changes to local database, copy changes from remote to local
+            // if( count($newLocalRcds) == 0 && count($updatedLocalRcds) == 0 && count($deletedLocalRcds) == 00 ) {
+
+            //     // insert new records
+            //     $insertRcds = [];
+            //     $insertIds = [];    // delete old records before inserting new ones
+
+            //     foreach($newRemoteRcds as $newRcd) {
+            //         $insertRcd = [];
+            //         foreach ($newRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //     }
+
+            //     // NOTE: There are no records to update or delete in the remote tables,
+            //     // so insert those as well.
+            //     foreach($updatedRemoteRcds as $updatedRcd) {
+            //         $insertRcd = [];
+            //         foreach ($updatedRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //     }
+            //     foreach($deletedRemoteRcds as $deletedRcd) {
+            //         $insertRcd = [];
+            //         foreach ($deletedRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //     }
+
+            //     if(count($insertRcds) == 0) {
+            //         $msg .= "No new changes found.  No records written.<br>";
+            //     } else {
+            //         // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
+            //         // foreach($insertIds as $rcd) error_log(json_encode($rcd));
+            //         // delete old record before inserting the new one
+            //         $result = DB::connection('mysqllocal')
+            //             ->table($table->tablename)
+            //             ->whereIn('id', $insertIds)
+            //             ->delete();
+            //         // error_log("result of deleting insertIds: " . json_encode($result));
+
+            //         $result = DB::connection('mysqllocal')
+            //             ->table($table->tablename)
+            //             ->insert($insertRcds);
+            //         if($result) $synced = true;
+            //         // error_log("result of inserting newRemoteRcds: " . $result);
+
+            //         $msg .= count($insertRcds) . " records written to LOCAL table " . $table->tablename . "<br>";
+            //     }
+
+            // }
+
+            // // if no recent changes to remote database, copy changes from local to remote
+            // else if( count($newRemoteRcds) == 0 && count($updatedRemoteRcds) == 0 && count($deletedRemoteRcds) == 00 ) {
+
+            //     // insert new records
+            //     $insertRcds = [];
+            //     $insertIds = [];    // delete old records before inserting new ones
+
+            //     foreach($newLocalRcds as $newRcd) {
+            //         $insertRcd = [];
+            //         foreach ($newRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //     }
+
+            //     // NOTE: There are no records to update or delete in the Local tables,
+            //     // so insert those as well.
+            //     foreach($updatedLocalRcds as $updatedRcd) {
+            //         $insertRcd = [];
+            //         foreach ($updatedRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //     }
+            //     foreach($deletedLocalRcds as $deletedRcd) {
+            //         $insertRcd = [];
+            //         foreach ($deletedRcd as $key => $value) {
+            //             $insertRcd[$key] = $value;
+            //         }
+            //         $insertRcds[] = $insertRcd;
+            //         $insertIds[] = $insertRcd['id'];
+            //         // error_log("**** -- id: " . $insertRcd['id'] . ";  insertIds: " . json_encode($insertIds));
+            //     }
+
+            //     // foreach($insertRcds as $rcd) error_log(json_encode($rcd));
+            //     // delete old record before inserting the new one
+            //     $result = DB::table($table->tablename)
+            //         ->whereIn('id', $insertIds)
+            //         ->delete();
+            //     // error_log("ids deleted: " . json_encode($insertIds));
+            //     // error_log("result of deleting newLocalRcds: " . json_encode($result));
+
+            //     $result = DB::table($table->tablename)
+            //         ->insert($insertRcds);
+            //     if($result) $synced = true;
+
+            //     // error_log("result of inserting newLocalRcds: " . $result);
+            //     $msg .= count($insertRcds) . " records written to REMOTE table " . $table->tablename . "<br>";
+
+            // } else {
+            //     // show screen with differences found, to be reconciled manually (for now)
+            //     $msg .= "NO RECORDS WRITTEN.  Discrepancies found: <br>";
+
+            //     // recent new in remote table
+            //     if(count($newRemoteRcds) > 0) $msg .= "<br>" . count($newRemoteRcds) . " recent 'created_at' in REMOTE table for ids:<br>";
+            //     foreach($newRemoteRcds as $newrcd) {
+            //         $msg .= "-- " . $newrcd->id . "<br>";
+            //     }
+                
+            //     // recent new in local table
+            //     if(count($newLocalRcds) > 0) $msg .= "<br>" . count($newLocalRcds) . " recent 'created_at' in LOCAL table for ids:<br>";
+            //     foreach($newLocalRcds as $newrcd) {
+            //         $msg .= "-- " . $newrcd->id . "<br>";
+            //     }
+                
+            //     // recent updated in remote table
+            //     if(count($updatedRemoteRcds) > 0) $msg .= "<br>" . count($updatedRemoteRcds) . " recent 'updated_at' in REMOTE table for ids:<br>";
+            //     foreach($updatedRemoteRcds as $updatedrcd) {
+            //         $msg .= "-- " . $updatedrcd->id . "<br>";
+            //     }
+                
+            //     // recent updated in local table
+            //     if(count($updatedLocalRcds) > 0) $msg .= "<br>" . count($updatedLocalRcds) . " recent 'updated_at' in LOCAL table for ids:<br>";
+            //     foreach($updatedLocalRcds as $updatedrcd) {
+            //         $msg .= "-- " . $updatedrcd->id . "<br>";
+            //     }
+
+            //     // recent deleted in remote table
+            //     if(count($deletedRemoteRcds) > 0) $msg .= "<br>" . count($deletedRemoteRcds) . " recent 'deleted_at' in REMOTE table for ids:<br>";
+            //     foreach($deletedRemoteRcds as $deletedrcd) {
+            //         $msg .= "-- " . $deletedrcd->id . "<br>";
+            //     }
+                
+            //     // recent deleted in local table
+            //     if(count($deletedLocalRcds) > 0) $msg .= "<br>" . count($deletedLocalRcds) . " recent 'deleted_at' in LOCAL table for ids:<br>";
+            //     foreach($deletedLocalRcds as $deletedrcd) {
+            //         $msg .= "-- " . $deletedrcd->id . "<br>";
+            //     }
+
+            // }
+
+            if($newMsg != '') {
+                $msg .= $newMsg . '<br>---------------------------------------<br>';    // to delimit between tables
+            }
 
             // update date in lastsync table
-            if($synced) {
-                DB::table('lastsync')
-                    ->where('tablename', $table->tablename)
-                    ->update(['lastdate' => now()]);
-            }
+            // if($synced) {
+            //     DB::table('lastsync')
+            //         ->where('tablename', $table->tablename)
+            //         ->update(['lastdate' => now(), 'copied' => 'needupt']);
+            // }
 
         }
    
+        if($msg == '') $msg = "No changes made.";
         return $msg;
+    }
+
+
+    // add arrays by position to get a new array which is the sum of each position
+    public function addArraysByPosition(...$arrays): array {
+        // Get length of first array
+        $length = count($arrays[0]);
+        
+        // Verify all arrays have same length
+        foreach ($arrays as $array) {
+            if (count($array) !== $length) {
+                throw new ValueError("All arrays must have the same length");
+            }
+        }
+        
+        // Initialize result array with zeros
+        $result = array_fill(0, $length, 0);
+        
+        // Add arrays position by position
+        foreach ($arrays as $array) {
+            for ($i = 0; $i < $length; $i++) {
+                $result[$i] += $array[$i];
+            }
+        }
+        
+        return $result;
+    }
+
+
+    // retirement forecast view
+    public function retirementForecast() {
+
+
+        // get initial balances for accounts as of the first of the current month
+        function initialBalances($date) {
+            // group accounts
+            $spendingAccts = ['Savings', 'Checking'];
+            $invAccts = ['WF-Inv-Bal', 'EJ'];
+            $retTaxAccts = ['WF-IRA-Taxable-Trad', 'RetirementDisc', 'TIAA'];
+            $retNonTaxAccts = ['WF-IRA-non-taxable-Roth'];
+
+            // get spending accounts balance from retirementdata table
+            $beginOfThisMonthSpendingBal = DB::table("retirementdata") 
+                ->whereIn("description", $spendingAccts)
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->sum("data");
+            
+            // get investement accounts balance from retirementdata table
+            $invAcctsBal = DB::table("retirementdata") 
+                ->whereIn("description", $invAccts)
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->sum("data");
+
+            // get balance of taxable retirement accts
+            $retTaxAcctsBal = DB::table("retirementdata") 
+                ->whereIn("description", $retTaxAccts)
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->sum("data");
+
+            // get LTC balance
+            $ltcDataDB = DB::table("retirementdata")
+                ->select("description", "data")
+                ->whereIn("description", ["LTCinWF", "LTCinWFdate", "LTCInvGrowth"])
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->get()->toArray();
+            $ltcData = [];
+
+            // subtract LTC balance from WF
+            // left off here - REMEMBER to add it to LTC balance
+            foreach($ltcDataDB as $data) {
+                switch($data->description) {
+                    case 'LTCinWFdate':
+                        $LTCinWFdate = $data->data;
+                        break;
+                    case 'LTCInvGrowth':
+                        $LTCInvGrowth = $data->data;
+                        break;
+                    case 'LTCinWF':
+                        $LTCinWF = $data->data;
+                }
+            }
+
+            // figure LTC balance in WF
+            //      balance
+            $initLTCBal = $LTCinWF;
+            //      interest rate
+            $rate = $LTCInvGrowth/100;
+            //      interest since date - get number of days elapsed
+            $initDate = substr($LTCinWFdate, 0, 2) . "/" . substr($LTCinWFdate, 2, 2) . "/" . '20' . substr($LTCinWFdate, 4, 2);
+            $initDate = new DateTime($initDate);
+            $firstOfThisMonth = date("m/1/Y");
+            $firstOfThisMonth = new DateTime($firstOfThisMonth);
+            $elapsedDays = date_diff($initDate, $firstOfThisMonth)->format('%a');
+
+            // interest
+            $interest = round($initLTCBal * $rate * ($elapsedDays/365), 2);
+            $totalLTCinWF = $LTCinWF + $interest;
+
+            // subract LTC princ & int from taxable retirement balance
+            $retTaxAcctsBal -= $totalLTCinWF;
+
+            // get balance of non-taxable (Roth) accts
+            $retNonTaxAcctsBal = DB::table("retirementdata") 
+                ->whereIn("description", $retNonTaxAccts)
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->sum("data");
+
+            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal];
+        }   // end of function initialBalances
+
+
+        // get income expected for the rest of this year as of the first of this month
+        function thisYearIncome($date, $twoDigitYear) {
+
+            $remainingIncomeThisYear = [];
+            $inputIncomes = ["NH Retirement", "MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
+            $inputIncomesDescriptions = ["NHRetirement", "MauraIBM", "MauraSS65", "MauraSS67", "RentalIncome".$twoDigitYear];
+            $otherRetirementDataNeeded = ["GBLimoForExpenses", "EndGBJob", "EndTownJob", "EndRentalJob", "MauraIBMStart", "MauraSSStart", "SSIncomeLimit" ];
+            $dataBaseIncomesLine = ["Town of Durham", "GB Limo", "Mike IBM", "Mike SS", "Tax Retire", "Non-Tax Retire", "Investment Growth"];
+            $dataBaseIncomestoFrom = ["Town of Durham", "Great Bay Limo", "MTS-IBM-Retirement", "SSMike"];
+
+            $queryDescriptions = array_merge($inputIncomesDescriptions, $otherRetirementDataNeeded);
+            $retirementDataInfo = DB::table('retirementdata')
+                ->where("type", "inpt")
+                ->whereIn("description", $queryDescriptions)
+                ->whereNull("deleted_at")
+                ->pluck( "data", "description");
+
+            // error_log("retirementDataInfo:");
+            // foreach($retirementDataInfo as $desc=>$data) {
+            //     error_log("--- " . $desc . " ----");
+            //     error_log(json_encode($data));
+            //     error_log("===================================");
+            // }
+
+            // error_log("retirementDataInfo[SSIncomeLimit]: " . $retirementDataInfo["SSIncomeLimit"]);
+            
+            // error_log(" --- ");
+            foreach($inputIncomesDescriptions as $income) {
+                // error_log("retirementDataInfo[".$income."]: " . $retirementDataInfo[$income]);
+                $remainingIncomeThisYear[$income] = $retirementDataInfo[$income];
+                // error_log(json_encode($remainingIncomeThisYear));
+                // error_log("------------------");
+            }
+           
+            // left off here...
+            //      getting remaining income for this year as of the first of the month
+            // error_log("remainingincomeThisYear:");
+            // foreach($remainingIncomeThisYear as $idx=>$income) {
+            //     error_log(" - " . $idx . ": " . $income);
+            // }
+
+            return $remainingIncomeThisYear;
+        }   // end of function thisYearIncome
+
+
+        // Town of Durham income predictions based on hourly wage and hours worked per week.
+        function getTownOfDurhamIncomes($date) {
+            function getWeeksRemainingInYear($date): int
+            {
+                // Convert input to DateTime object if it's a string
+                $startDate = ($date instanceof \DateTime) ? clone $date : new \DateTime($date);
+
+                // Get last day of the year
+                $lastDayOfYear = new \DateTime($startDate->format('Y') . '-12-31');
+                
+                // Calculate total days remaining
+                $interval = $startDate->diff($lastDayOfYear);
+                $totalDays = $interval->days;
+                
+                // convert days to weeks; Don't include partial weeks
+                return floor($totalDays / 7);
+            }
+
+            // init array to return
+            $townOfDurhamIncomes = [];
+
+            // get data from database
+            $townData = DB::table('retirementdata')
+                ->select('description', 'data')
+                ->where('type', 'inpt')
+                ->whereIn('description', ['EndTownJob', 'TownOfDurhamHourly', 'TownOfDurhamHrsPerWeek', 'SSCOLA'])
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get()->toArray();
+
+            // EndTownJob, TownOfDurhamHourly, TownOfDurhamHrsPerWeek and SSCOLA are returned in alphabetical order
+            // get EndTownJob date in usable form (yyyy-mm-dd)
+            $dateEndTownJob = '20' . substr($townData[0]->data, 4) . '-' . substr($townData[0]->data, 0, 2) . '-' . substr($townData[0]->data, 2, 2);
+
+            // assume yearly raises are 1% above cola
+            $COLA = $townData[1]->data; // ss cola
+            $raise = 1+($COLA + 1)/100;         // assume raise is 1% over COLA
+
+            // get hourly rate and hours per week
+            $hourlyRate = $townData[2]->data;
+            $hoursPerWeek = $townData[3]->data;
+
+            // calc income for rest of year; and set to first element of income array
+            $thisYearRemainingIncome = getWeeksRemainingInYear($date) * $hoursPerWeek * $hourlyRate;
+            $townOfDurhamIncomes[] = $thisYearRemainingIncome;
+
+            // subsequent years will be based on full year, so calc full year pay
+            $prevYearIncome = 52 * $hoursPerWeek * $hourlyRate;
+
+            // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
+            for($year = ((int)substr($date, 0, 4))+1; $year <= 2062; $year++) {
+                if(($year . '-12-31') <= $dateEndTownJob) {
+                    $thisYearIncome = $prevYearIncome * $raise;
+                } else {
+                    $thisYearIncome = 0;
+                }
+
+                // push new income to end of array
+                $townOfDurhamIncomes[] = $thisYearIncome;
+
+                // new income becomes base for next year
+                $prevYearIncome = $thisYearIncome;
+            }
+
+            return [$townOfDurhamIncomes, $raise, $COLA];  // can use raise & COLA for other predictions
+        }   // end of function getTownOfDurhamIncomes
+
+
+        // GB Limo income predicitons based on SS income limits & pay so far
+        function getGBLimoIncomes($date, $raise) {
+
+            $gbLimoIncomes = [];
+
+            // get SSIncomeLimit (SS Income limit) and EndGBJob (when GB Limo job ends) from retirementdata table
+            $gbData = DB::table('retirementdata')
+                ->select('description', 'data')
+                ->where('type', 'inpt')
+                ->whereIn('description', ['SSIncomeLimit', 'EndGBJob'])
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get()->toArray();
+            
+            // EndGBJob and SSIncomeLimit are returned in ABC order
+            $dateEndGBJob = '20' . substr($gbData[0]->data, 4) . '-' . substr($gbData[0]->data, 0, 2) . '-' . substr($gbData[0]->data, 2, 2);
+            $ssIncomeLimit = (int)$gbData[1]->data;
+
+            // get GB income up to the first of this month for this year
+            $thisYearIncome = DB::table('transactions')
+                ->where('toFrom', 'Great Bay Limo')
+                ->where('category', 'IncomeMisc')
+                ->whereBetween('trans_date', ['2025-01-01', $date])
+                ->sum('amount');
+
+            // calc income for rest of year; and set to first element of income array
+            $gbLimoIncomes[] = $ssIncomeLimit - $thisYearIncome;
+
+            // subsequent years will be based on full year, so set prev year to this year's full income
+            $prevYearIncome = $ssIncomeLimit;         
+
+            // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
+            for($year = ((int)substr($date, 0, 4))+1; $year <= 2062; $year++) {
+                if(($year . '-12-31') <= $dateEndGBJob) {
+                    $thisYearIncome = $prevYearIncome * $raise;
+                } else {
+                    $thisYearIncome = 0;
+                }
+
+                // push new income to end of array
+                $gbLimoIncomes[] = $thisYearIncome;
+
+                // new income becomes base for next year
+                $prevYearIncome = $thisYearIncome;
+            }
+
+            return $gbLimoIncomes;
+
+        }   // end of function getGBLimoIncome
+
+
+        // rental income predicitons
+        function getRentalIncomes($date, $raise) {
+
+            $rentalIncomes = [];
+
+            // get rental incomes from retirementdata
+            $rentalData = DB::table('retirementdata')
+                ->select('description', 'data')
+                ->where('type', 'inpt')
+                ->where('description', 'like', '%rental%')
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get()->toArray();
+            
+            // EndRentalJob, RentalIncomeYY0, RentalIncomeYY1, RentalIncomeYY3 (in 2025, YY0 is 25, YY1 is 26, YY2 is 27) are returned in ABC order
+            $dateEndRentalJob = '20' . substr($rentalData[0]->data, 4) . '-' . substr($rentalData[0]->data, 0, 2) . '-' . substr($rentalData[0]->data, 2, 2);
+            $rentalIncomeY1 = $rentalData[1]->data;
+            $rentalIncomeY2 = $rentalData[2]->data;
+            $rentalIncomeY3 = $rentalData[3]->data;
+
+            // Get RentalIncomeY1 first
+            $idx = 1;
+
+            // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
+            for($year = ((int)substr($date, 0, 4)); $year <= 2062; $year++) {
+                if(($year . '-12-31') <= $dateEndRentalJob) {
+                    // use projected rental incomes in input; then just increase by $raise until done renting rooms
+                    if($idx == 1) $thisYearIncome = $rentalIncomeY1;
+                    else if($idx == 2) $thisYearIncome = $rentalIncomeY2;
+                    else if($idx == 3) $thisYearIncome = $rentalIncomeY3;
+                    else $thisYearIncome = $prevYearIncome * $raise;
+                    $prevYearIncome = $thisYearIncome;
+                } else {  // no longer renting rooms
+                    $thisYearIncome = 0;
+                }
+                
+                $idx++;  // get next rental income year
+
+                // push new income to end of array
+                $rentalIncomes[] = $thisYearIncome;
+
+                // new income becomes base for next year
+                $prevYearIncome = $thisYearIncome;
+            }
+
+            return $rentalIncomes;
+
+        }   // end of function getRentalIncomes
+        
+        
+        // fixed income predicitons (doens't change)
+        function getFixedIncomes($date, $incomeType) {
+
+            $fixedIncomes = [];
+
+            // get rental incomes from retirementdata
+            $fixedIncomeDB = DB::table('retirementdata')
+                ->select('description', 'data')
+                ->where('type', 'inpt')
+                ->whereIn('description', [$incomeType, $incomeType . 'Start'])
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get();
+            $fixedIncome = $fixedIncomeDB->pluck('data');
+            $fixedIncome = $fixedIncome[0];
+
+            if(count($fixedIncomeDB) == 2) {
+                $startDate = $fixedIncomeDB[1]->data;   // date to begin receiving income
+                $startYear = (int)('20' . substr($startDate, 4, 2));    // year to begin 
+                // format year
+                $startDate = '20' . substr($startDate, 4, 2) . '-' . substr($startDate, 0, 2) . '-' . substr($startDate, 2, 2);
+            } else {
+                // this year
+                $startYear = (int)date('Y');
+                // old date
+                $startDate = '2024-01-01';
+            }
+
+            $thisMonth = substr($date, 5, 2);
+            $monthsLeftThisYear = 12 - $thisMonth + 1;
+            // error_log("IncomeType: " . $incomeType . "\n - this year: " . date("y") . "\n - date: " . substr($date, 2, 2) . "\n - months left: " . $monthsLeftThisYear . "\n - startYear: " . $startYear . "\n - startDate: " . $startDate);
+
+            // set pay the same for each year
+            $firstYear = true;  // may need to pro-rate first year
+            for($year = ((int)substr($date, 0, 4)); $year <= 2062; $year++) {
+                // push new income to end of array
+                if($startYear <= $year) {
+                    if($firstYear && $startDate <= $date) {  
+                        // if benefit has already started, income for rest of year
+                        $fixedIncomes[] = $fixedIncome * $monthsLeftThisYear;
+                        $firstYear = false; // don't do this in later years
+                    } else if ($firstYear && $startDate > $date) {
+                        // if benefit starts later this year, only months receiving it
+                        $benefitMonths = 12 - substr($startDate, 5, 2) + 1;
+                        $fixedIncomes[] = $fixedIncome * $benefitMonths;
+                        $firstYear = false; // don't do this in later years
+                    } else {
+                        // full 12 months
+                        $fixedIncomes[] = $fixedIncome * 12;
+                    }
+                } else {
+                    // not receiving it yet
+                    $fixedIncomes[] = 0;
+                }
+            }
+
+            return $fixedIncomes;
+
+        }   // end of function getFixedIncomes
+        
+        
+        // SS income predicitons
+        function getSSIncomes($date, $COLA, $who) {
+
+            // holds SS income estimate for each year 
+            $SSIncomes = [];
+
+            // get SS income date from retirementdata
+            if($who == 'Mike') $ssDataWhereIn = ['SSMike'];
+            else if ($who == 'Maura') $ssDataWhereIn = ['MauraSSStart', 'MauraSS65', 'MauraSS67', 'SSMaura'];
+            else $ssDataWhereIn = [];
+
+            $SSData = DB::table('retirementdata')
+                ->select('description', 'data')
+                ->where('type', 'inpt')
+                ->whereIn('description', $ssDataWhereIn)
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get()->toArray();
+
+            $today = date('Y-m-d');     // today in yyyy-mm-dd format
+            $thisYear = date('Y');      // this year - yyyy
+
+            if($who == 'Mike') {
+                // only SSMike returned
+                $start = '2024-01-01'; // old date - already started
+                $startYear = '2024';    // old - already started
+                $initIncome = $SSData[0]->data * 12;    // full year benefits
+            } else if($who == 'Maura') {
+                // MauraSS65, MauraSS67, MauraSSStart, SSMaura (current amt if it's already started) returned in ABC order
+                $start = $SSData[2]->data;  // get start date
+                // format start date
+                $start = '20' . substr($start, 4, 2) . '-' . substr($start, 0, 2) . '-' . substr($start, 2, 2);
+                // just the year (yyyy)
+                $startYear = substr($start, 0, 4);
+
+                if($start <= $today) {
+                    // already started - full year benefits as inputted 
+                    $initIncome = $SSData[3]->data * 12;
+                } else if($startYear == '2027') {   // Maura turns 65 in 2027
+                    // use 2027 income as entered
+                    $initIncome = $SSData[0]->data * 12;
+                } else if($startYear == '2029') { // Maura turns 67 in 20029
+                    // use 2029 income as entered
+                    $initIncome = $SSData[1]->data * 12;
+                } else {    // not a valid choice
+                    error_log("ERROR:  Shouldn't have a start date for Maura SS that is not 2027 or 2029, or in the past");
+                    $initIncome = 0;
+                }
+            }
+
+            // start when SS starts for that person & increase pay by COLA for subsequent years
+            // have benefits started yet?
+            if($start < $today) $isSSstarted = true;
+            else $isSSstarted = false;
+
+            // if it's starting this year...
+            if($startYear == $thisYear) {
+                //      First year benefits Apr - Dec (9 months)...so no more than that
+                $monthsLeftThisYear = min(9, 12 - (int)date('m') + 1);
+                // set the first year's benefits
+                $SSIncomes[] = $initIncome * $monthsLeftThisYear;
+                // prev year should be full year (COLA increase based on full year)
+                $prevYearIncome = $initIncome;
+                $isSSstarted = true;
+
+            // if benefits already started...
+            } elseif ($startYear < $thisYear) {
+                $monthsLeftThisYear = 12 - (int)date('m') + 1;
+                $SSIncomes[] = $initIncome * $monthsLeftThisYear/12;
+                $prevYearIncome = $initIncome;  // future benefits based on full year income
+                $isSSstarted = true;
+
+            // or if not started/starting this year
+            } else {
+                $SSIncomes[] = 0;
+                $prevYearIncome = 0;
+            }
+
+            // calc each subsequent year startign with next year
+            for($year = $thisYear+1; $year <= 2062; $year++) {
+                // if benefits have not yet started
+                if(!$isSSstarted) {
+                    // if benefits begin this year
+                    if($startYear == $year) {
+                        $benefitMonths = 9; // April through Dec
+                        // only get a parial year's benefits
+                        $thisYearIncome = $initIncome * $benefitMonths/12;
+                        // previous year used to increase by COLA, so needs to be full year
+                        $prevYearIncome = $initIncome;
+                        $isSSstarted = true;
+
+                    // if benefits have already started (this shouldn't run)
+                    } else if($startYear < $year) {
+                        $thisYearIncome = $initIncome;
+                        $prevYearIncome = $thisYearIncome;
+                        $isSSstarted = true;
+
+                    // if benefits have not yet started
+                    } else {
+                        $thisYearIncome = 0;
+                        $prevYearIncome = $thisYearIncome;
+                    }
+
+                // if benefits have started and are continuing
+                } else {
+                    $thisYearIncome = $prevYearIncome * (1 + $COLA/100);
+                    $prevYearIncome = $thisYearIncome;
+                }
+
+                // add income to income array
+                $SSIncomes[] = $thisYearIncome;
+            }
+
+            return $SSIncomes;
+
+        }   // end of function getSSIncomes
+
+
+        function  getTaxableRetIncomes($date) {
+            // left off here
+            $taxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            return $taxableRetIncomes;
+
+        }    // end function getTaxableRetIncomes
+        
+        function  getNonTaxableRetIncomes($date) {
+            // left off here
+            $nonTaxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            return $nonTaxableRetIncomes;
+
+        }    // end function getNonTaxableRetIncomes
+        
+        function  getInvestmentGrowths($date) {
+            // left off here
+            $investmentGrowths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            return $investmentGrowths;
+
+        }    // end function getInvestmentGrowths
+
+        // get first of this month
+        $date = date('Y-m-01'); // yyyy-mm-01 - first of current month
+        $firstOfThisYear = substr($date, 0, 4) . '-01-01';
+        $twoDigitYear = substr($date, 2, 2);
+
+        // get beginning balances
+        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal] = initialBalances($date, $twoDigitYear);
+        $spending = [$beginOfThisMonthSpendingBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
+        $investments = [$invAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
+        $retirementTaxable = [$retTaxAcctsBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
+        $retirementNonTaxable = [$retNonTaxAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
+        $beginBalances = $this->addArraysByPosition($spending, $investments, $retirementTaxable, $retirementNonTaxable);
+
+        // get rest of this year's expected income
+        $remainingIncomeThisYear = thisYearIncome($date, $twoDigitYear);
+        
+        // get Town of Durham income estimates
+        [$townOfDurhamIncomes, $raise, $COLA] = getTownOfDurhamIncomes($date);
+        
+        // get GB Lime income estimates
+        $GBLimoIncomes = getGBLimoIncomes($date, $raise);
+        
+        // get rental income estimates
+        $rentalIncomes = getRentalIncomes($date, $raise);
+        
+        // get NH Retirement income estimates
+        $nhRetirementIncomes = getFixedIncomes($date, 'NHRetirement');
+        
+        // get Mike IBM income estimates
+        $mikeIBMIncomes = getFixedIncomes($date, 'MTS-IBM-Retirement');
+        
+        // get Maura IBM income estimates
+        // ... left off here ...
+        $mauraIBMIncomes = getFixedIncomes($date, 'MauraIBM');
+        
+        // get Mike SS income estimates
+        $mikeSSIncomes = getSSIncomes($date, $COLA, 'Mike');
+        
+        // get Maura SS income estimates
+        $mauraSSIncomes = getSSIncomes($date, $COLA, 'Maura');
+        
+        // get taxable retirement income per year estimates
+        $taxableRetIncomes = getTaxableRetIncomes($date);
+        $nonTaxableRetIncomes = getNonTaxableRetIncomes($date);
+        $investmentGrowths = getInvestmentGrowths($date);
+
+        $incomeValues = [
+            // town of durham
+            $townOfDurhamIncomes,
+            // GB Limo
+            $GBLimoIncomes,
+            // Rental
+            $rentalIncomes,
+            // NH Retirement
+            $nhRetirementIncomes,
+            // Mike IBM
+            $mikeIBMIncomes,
+            // Mike SS
+            $mikeSSIncomes,
+            // Maura IBM
+            $mauraIBMIncomes,
+            // Maura SS
+            $mauraSSIncomes,
+            // Taxable retirement
+            $taxableRetIncomes,
+            // non-taxable retirement
+            $nonTaxableRetIncomes,
+            // Investment Growth
+            $investmentGrowths
+        ];
+        $incomeSubTots = $this->addArraysByPosition($townOfDurhamIncomes, $GBLimoIncomes, $rentalIncomes, $nhRetirementIncomes, $mikeIBMIncomes, $mikeSSIncomes, $mauraIBMIncomes, $mauraSSIncomes, $taxableRetIncomes, $nonTaxableRetIncomes, $investmentGrowths);
+
+        // get expense categories
+        $expenseCategoriesWithSubCats = DB::table('categories')
+            ->distinct()
+            ->select('name', 'subCategory')
+            ->where('ie', 'E')
+            ->get()->toArray();
+        error_log("expenseCategoriesWithSubCats: ");
+        foreach($expenseCategoriesWithSubCats as $subcat) error_log(" - " . $subcat->name . ": " . $subcat->subCategory);
+
+        $expenseCategories = [];
+        $expenseCategories = array_column($expenseCategoriesWithSubCats, 'name');
+        error_log("expenseCategories: ");
+        foreach($expenseCategories as $expcat) error_log(" - " . $expcat);
+        
+        // get expense subcategories
+        $expenseSubcategories = DB::table('categories')
+            ->distinct()
+            ->select('subCategory')
+            ->where('ie', 'E')  // where income/expense is expense
+            ->get()->toArray();
+        $expenseSubcategories = array_column($expenseSubcategories, 'subCategory');
+        error_log("expenseSubcategories: " . json_encode($expenseSubcategories));
+
+        error_log("categories within each subcategory: " );
+        foreach($expenseSubcategories as $subcat) {
+            error_log(" - " . $subcat);
+            foreach($expenseCategoriesWithSubCats as $expcat) {
+                if($expcat->subCategory == $subcat) error_log(" --- " . $expcat->name);
+            }
+        }
+
+        // get amt spent before current month (in this year) by category
+        error_log("type firstOfThisYear: " . gettype($firstOfThisYear) . ", " . $firstOfThisYear);
+        error_log("type date: " . gettype($date) . ", " . $date);
+        error_log("type expenseCategories: " . gettype($expenseCategories));
+        $ytdExpensesByCategory = DB::table('transactions')
+            ->whereBetween('trans_date', [$firstOfThisYear, $date])
+            ->whereIn('category', $expenseCategories)
+            ->whereNull('deleted_at')
+            ->select('category', DB::raw('sum(amount) as amount'))
+            ->groupBy('category')
+            ->get()
+            ->toArray();
+        error_log("amounts: " . json_encode($ytdExpensesByCategory));
+
+        // init each subcategory total to 0
+        $ytdExpensesBySubcategory = [];
+        foreach($expenseSubcategories as $subcategory) {
+            $ytdExpensesBySubcategory[$subcategory] = 0.00;
+            error_log("subcategory: " . $subcategory);
+        }
+
+        // sum subtotals for each subcategory
+        foreach($ytdExpensesByCategory as $idx=>$categoryRcd) {
+            error_log("---- " . $idx . " ------");
+            error_log(json_encode($categoryRcd));
+            $subCat = collect($expenseCategoriesWithSubCats)
+                ->where('name', $categoryRcd->category)
+                ->first();
+            error_log("sub cat: " . $subCat->subCategory);
+            $ytdExpensesBySubcategory[$subCat->subCategory] += $categoryRcd->amount;
+            // ... left off here (cat) ...
+            // now have sub-category & amount for ytd.  Send to view  & add rows to page.
+        }
+        // get budgeted spending for the rest of the year, starting with all of this month
+        // left off here...
+        error_log("\n\n" . json_encode($ytdExpensesBySubcategory));
+        error_log("keys: " . json_encode(array_keys($ytdExpensesBySubcategory)));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'ytdExpensesBySubcategory'));
     }
 
 }

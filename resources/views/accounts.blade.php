@@ -62,7 +62,7 @@
         </a>
 
         <!-- Retirement button -->
-        <a href="{{ route('retirement') }}" class="image-button-href">
+        <a href="{{ route('retirementInput') }}" class="image-button-href">
             <img src="{{ asset('images/buttons/Retirement.png') }}" alt="Clickable Retirement Image" class="image-button">
         </a>
 

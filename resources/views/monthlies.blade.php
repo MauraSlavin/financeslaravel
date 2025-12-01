@@ -329,11 +329,6 @@
 
 
 
-
-
-
-
-
                 $('#recordButton').on('click', function(e) {
                     const formData = new FormData();
                     

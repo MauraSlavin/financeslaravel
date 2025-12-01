@@ -8,23 +8,49 @@
 <hr>
 <hr>
 
-  <h2>NEXT:  ***  2025-09-01-retirement ***</h2>
+  <h2>NEXT:  ***  2025-10-13-retirement ***</h2>
     <p>Enhancements made in this branch...</p>
     <ul>
+      <li>SIDETRACKED updating how local & remote are sync'd</li>
       <li>WORKING on retirement analysis</li>
-      <li>Duplicate local database - pushed 10/13</li>
-      <li>Always update 1+ lastBalanced when account balances - pushed 10/13</li>
     </ul>
     <p>Here's the retirement stuff...</p>
     <ul>
-      <li>Need to do Rental button</li>
-      <li>DONE - SAVE WF splits</li>
+      <li> should do a push soon - it's been awhile </li>
       <br>
-      <li>Working on getting data from database<br>
-        And splitting WF accounts into categories</li>
-      <li>Ability to update/input/correct data</li>
-      <li>Save things like Maura SS & Maura IBM & by date started</li>
-      <li>See "Retirement in app" (FIN -> Retirement -> Retirement in app) in Google Drive for beginning of design</li>
+      <li>SYNC ---    *** NOT WORKING!! ***
+      <br>
+      <br>-- search for "left off here sync"
+      <br>-- copying new records done, updating changed records by id done.
+      <br>---- NEEDS testing
+      <br>---- What happens when there is no matching id in other table??
+      </li>
+      <br>
+      <li>DONE - Column in accts for how it shows up in Retirement Forecast</li>
+      <li>DONE - Store how much of WF is LTC - in RetirementData table?</li>
+      <br>
+      <li>Working on breaking expenses out by subcategory
+      <br>search for <br>... left off here (cat) ...
+      </li>
+      <br>
+      <li>Working on retirement analysis
+      <br>- Button "Retirement Forecast" gathers input fields needed.
+      <br>- Need to create and load new blade from retirementInput blade
+      <br>*** blade started: http://localhost:8000/retirement/forecast (view loaded is partially working)
+      <br>- do calc's in script of new blade.
+      <br>- See "left off here" in retirementInput blade.
+      <br>- See Google Doc (link below) for layout of new blade.
+      </li>
+      <li>**** NOTE ****  I'll need a more detailed budget forecast, too</li>
+      <li>Save intermediate WF values; and read in WF page (can do later - use to adjust individual WF acct numbers, if wanted)
+      </li>
+      <li>Test that other changes are saved in DB as needed (see other "left off here" notes)</li>
+      <li>See "Retirement in app" (FIN -> Retirement -> Retirement in app) in Google Drive for beginning of design
+      <br><br>link for design:
+      <br>https://docs.google.com/spreadsheets/d/1mj0eThBHoXeK59SmpeuZcFknbCslUpIO_aOZhQRcJVQ/edit?usp=drive_link
+      <br><br>current retirement forecast:
+      <br>https://docs.google.com/spreadsheets/d/13H8T0OAOkpzwRAhjt2-adY4RZBkQVls2WIcjjOmu0I0/edit?usp=sharing
+      </li>
     </ul>
 
   <h2>Check at some point...</h2>
@@ -37,11 +63,15 @@
   
 <h2>BUGS</h2>
   <ul>
+    <li>Total_amt on transactions page isn't ignoring deleted records</li>
     <li>On BUCKETS page, Goal Totals missing RetSavings amt</li>
   </ul>
     
 <h2>To do:</h2>
     <ul>
+      <li>Allow dupes in TOLLS upload - detect duplicates and only write unique tolls to database
+        <br>- Detect by unique date, time and car
+      </li>
       <li>Is changing Monthlies working??</li>
       <li>Add charges en route to trips table - alert if 0 (may not be getting charges)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
@@ -256,7 +286,7 @@
     <li><u><b>NHRetirement</b></u>:  Used for household expenses
     <p>All in category IncomeRetirement</p>
     </li>
-    <li><u><b>MTS IBM Retirement</b></u>:  Save for future retirement, if not needed for household expenses.
+    <li><u><b>MTS-IBM-Retirement</b></u>:  Save for future retirement, if not needed for household expenses.
     <p>Some being withheld ($278.85 in 2025) for Income taxes.<br>
     Rest can be saved for future retirement, or used for houshold expenses.
     </li>
