@@ -716,7 +716,7 @@
                 
 
                 // update transaction in the database
-                function updateTransactionRecord($record) {
+                function updateTransactionRecord($record, copied) {
 
                     // make array to send to ajax
                     var newTransaction = {};
@@ -776,6 +776,9 @@
                     var notes = $record.find('.notes').children(':first-child').val();
                     if(notes !== '' && notes !== 'null' && notes !== 'NULL') newTransaction['notes'] = notes;
                     else newTransaction['notes'] = null;
+
+                    // used in sync'g the two databases
+                    newTransaction['copied'] = copied;
 
                     // get id before stringifying
                     var id = newTransaction['id'];
@@ -2470,7 +2473,13 @@
                     $(this).removeData(); // clear cached data (to get new value with  $(this).attr('data-id'))
                     var id = $(this).attr('data-id');
 
-                    if(id == 'null') id = null;
+                    var copied;
+                    if(id == 'null') {
+                        id = null;
+                        copied = 'new';         // when sync'd with other database, this is a new record
+                    } else {
+                        copied = 'needupt';     // when sync'd with other database, this is an existing record to be updated
+                    }
                     var thisElement = this;
 
                     // are the values in the record good
@@ -2549,7 +2558,7 @@
                         }
 
                         // OK to write record (will update total_key if this is the first of a group of split transactions to be saved)
-                        updateTransactionRecord($record);
+                        updateTransactionRecord($record, copied);
                         
                         // change edittable cells in record to non-edittable
                         makeNotEdittable(this);

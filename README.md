@@ -16,7 +16,7 @@
     </ul>
     <p>Here's the retirement stuff...</p>
     <ul>
-      <li> should do a push soon - it's been awhile </li>
+      <li> Did a push on 11/30/25 </li>
       <br>
       <li>SYNC ---    *** NOT WORKING!! ***
       <br>
@@ -30,7 +30,8 @@
       <li>DONE - Store how much of WF is LTC - in RetirementData table?</li>
       <br>
       <li>Working on breaking expenses out by subcategory
-      <br>search for <br>... left off here (cat) ...
+      <br>CHECK VALUES
+      <br>clean up code
       </li>
       <br>
       <li>Working on retirement analysis

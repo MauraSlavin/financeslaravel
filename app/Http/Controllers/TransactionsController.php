@@ -1016,6 +1016,7 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
+        // months to use to get YTM budget
         $months = [
             'january',
             'february',
@@ -1030,8 +1031,6 @@ class TransactionsController extends Controller
             'november',
             'december'
         ];
-
-        // months to use to get YTM budget
         $selectedMonths = array_slice($months, 0, $thisMonth);
         
         $ytmBudgets = DB::table('budget')
@@ -1240,7 +1239,9 @@ class TransactionsController extends Controller
             ->toArray();
 
         // get year-to-month budgets by category (budget this year up to and including this month)
-        $months = [
+
+        // months to sum budgets to get YTM budget
+                $months = [
             'january',
             'february',
             'march',
@@ -1254,8 +1255,6 @@ class TransactionsController extends Controller
             'november',
             'december'
         ];
-
-        // months to sum budgets to get YTM budget
         $selectedMonths = array_slice($months, 0, $thisMonth);
         
         $ytmBudgets = DB::table('budget')
@@ -1503,7 +1502,7 @@ class TransactionsController extends Controller
                 'total_amt' => $transaction->total_amt,
                 'total_key' => $transaction->total_key,
                 'notes' => $transaction->notes,
-                'copied' => 'needupt'
+                'copied' => $transactions->copied
             ];
 
             $response = DB::table("transactions")
@@ -3399,9 +3398,7 @@ class TransactionsController extends Controller
                 ->leftJoin('transactions', function($join) {
                     $join->on('bucketgoals.bucket', '=', 'transactions.bucket');
                 })
-                ->whereDate('goalDate', '>', Carbon::today())
-                ->whereNotNull('goalDate')
-                ->whereYear('goalDate', '=', Carbon::now()->year)
+                ->where('goalDate', '>', Carbon::now())
                 ->whereNull('bucketgoals.deleted_at')
                 ->whereNull('transactions.deleted_at')
                 ->select(
@@ -3415,7 +3412,7 @@ class TransactionsController extends Controller
                 ->groupBy('bucketgoals.bucket')
                 ->orderBy('goalDate')
                 ->get()->toArray();
-    
+
             DB::statement("SET sql_mode=only_full_group_by"); 
             // only keep 2 decimal places (should have 4)
             foreach($futureGoalDateBuckets as $idx=>$bucket) {
@@ -4393,17 +4390,23 @@ class TransactionsController extends Controller
             $newRemoteRecords = DB::table($table)
                 ->where('copied', 'new')
                 ->get()->toArray();
-            
+            error_log(" - Number of copied or new record in remote: " . count($newRemoteRecords));
+
             // and write them (if any) to the local table
             if(!empty($newRemoteRecords)) {
                 // format array
                 $recordsToInsert = array_map(function($record) {
                     return (array) $record;
                 }, $newRemoteRecords);
+
                 // change 'copied' field to 'yes'
+                $mmsCount = 0;
                 foreach($recordsToInsert as $idx=>$record) {
                     $recordsToInsert[$idx]['copied'] = 'yes';
+                    if($table == 'retirementdata') error_log(" -- mmsCount idx: " . $idx);
+                    $mmsCount++;
                 }
+                if($table == 'retirementdata') error_log("mmsCount: " . $mmsCount);
 
                 // insert records
                 $insertResult = DB::connection('mysqllocal')
@@ -4417,7 +4420,7 @@ class TransactionsController extends Controller
                     ->update(['copied' => 'yes']);
                 error_log("Updated 'copied' field in REMOTE table.");
 
-                $newMsg .= "Table " . $table . ": " . count($newRemoteRecords) . " records inserted to local.<br>";
+                $newMsg .= 'Table <u><span style="font-weight: bold; font-size: 20px;">' . $table . ':</span></u> ' . count($newRemoteRecords) . ' records inserted to REMOTE.<br>';
             }
 
 
@@ -4426,18 +4429,24 @@ class TransactionsController extends Controller
                 ->table($table)
                 ->where('copied', 'new')
                 ->get()->toArray();
-            
+            error_log(" - Number of copied or new record in local: " . count($newLocalRecords));
+
             // and write them (if any) to the remote table
             if(!empty($newLocalRecords)) {
                 // format array
                 $recordsToInsert = array_map(function($record) {
                     return (array) $record;
                 }, $newLocalRecords);
+                
                 // change 'copied' field to 'yes'
+                $mmsCount = 0;
                 foreach($recordsToInsert as $idx=>$record) {
                     $recordsToInsert[$idx]['copied'] = 'yes';
+                    error_log(" -- mmsCount idx: " . $idx);
+                    $mmsCount++;
                 }
-
+                error_log("mmsCount: " . $mmsCount);
+                
                 // insert records to REMOTE
                 $insertResult = DB::table($table)
                     ->insert($recordsToInsert);
@@ -4448,9 +4457,9 @@ class TransactionsController extends Controller
                     ->table($table)
                     ->whereIn('id', array_column($newLocalRecords, 'id'))
                     ->update(['copied' => 'yes']);
-                error_log("Updated 'copied' field in REMOTE table.");
+                error_log("Updated 'copied' field in LOCAL table.");
 
-                $newMsg .= "Table " . $table . ": " . count($newLocalRecords) . " records inserted to REMOTE.<br>";
+                $newMsg .= 'Table <u><span style="font-weight: bold; font-size: 20px;">' . $table . ':</span></u> ' . count($newLocalRecords) . ' records inserted to LOCAL.<br>';
             }
 
             // Get REMOTE records to UPDATE locally
@@ -4478,34 +4487,78 @@ class TransactionsController extends Controller
 
             } else {
 
-                
+                error_log(" - # chgdRemoteRecords: " . count($chgdRemoteRecords));
+                error_log(" - # chgdLocalRecords: " . count($chgdLocalRecords));
                 // ... left off here sync ...  Coding is done - needs further testing
                 // what happens if there is no matching id??
 
 
                 // Copy remote records to local
                 if(count($chgdRemoteRecords) > 0) {
+                    error_log(" - have changed remote rcds");
                     // let user see what's being copied.  Can save and switch back if it's not right. (Although not that easily)
-                    $newMsg .= "<br><br>" . $table . " Table; Records in the local table are being updated to match the remote table by id.";
-                    foreach($chgdRemoteRecords as $remoteRcd) {
+                    $newMsg .= "<br><br>" . $table . " Table; Records in the local table are being <u><b>UPDATED</b></u> to match the remote table by id.";
+                    foreach($chgdRemoteRecords as $mmsIdx=>$remoteRcd) {
+                        // error_log(" -- mmsIdx: " . $mmsIdx);
+                        // error_log(" -- ")
                         // set msg to what is being updated in local
+                        error_log(" - updating remoteRcd:");
+                        // foreach($remoteRcd as $key=>$part) {
+                        //     error_log(" -- " . $key . ": " . $part);
+                        // }
+                        // total in budget table is a formula
+                        if($table == 'budget') {
+                            unset($remoteRcd->total);
+                            error_log(" - modified updating remoteRcd:");
+                            // foreach($remoteRcd as $key=>$part) {
+                            //     error_log(" -- " . $key . ": " . $part);
+                            // }
+                        }
 
                         // get local record with that id
+                        error_log(" --- remoteRcd->id: " . $remoteRcd->id);
                         $localRcd = DB::connection('mysqllocal')
                             ->table($table)
                             ->where('id', $remoteRcd->id)
                             ->first();
                         
-                        // add details to message
-                        $newMsg .= "<br><br>  Remote: " . json_encode($remoteRcd);
-                        $newMsg .= "<br><br>to local: " . json_encode($localRcd);
-                        
-                        // change copied to 'yes' before updating remote record
-                        $remoteRcd->copied = 'yes';
-                        DB::connection('mysqllocal')
-                            ->table($table)
-                            ->where('id', $remoteRcd->id)
-                            ->update((array)$remoteRcd);
+                        error_log(" - localRcd (to be updated): " . $localRcd);
+
+                        // add details to message - only show differences
+                        if($localRcd == null) {
+                            error_log("localRcd is NULL");
+                            $newMsg .= "<br><br> NEW remote record written to local:";
+                            foreach($remoteRcd as $key=>$rcd) {
+                                $newMsg .= "<br> - " . $key . ": " . $rcd;
+                            }
+                            // change copied to 'yes' before updating remote record
+                            $remoteRcd->copied = 'yes';
+                            DB::connection('mysqllocal')
+                                ->table($table)
+                                ->where('id', $remoteRcd->id)
+                                ->insert((array)$remoteRcd);                            
+                        } else {
+                            error_log("localRcd is being updated");
+                            $newMsg .= "<br><br>Changes: ";
+                            foreach($remoteRcd as $key=>$rRcd) {
+                                if($rRcd != $localRcd->{$key}) {
+                                    if($rRcd == null) 
+                                        $remoteValue = 'null'; 
+                                    else $remoteValue = $rRcd;
+                                    if($localRcd->{$key} == null) 
+                                        $localValue = 'null';
+                                    else $localValue = $localRcd->{$key};
+                                    $newMsg .= "<br> - " . $key . ": <u><b>" . $remoteValue . "</b></u> (remote) WAS <u><b>" . $localValue . "</b></u> (local).";
+                                }
+                            }
+                            // $newMsg .= "<br><br>to local: " . json_encode($localRcd);
+                            // change copied to 'yes' before updating remote record
+                            $remoteRcd->copied = 'yes';
+                            DB::connection('mysqllocal')
+                                ->table($table)
+                                ->where('id', $remoteRcd->id)
+                                ->update((array)$remoteRcd);                    
+                            }
 
                         // the set copied in remote table to 'yes'
                         DB::table($table)
@@ -4514,8 +4567,10 @@ class TransactionsController extends Controller
 
                     }
                 } else if(count($chgdLocalRecords) > 0) {
+                    error_log(" - have changed local rcds");
+
                     // let user see what's being copied.  Can save and switch back if it's not right. (Although not that easily)
-                    $newMsg .= "<br><br>" . $table . " Table; Records in the REMOTE table are being updated to match the local table by id.";
+                    $newMsg .= "<br><br>" . $table . " Table; Records in the REMOTE table are being <u><b>UPDATED</b></u> to match the local table by id.";
                     foreach($chgdLocalRecords as $localRcd) {
                         // set msg to what is being updated in REMOTE
 
@@ -4805,7 +4860,7 @@ class TransactionsController extends Controller
     public function addArraysByPosition(...$arrays): array {
         // Get length of first array
         $length = count($arrays[0]);
-        
+
         // Verify all arrays have same length
         foreach ($arrays as $array) {
             if (count($array) !== $length) {
@@ -4862,10 +4917,11 @@ class TransactionsController extends Controller
 
             // get LTC balance
             $ltcDataDB = DB::table("retirementdata")
-                ->select("description", "data")
+                ->select("description", "data", "type")
                 ->whereIn("description", ["LTCinWF", "LTCinWFdate", "LTCInvGrowth"])
-                ->where("type", "inpt")
+                ->whereIn("type", ["inpt", "con"])
                 ->whereNull("deleted_at")
+                ->orderBy("type", "asc")
                 ->get()->toArray();
             $ltcData = [];
 
@@ -4883,10 +4939,12 @@ class TransactionsController extends Controller
                         $LTCinWF = $data->data;
                 }
             }
+            error_log("LTC... LTCinvGrowth: " . $LTCInvGrowth . "; LTCinWF: " . $LTCinWF . "; LTCinWFdate: " . $LTCinWFdate);
 
             // figure LTC balance in WF
             //      balance
-            $initLTCBal = $LTCinWF;
+            // $initLTCBal = $LTCinWF;
+            $initLTCBal = 17959.64;             // left off here (ltc)
             //      interest rate
             $rate = $LTCInvGrowth/100;
             //      interest since date - get number of days elapsed
@@ -4910,7 +4968,11 @@ class TransactionsController extends Controller
                 ->whereNull("deleted_at")
                 ->sum("data");
 
-            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal];
+            $spendingAccts = implode(", ", $spendingAccts);
+            $invAccts = implode(", ", $invAccts);
+            $retTaxAccts = implode(", ", $retTaxAccts);
+            $retNonTaxAccts = implode(", ", $retNonTaxAccts);
+            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts];
         }   // end of function initialBalances
 
 
@@ -5309,32 +5371,49 @@ class TransactionsController extends Controller
 
         function  getTaxableRetIncomes($date) {
             // left off here
-            $taxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            $taxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
             return $taxableRetIncomes;
 
         }    // end function getTaxableRetIncomes
         
         function  getNonTaxableRetIncomes($date) {
             // left off here
-            $nonTaxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            $nonTaxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
             return $nonTaxableRetIncomes;
 
         }    // end function getNonTaxableRetIncomes
         
         function  getInvestmentGrowths($date) {
             // left off here
-            $investmentGrowths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7, 8 ];
+            $investmentGrowths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
             return $investmentGrowths;
 
         }    // end function getInvestmentGrowths
 
+        // global months array
+        $months = [
+            'january',
+            'february',
+            'march',
+            'april',
+            'may',
+            'june',
+            'july',
+            'august',
+            'september',
+            'october',
+            'november',
+            'december'
+        ];
+
         // get first of this month
         $date = date('Y-m-01'); // yyyy-mm-01 - first of current month
         $firstOfThisYear = substr($date, 0, 4) . '-01-01';
+        $lastOfThisYear = substr($date, 0, 4) . '-12-31';
         $twoDigitYear = substr($date, 2, 2);
 
         // get beginning balances
-        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal] = initialBalances($date, $twoDigitYear);
+        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts] = initialBalances($date, $twoDigitYear);
         $spending = [$beginOfThisMonthSpendingBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
         $investments = [$invAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
         $retirementTaxable = [$retTaxAcctsBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
@@ -5376,99 +5455,251 @@ class TransactionsController extends Controller
 
         $incomeValues = [
             // town of durham
-            $townOfDurhamIncomes,
+            json_encode($townOfDurhamIncomes),
             // GB Limo
-            $GBLimoIncomes,
+            json_encode($GBLimoIncomes),
             // Rental
-            $rentalIncomes,
+            json_encode($rentalIncomes),
             // NH Retirement
-            $nhRetirementIncomes,
+            json_encode($nhRetirementIncomes),
             // Mike IBM
-            $mikeIBMIncomes,
+            json_encode($mikeIBMIncomes),
             // Mike SS
-            $mikeSSIncomes,
+            json_encode($mikeSSIncomes),
             // Maura IBM
-            $mauraIBMIncomes,
+            json_encode($mauraIBMIncomes),
             // Maura SS
-            $mauraSSIncomes,
+            json_encode($mauraSSIncomes),
             // Taxable retirement
-            $taxableRetIncomes,
+            json_encode($taxableRetIncomes),
             // non-taxable retirement
-            $nonTaxableRetIncomes,
+            json_encode($nonTaxableRetIncomes),
             // Investment Growth
-            $investmentGrowths
+            json_encode($investmentGrowths)
         ];
         $incomeSubTots = $this->addArraysByPosition($townOfDurhamIncomes, $GBLimoIncomes, $rentalIncomes, $nhRetirementIncomes, $mikeIBMIncomes, $mikeSSIncomes, $mauraIBMIncomes, $mauraSSIncomes, $taxableRetIncomes, $nonTaxableRetIncomes, $investmentGrowths);
 
         // get expense categories
-        $expenseCategoriesWithSubCats = DB::table('categories')
+        $expenseCategoriesWithSummaryCats = DB::table('categories')
             ->distinct()
-            ->select('name', 'subCategory')
+            ->select('name', 'summaryCategory')
             ->where('ie', 'E')
             ->get()->toArray();
-        error_log("expenseCategoriesWithSubCats: ");
-        foreach($expenseCategoriesWithSubCats as $subcat) error_log(" - " . $subcat->name . ": " . $subcat->subCategory);
+        error_log("expenseCategoriesWithSummaryCats: ");
+        foreach($expenseCategoriesWithSummaryCats as $sumcat) error_log(" - " . json_encode($sumcat));
 
         $expenseCategories = [];
-        $expenseCategories = array_column($expenseCategoriesWithSubCats, 'name');
+        $expenseCategories = array_column($expenseCategoriesWithSummaryCats, 'name');
         error_log("expenseCategories: ");
         foreach($expenseCategories as $expcat) error_log(" - " . $expcat);
         
-        // get expense subcategories
-        $expenseSubcategories = DB::table('categories')
+        // get expense sumcategories
+        $expenseSummaryCategories = DB::table('categories')
             ->distinct()
-            ->select('subCategory')
+            ->select('summaryCategory')
             ->where('ie', 'E')  // where income/expense is expense
             ->get()->toArray();
-        $expenseSubcategories = array_column($expenseSubcategories, 'subCategory');
-        error_log("expenseSubcategories: " . json_encode($expenseSubcategories));
-
-        error_log("categories within each subcategory: " );
-        foreach($expenseSubcategories as $subcat) {
-            error_log(" - " . $subcat);
-            foreach($expenseCategoriesWithSubCats as $expcat) {
-                if($expcat->subCategory == $subcat) error_log(" --- " . $expcat->name);
-            }
-        }
+        $expenseSummaryCategories = array_column($expenseSummaryCategories, 'summaryCategory');
+        error_log("expenseSummaryCategories: " . json_encode($expenseSummaryCategories));
 
         // get amt spent before current month (in this year) by category
         error_log("type firstOfThisYear: " . gettype($firstOfThisYear) . ", " . $firstOfThisYear);
+        error_log("type lastOfThisYear: " . gettype($lastOfThisYear) . ", " . $lastOfThisYear);
         error_log("type date: " . gettype($date) . ", " . $date);
         error_log("type expenseCategories: " . gettype($expenseCategories));
-        $ytdExpensesByCategory = DB::table('transactions')
-            ->whereBetween('trans_date', [$firstOfThisYear, $date])
-            ->whereIn('category', $expenseCategories)
+        $monthsQueryArray = [];
+        $thisMonthIdx = substr($date, 5, 2);
+        $thisYear = substr($date, 0, 4);
+        foreach($months as $monthIdx=>$month) {
+            if($monthIdx+1 >= $thisMonthIdx) {
+                $monthsQueryArray[] = $month;
+            }
+        }
+
+        // Build aggregate expressions for each month column.
+        $monthAggregates = collect($monthsQueryArray)
+            ->map(function ($month) {
+                return DB::raw("sum({$month}) as {$month}");
+            })
+            ->toArray();
+
+        $expectedExpensesByCategory = DB::table('budget')
+            ->where('year', $thisYear)
+            ->select('category', 'inflationFactor', ...$monthAggregates)
+            ->groupBy('category')
+            ->get()->toArray();
+        error_log("expectedExpensesByCategory:");
+        foreach($expectedExpensesByCategory as $key=>$expExp) {
+            error_log(" - " . $key . ": " . json_encode($expExp));
+        }
+        // get this year's budget left by category
+        $expectedExpensesAfterTodayByCategory = [];
+        $inflationFactors = [];
+        $expectedExpensesAfterTodayTotal = 0;
+        error_log("total: " . $expectedExpensesAfterTodayTotal);
+        foreach($expectedExpensesByCategory as $expensesRcd) {
+            error_log("expensesRcd: " . json_encode($expensesRcd));
+            $expectedExpensesAfterTodayByCategory[$expensesRcd->category] = 0;
+            if($expensesRcd->inflationFactor != null) {
+                $inflationFactors[$expensesRcd->category] = $expensesRcd->inflationFactor;
+            }
+            foreach($monthsQueryArray as $month) {
+                $expectedExpensesAfterTodayByCategory[$expensesRcd->category] += $expensesRcd->{$month};
+            }
+        }
+
+        // get default inflationFactor
+        $defaultInflationFactor = DB::table('retirementdata')
+            ->where('description', 'Inflation')
             ->whereNull('deleted_at')
-            ->select('category', DB::raw('sum(amount) as amount'))
+            ->orderByDesc('type')       // so inpt - input (rather than assm - assumed) is first
+            ->value('data');
+        error_log("defaultInflationFactor: " . $defaultInflationFactor);
+        error_log("expectedExpensesAfterTodayByCategory: " . json_encode($expectedExpensesAfterTodayByCategory));
+        error_log("inflationFactors: " . json_encode($inflationFactors));
+
+
+        // init each summaryCategory total to 0
+        $expectedExpensesAfterTodayBySUMMARYCategory = [];
+        $actualExpensesAfterTodayBySUMMARYCategory = [];
+        foreach($expenseSummaryCategories as $sumcategory) {
+            $expectedExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
+            $actualExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
+            error_log("sumcategory: " . $sumcategory . ";  expectedExpensesAfterTodayBySUMMARYCategory[".$sumcategory."]: " . $expectedExpensesAfterTodayBySUMMARYCategory[$sumcategory]);
+        }
+
+        // sum subtotals for each sumcategory
+        foreach($expectedExpensesAfterTodayByCategory as $idx=>$categoryRcd) {
+            error_log("---- " . $idx . " ------");
+            error_log($categoryRcd);
+            $sumCat = collect($expenseCategoriesWithSummaryCats)
+                // ->where('name', $categoryRcd->category)
+                ->where('name', $idx)
+                ->first();
+            error_log("summary cat: " . json_encode($sumCat));
+            if($sumCat != null) {
+                error_log(" -- " . $sumCat->summaryCategory);
+                $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
+                // $expectedExpensesAfterTodayTotal += $categoryRcd;
+                // error_log("total: " . $expectedExpensesAfterTodayTotal);
+            }
+        }
+
+        // for rest of year expenses, need max of budget or actuals.
+        //      I have the budget.  Need to get actuals, sum by bigger category, and compare to budget.
+        $restOfYearActualsDB = DB::table("transactions")
+            ->select(
+                'category',
+                DB::raw('SUM(amount) AS amount')
+            )
+            ->whereNull('deleted_at')
+            ->whereBetween('trans_date', [$date, $lastOfThisYear])
+            ->where('account', 'not like', 'Maura%')
+            ->where('account', 'not like', 'Mike%')
+            ->whereIn('category', $expenseCategories)
             ->groupBy('category')
             ->get()
             ->toArray();
-        error_log("amounts: " . json_encode($ytdExpensesByCategory));
 
-        // init each subcategory total to 0
-        $ytdExpensesBySubcategory = [];
-        foreach($expenseSubcategories as $subcategory) {
-            $ytdExpensesBySubcategory[$subcategory] = 0.00;
-            error_log("subcategory: " . $subcategory);
+        error_log("============  restOfYearActualsDB ==========");
+        foreach($restOfYearActualsDB as $rest) error_log(json_encode($rest));
+
+        // left off here
+        // FIX FORMAT to associative array where key is category -> amount
+        $restOfYearActuals = [];
+        foreach($restOfYearActualsDB as $restElmt) {
+            $restOfYearActuals[$restElmt->category] = $restElmt->amount;
         }
 
-        // sum subtotals for each subcategory
-        foreach($ytdExpensesByCategory as $idx=>$categoryRcd) {
-            error_log("---- " . $idx . " ------");
-            error_log(json_encode($categoryRcd));
-            $subCat = collect($expenseCategoriesWithSubCats)
-                ->where('name', $categoryRcd->category)
+        // if no spending for a category, set it to 0
+        foreach($expenseCategories as $expenseCategory) {
+            if(!isset($restOfYearActuals[$expenseCategory])) $restOfYearActuals[$expenseCategory] = 0.0;
+        }
+
+        error_log(" ---- restOfYearActuals  (no DB) --------- ");
+        foreach($restOfYearActuals as $key=>$rest) error_log($key . ": " . $rest);
+
+        // sum subtotals for each sumcategory for expenses this month and rest of year
+        error_log(" --- ");
+        error_log("restOfYear by summary cats:");
+        foreach($restOfYearActuals as $idx=>$categoryRcd) {
+            // error_log("---- " . $idx . " ------");
+            // error_log($categoryRcd);
+            $sumCat = collect($expenseCategoriesWithSummaryCats)
+                ->where('name', $idx)
                 ->first();
-            error_log("sub cat: " . $subCat->subCategory);
-            $ytdExpensesBySubcategory[$subCat->subCategory] += $categoryRcd->amount;
-            // ... left off here (cat) ...
-            // now have sub-category & amount for ytd.  Send to view  & add rows to page.
+            // error_log("summary cat: " . json_encode($sumCat));
+            if($sumCat != null) {
+                // error_log(" -- " . $sumCat->summaryCategory);
+                $actualExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
+            }
         }
+        // error_log(" --------- actualExpensesAfterTodayBySUMMARYCategory --------");
+        // foreach($actualExpensesAfterTodayBySUMMARYCategory as $key=>$actual) error_log($key . ": " . $actual);
+
+        foreach($expectedExpensesAfterTodayBySUMMARYCategory as $key=>$expected) {
+            // use "min" to get the bigger number since they are NEGATIVE.
+            $expectedExpensesAfterTodayBySUMMARYCategory[$key] = min($expectedExpensesAfterTodayBySUMMARYCategory[$key], $actualExpensesAfterTodayBySUMMARYCategory[$key]);
+            $expectedExpensesAfterTodayTotal += $expectedExpensesAfterTodayBySUMMARYCategory[$key];
+        }
+
+        // round to nearest dollar
+        foreach($expectedExpensesAfterTodayBySUMMARYCategory as $sumcatRcdIdx=>$sumcatRcd) {
+            $expectedExpensesAfterTodayBySUMMARYCategory[$sumcatRcdIdx] = round($sumcatRcd, 0);
+        }
+        $expectedExpensesAfterTodayTotal = round($expectedExpensesAfterTodayTotal, 0);
+        
+        // get expenses for the current year by category
+        //      actuals for Jan - last month +
+        //      expected expenses for rest of year
+        $expectedExpensesForThisYearByCategory = [];
+        // $actualExpensesYTMDB = DB::table('transactions')
+        //     ->select('category', SUM('amount') as amount)
+        //     ->where('trans_date', '>=', $firstOfThisYear)
+        //     ->where('trans_date', '<', $date)
+        //     ->get()->toArray();
+        $actualExpensesYTM = DB::table('transactions')
+            ->select('category', DB::raw('SUM(amount) as amount'))
+            ->where('trans_date', '>=', $firstOfThisYear)
+            ->where('trans_date', '<', $date)
+            ->whereIn('category', $expenseCategories)
+            ->groupBy('category')
+            ->get()->toArray();
+        error_log("actualExpensesYTM:" . json_encode($actualExpensesYTM));
+
+        // keep track of categories so categories with no expenses yet can be appended
+        $categoriesCalculated = [];
+        foreach($actualExpensesYTM as $actual) {
+            $category = $actual->category;
+            $categoriesCalculated[] = $category;
+            $expectedExpensesForThisYearByCategory[$category] =
+                $actual->amount +
+                ($expectedExpensesAfterTodayByCategory[$category] ?? 0);
+        }
+        // find categories missed and include those
+        foreach($expenseCategories as $expenseCategory) {
+            if(!in_array($expenseCategory, $categoriesCalculated)) {
+                $expectedExpensesForThisYearByCategory[$expenseCategory] =
+                    $expectedExpensesAfterTodayByCategory[$expenseCategory] ?? 0;
+            }
+        }
+
+        error_log("expectedExpensesForThisYearByCategory:");
+        error_log(json_encode($expectedExpensesForThisYearByCategory));
+        foreach($expectedExpensesForThisYearByCategory as $cat=>$actual) {
+            error_log(" - " . $cat . ": " . $actual);
+        }
+
         // get budgeted spending for the rest of the year, starting with all of this month
         // left off here...
-        error_log("\n\n" . json_encode($ytdExpensesBySubcategory));
-        error_log("keys: " . json_encode(array_keys($ytdExpensesBySubcategory)));
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'ytdExpensesBySubcategory'));
+        error_log("\n\n" . json_encode($expectedExpensesAfterTodayBySUMMARYCategory));
+        error_log("keys: " . json_encode(array_keys($expectedExpensesAfterTodayBySUMMARYCategory)));
+
+        error_log("incomeValues: " );
+        foreach($incomeValues as $key=>$val) {
+            error_log(" - " . $key . ": " . $val);
+        }
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
     }
 
 }

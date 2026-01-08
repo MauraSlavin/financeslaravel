@@ -1,10 +1,12 @@
 <html>
     <head>
         <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+        <script src="https://unpkg.com/@popperjs/core@2"></script>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script> -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
         <meta name="csrf-token" content="{{ csrf_token() }}">
     </head>
 
@@ -15,7 +17,19 @@
 
         <!-- headers -->
         <h1>Retirement Forecast</h1> 
-
+        <!-- hidden fields to use in Script -->
+        <div hidden id="inflationFactors">{{ json_encode($inflationFactors) }}</div>
+        <div hidden id="expectedExpensesForThisYearByCategory">{{ json_encode($expectedExpensesForThisYearByCategory) }}</div>
+        <div hidden id="expenseCategoriesWithSummaryCats">{{ json_encode($expenseCategoriesWithSummaryCats) }}</div>
+        <div hidden id="defaultInflationFactor">{{ $defaultInflationFactor }}</div>
+        <div hidden id="incomeValues">{{ json_encode($incomeValues) }}</div>
+        @php 
+        $currentYear = date("Y");
+        $forecastLength = 2062 - $currentYear;
+        $forecastYears = range($currentYear, $currentYear + $forecastLength);
+        @endphp
+        <div hidden id="forecastYears">{{ json_encode($forecastYears) }}</div>
+        <div hidden id="currentYear">{{ $currentYear }}</div>
 
         <div class="retirementForecast">
             <table id="retirementForecastTable" class="table table-striped table-bordered" style="background-color: lavender;">
@@ -23,11 +37,6 @@
                     <tr>
                         <th style="width: 75px;" class="sticky-top bg-info">Type</th>
                         <th style="width: 20px;" class="sticky-top bg-info">Item</th>
-                        @php 
-                            $currentYear = date("Y");
-                            $forecastLength = 2062 - $currentYear;
-                            $forecastYears = range($currentYear, $currentYear + $forecastLength);
-                        @endphp
                         @foreach($forecastYears as $year)
                             <th style="width: 75px;" class="text-center sticky-top bg-info">
                                 {{ $year }}
@@ -90,10 +99,22 @@
                             @endif
                         @endforeach
                     </tr>
+                    @php 
+                        $acctsIncludedArray = [
+                            $spendingAccts,   // Spending
+                            $invAccts, // Investment
+                            $retTaxAccts,  // taxable retirement accts
+                            $retNonTaxAccts   // tax free retirement accts
+                        ];
+                    @endphp
                     @foreach($accountNames as $acctIdx=>$account)
                         <tr>
                             <td></td>
-                            <td>{{ $account }}</td>
+                            <td data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="{{ $acctsIncludedArray[$acctIdx] }}">
+                                {{ $account }}
+                            </td>
                             @foreach($forecastYears as $yearIdx=>$year)
                                 <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
@@ -134,11 +155,14 @@
                         @endforeach
                     </tr>
                     @foreach($accountNames as $acctIdx=>$account)
-                        <tr>
-                            <td></td>
-                            <td>{{ $account }}</td>
+                    <tr>
+                        <td></td>
+                        <td>{{ $account }}</td>
                             @foreach($forecastYears as $yearIdx=>$year)
-                                <td>{{ number_format((float)$incomeValues[$acctIdx][$yearIdx]) }}</td>
+                                @php 
+                                    $incomeValueArray = json_decode($incomeValues[$acctIdx]);
+                                @endphp
+                                <td>{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
                             @endforeach
                         </tr>
                     @endforeach
@@ -162,9 +186,10 @@
 
                     <!-- Expenses --> 
                     @php 
-                        $subCatNames = array_keys($ytdExpensesBySubcategory);
+                        $sumCatNames = array_keys($expectedExpensesAfterTodayBySUMMARYCategory);
                         // NO inherited IRA - income from that goes to LTC (no longer true)
                     @endphp
+                    <!-- header row for expenses, with date on first column -->
                     <tr id="expenseForecast">
                         <td style="background-color: red; color: white;">Expenses</td>
                         <td style="background-color: red; color: white;"></td>
@@ -176,61 +201,44 @@
                             @endif
                         @endforeach
                     </tr>
-                    @foreach($subCatNames as $expIdx=>$subcat)
+                    <!-- row for each summary category -->
+                    @foreach($sumCatNames as $expIdx=>$sumcat)
+                        @php 
+                            $categories = [];
+                            foreach($expenseCategoriesWithSummaryCats as $sums) {
+                                if($sums->summaryCategory == $sumcat) $categories[] = $sums->name;
+                            }
+                            $categories = implode(", ", $categories);
+                        @endphp
                         <tr>
                             <td></td>
-                            <td>{{ $subcat }}</td>
-                            <td>{{ $ytdExpensesBySubcategory[$subcat] }}</td>
-                            <!-- left off here -->
-                            <!-- add expenses for subsequent years here -->
+                            <!-- show categories for each summary category when hovered -->
+                            <td data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="{{ $categories }}">
+                                {{ $sumcat }}
+                            </td>
+                            <td>{{ $expectedExpensesAfterTodayBySUMMARYCategory[$sumcat] }}</td>
+                            <!-- expenses for subsequent years -->
+                            @foreach($forecastYears as $idxYear => $year)
+                                @if($idxYear != 0)
+                                <td id="{{ $sumcat }}{{ $year }}">{{ $sumcat }}{{ $year }}</td>
+                                @endif
+                            @endforeach
 
                         </tr>
                     @endforeach
-                    <!-- subtotal -->
+                    <!-- subtotals -->
                     <tr>
                         <td style="background-color: pink;">Sub-total:</td>
                         <td style="background-color: pink;"></td>
-
+                        <td style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
                         <!-- add sub totals here --> 
-
-                    </tr>
-
-                    @php 
-                        $accountNames = ["Total"];
-                        $accountValues = [
-                            [-1000, -2000, -3000, -400, -500, -600, -700, -800, -800, -100, -1100, -1200, -1300, -1400, -1500, -1600, -1700, -1800, -1900, -200, -2100, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -100, -200, -300, -400, -500, -600, -700, -800, -800, -100, -1100, -1200, -1300, -1400, -1500, -1600, -1700, -1800, -1900, -200, -2100, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -100, -200, -300, -400, -500, -600, -700, -800, -800, -100, -1100, -1200, -1300, -1400, -1500, -1600, -1700, -1800, -1900, -200, -2100, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -100, -200, -300, -400, -500, -600, -700, -800, -800, -100, -11]
-                            // [-100, -200, -300, -400, -500, -600, -700, -800, -800, -100, -1100, -200, -300, -400, -500, -600, -700, -800, -800, -200, -200, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -400, -200, -300, -400, -500, -600, -700, -800, -800, -1000, -1100, -200, -300, -400, -500, -600, -700, -800, -800, -200, -200, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -1100, -200, -300, -400, -500, -600, -700, -800, -800, -1100, -11100, -200, -300, -400, -500, -600, -700, -800, -800, -200, -200, -2200, -2300, -2400, -2500, -2600, -2700, -2800, -2900, -300, -100, -200, -300, -400, -500, -600, -700, -800, -800, -11100, -111 ],
-                            // [-100, -200, -300, -40, -50, -60, -70, -80, -80, -10, -110, -120, -130, -140, -150, -160, -170, -180, -190, -20, -210, -220, -230, -240, -250, -260, -270, -280, -290, -30, -10, -20, -30, -40, -50, -60, -70, -80, -80, -10, -110, -120, -130, -140, -150, -160, -170, -180, -190, -20, -210, -220, -230, -240, -250, -260, -270, -280, -290, -30, -10, -20, -30, -40, -50, -60, -70, -80, -80, -10, -110, -120, -130, -140, -150, -160, -170, -180, -190, -20, -210, -220, -230, -240, -250, -260, -270, -280, -290, -30, -10, -20, -30, -40, -50, -60, -70, -80, -80, -10, -11],
-                            // [-10, -20, -30, -40, -50, -60, -70, -80, -80, -10, -110, -20, -30, -40, -50, -60, -70, -80, -80, -20, -20, -220, -230, -240, -250, -260, -270, -280, -290, -30, -40, -20, -30, -40, -50, -60, -70, -80, -80, -100, -110, -20, -30, -40, -50, -60, -70, -80, -80, -20, -20, -220, -230, -240, -250, -260, -270, -280, -290, -30, -110, -20, -30, -40, -50, -60, -70, -80, -80, -110, -1110, -20, -30, -40, -50, -60, -70, -80, -80, -20, -20, -220, -230, -240, -250, -260, -270, -280, -290, -30, -10, -20, -30, -40, -50, -60, -70, -80, -80, -1110, -111 ],
-                        ];
-                    @endphp
-                    <tr id="expensesForecast">
-                        <td style="background-color: red; color: white;">Expenses</td>
-                        <td style="background-color: red; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
-                            @if($idxYear == 0)
-                            <td style="background-color: red; color: white;">After {{ $date }}</td>
-                            @else
-                            <td style="background-color: red; color: white;"></td>
+                            @if($idxYear != 0)   <!-- first column is already done -->
+                            <td id="expenses{{ $year }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
                             @endif
                         @endforeach
-                    </tr>
-                    @foreach($accountNames as $acctIdx=>$account)
-                        <tr>
-                            <td></td>
-                            <td>{{ $account }}</td>
-                            @foreach($forecastYears as $yearIdx=>$year)
-                                <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                    <!-- subtotal -->
-                    <tr>
-                        <td style="background-color: pink;">Sub-total:</td>
-                        <td style="background-color: pink;"></td>
-                        @foreach($forecastYears as $year)
-                            <td style="background-color: pink;">(calc)</td>
-                        @endforeach                        
                     </tr>
 
                     <!-- break -->
@@ -329,10 +337,9 @@
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Spending:
                     <ul>
-                        <li>Savings</li>
+                        <li>Savings (Big Bills)</li>
                         <li>Checking</li>
-                        <li>Big Bills</li>
-                        <li>subtract CC (Disc & VISA) balances</li>
+                        <li>subtract CC (Disc & VISA) balances - I'm not doing this yet (12/25/25)</li>
                     </ul>
                 </li>
                 <li>Investment:
@@ -369,11 +376,15 @@
                         <li>House</li>
                     </ul>
                 </li>
+                <li>Expenses for current year are the max of the budget vs. actual expenses between the first of the current month through the end of the year.</li>
             </ul>
         </div>
 
         
         <script>
+            // needed for tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            // const tooltipList = [...tooltipTriggerList].map(el => new bootstrap.Tooltip(tooltipTriggerEl));
 
             $.ajaxSetup({
                 headers: {
@@ -383,6 +394,136 @@
 
             $(document).ready(function() {
 
+                // left off here ...
+                function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues) {
+
+                    function calcIncomeRelatedExpense(year, currentYear, lastYearsExpense, inflationFactor, incomeValue) {
+                            
+                        var yearIdx = year-currentYear;
+                        var thisYearsExpense = 0;
+                        incomeValue = JSON.parse(incomeValue);
+
+                        // if no income, thisYearsExpense is 0
+                        console.log("incomeValue["+yearIdx+"]: ", incomeValue[yearIdx]);
+                        if(incomeValue[yearIdx] == 0 ) thisYearsExpense = 0;
+                        // if there is income, increase Expense by inflation factor
+                        else {
+                            thisYearsExpense = Math.round(lastYearsExpense * (1 + inflationFactor/100));
+                        }
+                        console.log("lastYearsExpense: ", lastYearsExpense, "; thisYearsExpense: ", thisYearsExpense, "; inflationFactor: ", inflationFactor);
+                        return thisYearsExpense;
+                    }
+
+                    // last year expenses set to current year expenses by category
+                    var lastYearsExpenses = expectedExpensesForThisYearByCategory;
+
+                    // categories with different (non-default) inflation factors
+                    var inflationFactorCategories = Object.keys(inflationFactors);
+
+                    console.log("expectedExpensesForThisYearByCategory:", expectedExpensesForThisYearByCategory);
+                    // for each year starting with next year
+                    forecastYears.shift();
+
+                    var futureExpenses = [];
+                    var futureExpensesSummary = [];
+                    var futureExpensesYearlyTotal = [];
+                    var summaryCategories = [];
+
+                    const currentYear = $('#currentYear').text();
+                    console.log("currentYear: ", currentYear);
+                    
+                    forecastYears.forEach(year => {
+                        console.log("------------ Year: ",year," ----------------");
+                        futureExpenses[year] = [];
+                        futureExpensesSummary[year] = [];
+                        futureExpensesYearlyTotal[year] = 0;
+                        
+                        // init this year's expenses by category & summary category
+                        futureExpenses[year] = [];
+                        futureExpensesSummary[year] = [];
+                        expenseCategoriesWithSummaryCats.forEach( summary => {
+                            const category = summary['name'];
+                            const summaryCategory = summary['summaryCategory'];
+                            futureExpenses[year][category] = 0;
+                            if(typeof futureExpensesSummary[year][summaryCategory] == 'undefined') {
+                                futureExpensesSummary[year][summaryCategory] = 0;
+                                summaryCategories.push(summaryCategory);
+                            }
+                        });
+
+                        // for each catagory, 
+                        expenseCategoriesWithSummaryCats.forEach( summary => {
+                            const category = summary['name'];
+                            const summaryCategory = summary['summaryCategory'];
+                            if(category == 'RentalExpense' || category == 'WorkExpense') console.log(" ---- category: ", category, "; summary category: ", summaryCategory);
+
+                            // get inflation factor
+                            if(inflationFactorCategories.includes(category)) {
+                                inflationFactor = inflationFactors[category];
+                            } else {
+                                inflationFactor = defaultInflationFactor;
+                            }
+                            if(category == 'RentalExpense' || category == 'WorkExpense') console.log(" - inflationFactor: ", inflationFactor);
+
+                            // handle special cases separately
+                            if(category == 'RentalExpense' || category == 'WorkExpense') {
+                                // RentalIncome is index 2 in incomeValues; WorkExpense based on IncomePaycheck existing - index 0
+                                if(category == 'RentalExpense') catIdx = 2;
+                                else if(category == 'WorkExpense') catIdx = 0;
+                                console.log("incomeValues["+catIdx+"]: ", incomeValues[catIdx]);
+                                futureExpenses[year][category] = calcIncomeRelatedExpense(year, currentYear, lastYearsExpenses[category], inflationFactor, incomeValues[catIdx]);
+                            } else {
+                                // increase expense by inflation.  Use category's inflation factor, or default
+                                futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
+                            }
+                            // add to summary category
+                            futureExpensesSummary[year][summaryCategory] += futureExpenses[year][category];
+                            //      add new amt to year total
+                            futureExpensesYearlyTotal[year] += futureExpenses[year][category];
+
+                            if(category == 'RentalExpense' || category == 'WorkExpense') {
+                                console.log(" - last year: ", lastYearsExpenses[category], ";  futureExpenses[year][category]: ", futureExpenses[year][category]);
+                                console.log(" - summary, so far (", summaryCategory, "): ", futureExpensesSummary[year][summaryCategory])
+                                console.log(" - yearly total, so far: ", futureExpensesYearlyTotal[year]);
+                            }
+                        });                        
+                        
+                        // write this year's expenses to page
+                        summaryCategories.forEach( summaryCategory => {
+                            $("#" + summaryCategory + year).text(futureExpensesSummary[year][summaryCategory]);
+                        });
+                        $("#expenses" + year).text(futureExpensesYearlyTotal[year]);
+
+                        // set this year's expenses to last year's in preparation for the next year's calculations
+                        lastYearsExpenses =futureExpenses[year];
+                    }); // end of foreach year
+
+                }   // end function futureExpenses
+
+                // get inflationFactors from page
+                const inflationFactors = JSON.parse($("#inflationFactors").text());
+                console.log(inflationFactors);
+
+                // get forecastYears from page
+                const forecastYears = JSON.parse($("#forecastYears").text());
+                console.log(forecastYears);
+
+                // get expenses for current year by category
+                const expectedExpensesForThisYearByCategory = JSON.parse($("#expectedExpensesForThisYearByCategory").text());
+                
+                // get expense Categories With Summary Cats
+                const expenseCategoriesWithSummaryCats = JSON.parse($("#expenseCategoriesWithSummaryCats").text());
+                console.log("expenseCategoriesWithSummaryCats: " , expenseCategoriesWithSummaryCats);
+                
+                // get default inflation factor
+                const defaultInflationFactor = $("#defaultInflationFactor").text();
+                console.log("defaultInflationFactor: ", defaultInflationFactor, " (", typeof defaultInflationFactor, ")");
+                
+                // get incomeValues
+                const incomeValues = JSON.parse($("#incomeValues").text());
+ 
+                // need current year expenses by category and summary category
+                calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
 
 
             });
