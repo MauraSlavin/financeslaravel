@@ -39,7 +39,7 @@
                 <tbody>
                     <!-- show data for each type of data -->
                     @php
-                        $types =    ["Assumption",               "Income",               "Values",               "Balances",                "Constants"];
+                        $types =    ["Assumption",               "Income",               "Values (1st of mon)",  "Balances (1st of mon)",   "Constants"];
                         $vars =     [$retirementDataAssumptions, $retirementDataIncomes, $retirementDataValues,  $retirementDataBalances,   $retirementDataConstants];
                         $colors =   ["darkorange",               "lightseagreen",        "blue",                 "purple",                  "black"];
 
@@ -550,7 +550,7 @@
                         contentType: 'application/json',
 
                         success: function(response) {
-                            alert("Input retirement data saved to retirementData table.");
+                            console.log("Input retirement data saved to retirementData table.");
                         },
                         error: function(xhr, status, error) {
                             console.error('Error:', error);
