@@ -1479,12 +1479,14 @@ class TransactionsController extends Controller
             // get transaction to update from payload
             $data = json_decode($request->getContent(), true);
             $transaction = $data['newTransaction'];
+            error_log("transaction: " . $transaction);
 
             // remove url encoding
             $transaction = urldecode($transaction);
 
             // put it back as an object (from json)
             $transaction = json_decode($transaction);
+            error_log("transaction: " . json_encode($transaction));
             $id = $transaction->id;
 
             // set fields to be updated
@@ -1502,8 +1504,14 @@ class TransactionsController extends Controller
                 'total_amt' => $transaction->total_amt,
                 'total_key' => $transaction->total_key,
                 'notes' => $transaction->notes,
-                'copied' => $transactions->copied
+                'copied' => $transaction->copied
             ];
+
+            error_log(" ***** ");
+            error_log("id: " . $id);
+            error_log("dataToUpdate: " );
+            foreach($dataToUpdate as $key=>$datum) error_log(" - " . $key . ": " . $datum);
+            error_log(" ***** ");
 
             $response = DB::table("transactions")
                 ->where('id', $id)
@@ -1516,7 +1524,6 @@ class TransactionsController extends Controller
 
         } catch (\Exception $e) {
             // Log the error
-            logger()->error("Error updating transaction: " . $e->getMessage());
             error_log("Error updating transaction: " . $e->getMessage());
            
             // Re-throw the exception
@@ -4522,7 +4529,7 @@ class TransactionsController extends Controller
                             ->where('id', $remoteRcd->id)
                             ->first();
                         
-                        error_log(" - localRcd (to be updated): " . $localRcd);
+                        error_log(" - localRcd (to be updated): " . json_encode($localRcd));
 
                         // add details to message - only show differences
                         if($localRcd == null) {
@@ -4570,7 +4577,7 @@ class TransactionsController extends Controller
                     error_log(" - have changed local rcds");
 
                     // let user see what's being copied.  Can save and switch back if it's not right. (Although not that easily)
-                    $newMsg .= "<br><br>" . $table . " Table; Records in the REMOTE table are being <u><b>UPDATED</b></u> to match the local table by id.";
+                    $newMsg .= '<br><br><u><span style="font-weight: bold; font-size: 20px;">' . $table . '</span></u> Table; Records in the REMOTE table are being <u><b>UPDATED</b></u> to match the local table by id.';
                     foreach($chgdLocalRecords as $localRcd) {
                         // set msg to what is being updated in REMOTE
 
@@ -4919,7 +4926,7 @@ class TransactionsController extends Controller
             $ltcDataDB = DB::table("retirementdata")
                 ->select("description", "data", "type")
                 ->whereIn("description", ["LTCinWF", "LTCinWFdate", "LTCInvGrowth"])
-                ->whereIn("type", ["inpt", "con"])
+                ->whereIn("type", ["inpt", "con", "assm"])
                 ->whereNull("deleted_at")
                 ->orderBy("type", "asc")
                 ->get()->toArray();
@@ -5488,6 +5495,18 @@ class TransactionsController extends Controller
         error_log("expenseCategoriesWithSummaryCats: ");
         foreach($expenseCategoriesWithSummaryCats as $sumcat) error_log(" - " . json_encode($sumcat));
 
+        $sumCategoriesWithDetailCategories = [];
+        foreach($expenseCategoriesWithSummaryCats as $expAndSumCat) {
+            if(!isset($sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory])) {
+                $sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory] = [];
+            }
+            $sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory][] = $expAndSumCat->name;
+        }
+        error_log("sumCategoriesWithDetailCategories:");
+        foreach($sumCategoriesWithDetailCategories as $sum=>$det) {
+            error_log(" - " . $sum . "; " . json_encode($det));
+        }
+
         $expenseCategories = [];
         $expenseCategories = array_column($expenseCategoriesWithSummaryCats, 'name');
         error_log("expenseCategories: ");
@@ -5699,7 +5718,7 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
     }
 
 }

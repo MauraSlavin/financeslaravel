@@ -9,21 +9,25 @@
 <hr>
 
   <h2>NEXT:  ***  2025-10-13-retirement ***</h2>
+    <p>WORKING ON...<p>
+    <ul>
+      <li>sumCategoriesWithDetailCategories...</li>
+      <li>Use <u>sumCategoriesWithDetailCategories</u> to make collapsable list of details in retirementforecast blade</li>
+    </ul>
     <p>Enhancements made in this branch...</p>
     <ul>
-      <li>SIDETRACKED updating how local & remote are sync'd</li>
+      <li>SHOULD be working - SIDETRACKED updating how local & remote are sync'd</li>
       <li>WORKING on retirement analysis</li>
     </ul>
     <p>Here's the retirement stuff...</p>
     <ul>
-      <li> Did a push on 11/30/25 </li>
+      <li> Did a push on 1/7/26 </li>
       <br>
-      <li>SYNC ---    *** NOT WORKING!! ***
+      <li>SYNC ---    *** should be WORKING ***
       <br>
       <br>-- search for "left off here sync"
       <br>-- copying new records done, updating changed records by id done.
       <br>---- NEEDS testing
-      <br>---- What happens when there is no matching id in other table??
       </li>
       <br>
       <li>DONE - Column in accts for how it shows up in Retirement Forecast</li>
