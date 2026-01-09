@@ -21,6 +21,7 @@
         <div hidden id="inflationFactors">{{ json_encode($inflationFactors) }}</div>
         <div hidden id="expectedExpensesForThisYearByCategory">{{ json_encode($expectedExpensesForThisYearByCategory) }}</div>
         <div hidden id="expenseCategoriesWithSummaryCats">{{ json_encode($expenseCategoriesWithSummaryCats) }}</div>
+        <div hidden id="sumCategoriesWithDetailCategories">{{ json_encode($sumCategoriesWithDetailCategories) }}</div>
         <div hidden id="defaultInflationFactor">{{ $defaultInflationFactor }}</div>
         <div hidden id="incomeValues">{{ json_encode($incomeValues) }}</div>
         @php 
@@ -201,8 +202,10 @@
                             @endif
                         @endforeach
                     </tr>
-                    <!-- row for each summary category -->
+
+                    <!-- row for each EXPENSE summary category -->
                     @foreach($sumCatNames as $expIdx=>$sumcat)
+                        <!-- get $categories string -->
                         @php 
                             $categories = [];
                             foreach($expenseCategoriesWithSummaryCats as $sums) {
@@ -210,25 +213,39 @@
                             }
                             $categories = implode(", ", $categories);
                         @endphp
+                        <!-- SUMMARY category -->
                         <tr>
-                            <td></td>
+                            <td  style="background-color: lightpink;"></td>
                             <!-- show categories for each summary category when hovered -->
                             <td data-bs-toggle="tooltip"
                                 data-bs-placement="top"
-                                title="{{ $categories }}">
+                                title="{{ $categories }}" style="background-color: lightpink;">
                                 {{ $sumcat }}
                             </td>
-                            <td>{{ $expectedExpensesAfterTodayBySUMMARYCategory[$sumcat] }}</td>
-                            <!-- expenses for subsequent years -->
+                            <td style="background-color: lightpink;">{{ $expectedExpensesAfterTodayBySUMMARYCategory[$sumcat] }}</td>
+                            <!-- summary category expenses for subsequent years -->
                             @foreach($forecastYears as $idxYear => $year)
                                 @if($idxYear != 0)
-                                <td id="{{ $sumcat }}{{ $year }}">{{ $sumcat }}{{ $year }}</td>
+                                <td id="{{ $sumcat }}{{ $year }}" style="background-color: lightpink;">{{ $sumcat }}{{ $year }}</td>
                                 @endif
                             @endforeach
 
                         </tr>
+                        <!-- row for each EXPENSE detail category --> 
+                         @foreach($sumCategoriesWithDetailCategories[$sumcat] as $detailCategory)
+                            <tr>
+                                <td></td>
+                                <!-- show categories for each summary category when hovered -->
+                                <td>{{ $detailCategory }}</td>
+                                <!-- expenses for subsequent years -->
+                                @foreach($forecastYears as $idxYear => $year)
+                                    <td id="{{ $detailCategory }}{{ $year }}">{{ $detailCategory }}{{ $year }}</td>
+                                @endforeach
+                            </tr>
+                         @endforeach
                     @endforeach
-                    <!-- subtotals -->
+
+                    <!-- EXPENSES subtotals -->
                     <tr>
                         <td style="background-color: pink;">Sub-total:</td>
                         <td style="background-color: pink;"></td>
@@ -395,7 +412,7 @@
             $(document).ready(function() {
 
                 // left off here ...
-                function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues) {
+                function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues) {
 
                     function calcIncomeRelatedExpense(year, currentYear, lastYearsExpense, inflationFactor, incomeValue) {
                             
@@ -514,6 +531,10 @@
                 // get expense Categories With Summary Cats
                 const expenseCategoriesWithSummaryCats = JSON.parse($("#expenseCategoriesWithSummaryCats").text());
                 console.log("expenseCategoriesWithSummaryCats: " , expenseCategoriesWithSummaryCats);
+
+                // get summary Categories With detail Cats (same data as expenseCategoriesWithSummaryCats above structured differently)
+                const sumCategoriesWithDetailCategories = JSON.parse($("#sumCategoriesWithDetailCategories").text());
+                console.log("sumCategoriesWithDetailCategories: " , sumCategoriesWithDetailCategories);
                 
                 // get default inflation factor
                 const defaultInflationFactor = $("#defaultInflationFactor").text();
@@ -523,7 +544,7 @@
                 const incomeValues = JSON.parse($("#incomeValues").text());
  
                 // need current year expenses by category and summary category
-                calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
+                calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
 
 
             });
