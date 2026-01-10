@@ -38,6 +38,7 @@
                     <tr>
                         <th style="width: 75px;" class="sticky-top bg-info">Type</th>
                         <th style="width: 20px;" class="sticky-top bg-info">Item</th>
+                        <th sytle="width: 20px;" class="sticky-top bg-info">Inf</th>
                         @foreach($forecastYears as $year)
                             <th style="width: 75px;" class="text-center sticky-top bg-info">
                                 {{ $year }}
@@ -58,12 +59,14 @@
                     <tr>
                         <td>Mike turns</td>
                         <td></td>
+                        <td></td>
                         @foreach($mikeAges as $age)
                             <td>{{ $age }}</td>
                         @endforeach
                     </tr>
                     <tr>
                         <td>Maura turns</td>
+                        <td></td>
                         <td></td>
                         @foreach($mauraAges as $age)
                             <td>{{ $age }}</td>
@@ -73,6 +76,7 @@
                     <!-- break -->
                     <tr>
                         <td style="background-color: #36454F; height: 10px;"></td>
+                        <td style="background-color: #36454F;"></td>
                         <td style="background-color: #36454F;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: #36454F;"></td>
@@ -91,6 +95,7 @@
                     @endphp
                     <tr id="beginningForecast">
                         <td style="background-color: blue; color: white;">Beginning balances</td>
+                        <td style="background-color: blue; color: white;"></td>
                         <td style="background-color: blue; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
@@ -116,6 +121,7 @@
                                 title="{{ $acctsIncludedArray[$acctIdx] }}">
                                 {{ $account }}
                             </td>
+                            <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
                                 <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
@@ -125,6 +131,7 @@
                     <tr>
                         <td style="background-color: lightblue;">Sub-total:</td>
                         <td style="background-color: lightblue;"></td>
+                        <td style="background-color: lightblue;"></td>
                         @foreach($forecastYears as $idxSubTot=>$year)
                             <td style="background-color: lightblue;">{{ number_format((float)$beginBalances[$idxSubTot]) }}</td>
                         @endforeach                        
@@ -133,6 +140,7 @@
                     <!-- break -->
                     <tr>
                         <td style="background-color: #36454F; height: 10px;"></td>
+                        <td style="background-color: #36454F;"></td>
                         <td style="background-color: #36454F;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: #36454F;"></td>
@@ -147,6 +155,7 @@
                     <tr id="incomeForecast">
                         <td style="background-color: green; color: white;">Income</td>
                         <td style="background-color: green; color: white;"></td>
+                        <td style="background-color: green; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
                             <td style="background-color: green; color: white;">After {{ $date }}</td>
@@ -159,17 +168,19 @@
                     <tr>
                         <td></td>
                         <td>{{ $account }}</td>
-                            @foreach($forecastYears as $yearIdx=>$year)
-                                @php 
-                                    $incomeValueArray = json_decode($incomeValues[$acctIdx]);
-                                @endphp
-                                <td>{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
-                            @endforeach
-                        </tr>
+                        <td></td>
+                        @foreach($forecastYears as $yearIdx=>$year)
+                            @php 
+                                $incomeValueArray = json_decode($incomeValues[$acctIdx]);
+                            @endphp
+                            <td>{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
+                        @endforeach
+                    </tr>
                     @endforeach
                     <!-- subtotal -->
                     <tr>
                         <td style="background-color: lightgreen;">Sub-total:</td>
+                        <td style="background-color: lightgreen;"></td>
                         <td style="background-color: lightgreen;"></td>
                         @foreach($forecastYears as $idxSubTot=>$year)
                             <td style="background-color: lightgreen;">{{ number_format((float)$incomeSubTots[$idxSubTot]) }}</td>
@@ -193,6 +204,7 @@
                     <!-- header row for expenses, with date on first column -->
                     <tr id="expenseForecast">
                         <td style="background-color: red; color: white;">Expenses</td>
+                        <td style="background-color: red; color: white;"></td>
                         <td style="background-color: red; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
@@ -222,11 +234,12 @@
                                 title="{{ $categories }}" style="background-color: lightpink;">
                                 {{ $sumcat }}
                             </td>
+                            <td  style="background-color: lightpink;"></td>  <!-- inflation column -->
                             <td style="background-color: lightpink;">{{ $expectedExpensesAfterTodayBySUMMARYCategory[$sumcat] }}</td>
                             <!-- summary category expenses for subsequent years -->
                             @foreach($forecastYears as $idxYear => $year)
                                 @if($idxYear != 0)
-                                <td id="{{ $sumcat }}{{ $year }}" style="background-color: lightpink;">{{ $sumcat }}{{ $year }}</td>
+                                <td id="{{ $sumcat }}{{ $year }}SUM" style="background-color: lightpink;">{{ $sumcat }}{{ $year }}</td>
                                 @endif
                             @endforeach
 
@@ -237,9 +250,14 @@
                                 <td></td>
                                 <!-- show categories for each summary category when hovered -->
                                 <td>{{ $detailCategory }}</td>
+                                <td id="{{ $detailCategory }}INF">{{ $detailCategory }}inf</td>
                                 <!-- expenses for subsequent years -->
                                 @foreach($forecastYears as $idxYear => $year)
+                                    @if($idxYear == 0)
+                                    <td id="{{ $detailCategory }}{{ $year }}">{{ round($expectedExpensesAfterTodayByCategory[$detailCategory] ?? 0 ) }}</td>
+                                    @else
                                     <td id="{{ $detailCategory }}{{ $year }}">{{ $detailCategory }}{{ $year }}</td>
+                                    @endif
                                 @endforeach
                             </tr>
                          @endforeach
@@ -280,6 +298,7 @@
                     <tr id="endingForecast">
                         <td style="background-color: blue; color: white;">Ending balances</td>
                         <td style="background-color: blue; color: white;"></td>
+                        <td style="background-color: blue; color: white;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: blue; color: white;">Dec 31</td>
                         @endforeach
@@ -288,6 +307,7 @@
                         <tr>
                             <td></td>
                             <td>{{ $account }}</td>
+                            <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
                                 <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
@@ -297,6 +317,7 @@
                     <tr>
                         <td style="background-color: lightblue;">Sub-total:</td>
                         <td style="background-color: lightblue;"></td>
+                        <td style="background-color: lightblue;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: lightblue;">(calc)</td>
                         @endforeach                        
@@ -305,6 +326,7 @@
                     <!-- break -->
                     <tr>
                         <td style="background-color: #36454F; height: 10px;"></td>
+                        <td style="background-color: #36454F;"></td>
                         <td style="background-color: #36454F;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: #36454F;"></td>
@@ -322,6 +344,7 @@
                     <tr>
                         <td style="background-color: purple; color: white;">Misc Balances</td>
                         <td style="background-color: purple; color: white;"></td>
+                        <td style="background-color: purple; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
                             <td style="background-color: purple; color: white;">{{ $date }}</td>
@@ -334,6 +357,7 @@
                         <tr>
                             <td></td>
                             <td>{{ $account }}</td>
+                            <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
                                 <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
@@ -350,6 +374,10 @@
                 <li>Income from Inherited IRA intended for LTC</li>
                 <li>Investment Growth: (end bal before growth - begin bal)/2 * growth
                     <br>or (begin bal - w/ds) * growth
+                </li>
+                <li>Health care inflation assumed to be 5% (in budget table)
+                    <br>US Health Care Inflation Rate is at 3.05%, compared to 3.28% last month and 3.08% last year. This is lower than the long term average of 5.09%.</br>
+                    <br>Source: https://ycharts.com/indicators/us_health_care_inflation_rate#:~:text=Basic%20Info,the%20US%20Consumer%20Price%20Index.</br>
                 </li>
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Spending:
@@ -421,13 +449,11 @@
                         incomeValue = JSON.parse(incomeValue);
 
                         // if no income, thisYearsExpense is 0
-                        console.log("incomeValue["+yearIdx+"]: ", incomeValue[yearIdx]);
                         if(incomeValue[yearIdx] == 0 ) thisYearsExpense = 0;
                         // if there is income, increase Expense by inflation factor
                         else {
                             thisYearsExpense = Math.round(lastYearsExpense * (1 + inflationFactor/100));
                         }
-                        console.log("lastYearsExpense: ", lastYearsExpense, "; thisYearsExpense: ", thisYearsExpense, "; inflationFactor: ", inflationFactor);
                         return thisYearsExpense;
                     }
 
@@ -471,8 +497,8 @@
                         // for each catagory, 
                         expenseCategoriesWithSummaryCats.forEach( summary => {
                             const category = summary['name'];
+                            console.log("category: ", category);
                             const summaryCategory = summary['summaryCategory'];
-                            if(category == 'RentalExpense' || category == 'WorkExpense') console.log(" ---- category: ", category, "; summary category: ", summaryCategory);
 
                             // get inflation factor
                             if(inflationFactorCategories.includes(category)) {
@@ -480,14 +506,18 @@
                             } else {
                                 inflationFactor = defaultInflationFactor;
                             }
-                            if(category == 'RentalExpense' || category == 'WorkExpense') console.log(" - inflationFactor: ", inflationFactor);
 
+                            // put inflation factor on page, highlighing non-default values
+                            if(inflationFactor == defaultInflationFactor) {
+                                $('#' + category + 'INF').text(inflationFactor);
+                            } else {
+                                $('#' + category + 'INF').text(inflationFactor).css('background-color', 'yellow');
+                            }
                             // handle special cases separately
                             if(category == 'RentalExpense' || category == 'WorkExpense') {
                                 // RentalIncome is index 2 in incomeValues; WorkExpense based on IncomePaycheck existing - index 0
                                 if(category == 'RentalExpense') catIdx = 2;
                                 else if(category == 'WorkExpense') catIdx = 0;
-                                console.log("incomeValues["+catIdx+"]: ", incomeValues[catIdx]);
                                 futureExpenses[year][category] = calcIncomeRelatedExpense(year, currentYear, lastYearsExpenses[category], inflationFactor, incomeValues[catIdx]);
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
@@ -495,19 +525,18 @@
                             }
                             // add to summary category
                             futureExpensesSummary[year][summaryCategory] += futureExpenses[year][category];
+
+                            // put detail on page
+                            $("#" + category + year).text(futureExpenses[year][category]);
+
                             //      add new amt to year total
                             futureExpensesYearlyTotal[year] += futureExpenses[year][category];
 
-                            if(category == 'RentalExpense' || category == 'WorkExpense') {
-                                console.log(" - last year: ", lastYearsExpenses[category], ";  futureExpenses[year][category]: ", futureExpenses[year][category]);
-                                console.log(" - summary, so far (", summaryCategory, "): ", futureExpensesSummary[year][summaryCategory])
-                                console.log(" - yearly total, so far: ", futureExpensesYearlyTotal[year]);
-                            }
                         });                        
                         
                         // write this year's expenses to page
                         summaryCategories.forEach( summaryCategory => {
-                            $("#" + summaryCategory + year).text(futureExpensesSummary[year][summaryCategory]);
+                            $("#" + summaryCategory + year + "SUM").text(futureExpensesSummary[year][summaryCategory]);
                         });
                         $("#expenses" + year).text(futureExpensesYearlyTotal[year]);
 
