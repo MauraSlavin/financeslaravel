@@ -5599,6 +5599,7 @@ class TransactionsController extends Controller
             if($sumCat != null) {
                 error_log(" -- " . $sumCat->summaryCategory);
                 $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
+                error_log("expectedExpensesAfterTodayBySUMMARYCategory[". $sumCat->summaryCategory . "]: " . $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory]);
                 // $expectedExpensesAfterTodayTotal += $categoryRcd;
                 // error_log("total: " . $expectedExpensesAfterTodayTotal);
             }
@@ -5718,7 +5719,7 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
     }
 
 }

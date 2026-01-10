@@ -9,10 +9,24 @@
 <hr>
 
   <h2>NEXT:  ***  2025-10-13-retirement ***</h2>
-    <p>WORKING ON...<p>
+    <p>Last push: 1/10/26</p>
+    <p>To Do:<p>
     <ul>
-      <li>sumCategoriesWithDetailCategories...</li>
-      <li>Use <u>sumCategoriesWithDetailCategories</u> to make collapsable list of details in retirementforecast blade</li>
+      <li>fix future expenses...
+        <ul>
+          <li>ExtraSpending</li>
+          <li>Doctor (when Maura starts Medicare)?</li>
+          <li>IncomeTaxes</li>
+          <li>IncomeOtherWH</li>
+        </ul>
+      </li>
+      <li>Retirement Income</li>
+      <li>Investment Growth</li>
+      <li>Ending balances</li>
+      <li>future Beginning balances</li>
+      <li>Misc balances</li>
+      <li>LTC balance</li>
+      <li>Make sure I'm using data on Retirement Input page</li>
     </ul>
     <p>Enhancements made in this branch...</p>
     <ul>
@@ -21,8 +35,6 @@
     </ul>
     <p>Here's the retirement stuff...</p>
     <ul>
-      <li> Did a push on 1/7/26 </li>
-      <br>
       <li>SYNC ---    *** should be WORKING ***
       <br>
       <br>-- search for "left off here sync"
