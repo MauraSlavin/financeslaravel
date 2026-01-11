@@ -172,8 +172,9 @@
                         @foreach($forecastYears as $yearIdx=>$year)
                             @php 
                                 $incomeValueArray = json_decode($incomeValues[$acctIdx]);
+                                $htmlId = str_replace(' ', '', $account) . $year;
                             @endphp
-                            <td>{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
+                            <td id="{{ $htmlId }}">{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
                         @endforeach
                     </tr>
                     @endforeach
@@ -439,7 +440,7 @@
 
             $(document).ready(function() {
 
-                // left off here ...
+                // calculate future forecasted expenses
                 function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues) {
 
                     function calcIncomeRelatedExpense(year, currentYear, lastYearsExpense, inflationFactor, incomeValue) {
@@ -575,6 +576,8 @@
                 // need current year expenses by category and summary category
                 calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
 
+                // need future retirement income
+                calcRetirementIncome(forecastYears);
 
             });
 
