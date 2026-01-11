@@ -5376,20 +5376,77 @@ class TransactionsController extends Controller
         }   // end of function getSSIncomes
 
 
-        function  getTaxableRetIncomes($date) {
+        function  getRetIncomes($date) {
+
             // left off here
+            $taxableRetIncomes = [];
+            $nonTaxableRetIncomes = [];
+
+            // need 
+            //  invWD
+            //  RetDistribBegin
+            //  WF-IRA-non-taxable-Roth
+            //  WF-IRA-Taxable-Trad
+            //  TIAA
+            //  RetirementDisc
+            //  (don't need WF-Inv-Bal - not retirement funds)
+            //  LTCinWF
+            //  LTCinWFdate
+            //  LTCinvGrowth
+            //  
+            // See 
+            //  https://docs.google.com/spreadsheets/d/1R3-hUoFWOH0Uy_slsT8UsA8CUeDRr2heCF57Z44LCYo/edit?gid=0#gid=0
+            //  ...for LTC details
+            //  NOTES: 
+            //      LTC is in Traditional IRA since LTC might be tax deductible
+            //      ALL of Inherited IRA is considered earmarked for LTC
+
+            $retDataFields = [
+                'invWD',
+                'RetDistribBegin',
+                'WF-IRA-non-taxable-Roth',
+                'WF-IRA-Taxable-Trad',
+                'TIAA',
+                'RetirementDisc',
+                'LTCinWF',
+                'LTCinWFdate',
+                'LTCinvGrowth'
+            ];
+            $retDataDB = DB::table('retirementdata')
+                ->select('description', 'data', 'type')
+                ->whereIn('type', ['inpt', 'assm', 'val'])
+                ->whereIn('description', $retDataFields)
+                ->whereNull('deleted_at')
+                ->orderBy('description')
+                ->get()->toArray();
+
+            //  Reformat into associative array
+            //  When more than one 'description', use the type 'inpt' value
+            $retData = [];
+            foreach($retDataDB as $retDatum) {
+                if(!isset($retData[$retDatum->description])) {
+                    $retData[$retDatum->description] = $retDatum->data;
+                } else {
+                    if($retDatum->type == 'inpt') {
+                        $retData[$retDatum->description] = $retDatum->data;
+                    }
+                }
+            }
+
+            error_log("retData:");
+            foreach($retData as $idx=>$retDatum) {
+                error_log($idx . ": " . json_encode($retDatum));
+            }
+
+            // left off here ret income forecast
+            
             $taxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
-            return $taxableRetIncomes;
-
-        }    // end function getTaxableRetIncomes
-        
-        function  getNonTaxableRetIncomes($date) {
-            // left off here
             $nonTaxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
-            return $nonTaxableRetIncomes;
+            return [$taxableRetIncomes, $nonTaxableRetIncomes];
 
-        }    // end function getNonTaxableRetIncomes
+        }    // end function getRetIncomes
         
+    
         function  getInvestmentGrowths($date) {
             // left off here
             $investmentGrowths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
@@ -5455,9 +5512,10 @@ class TransactionsController extends Controller
         // get Maura SS income estimates
         $mauraSSIncomes = getSSIncomes($date, $COLA, 'Maura');
         
-        // get taxable retirement income per year estimates
-        $taxableRetIncomes = getTaxableRetIncomes($date);
-        $nonTaxableRetIncomes = getNonTaxableRetIncomes($date);
+        // get retirement incomes per year estimates
+        [$taxableRetIncomes, $nonTaxableRetIncomes] = getRetIncomes($date);
+
+        // get expected investement growth per year
         $investmentGrowths = getInvestmentGrowths($date);
 
         $incomeValues = [

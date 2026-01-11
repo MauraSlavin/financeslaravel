@@ -12,6 +12,10 @@
     <p>Last push: 1/10/26</p>
     <p>To Do:<p>
     <ul>
+      <li>** Retirement Income
+        <br>See // left off here ret income forecast</br>
+      </li>
+      <li>fix GB Limo income this year</li>
       <li>fix future expenses...
         <ul>
           <li>ExtraSpending</li>
@@ -20,13 +24,13 @@
           <li>IncomeOtherWH</li>
         </ul>
       </li>
-      <li>Retirement Income</li>
       <li>Investment Growth</li>
       <li>Ending balances</li>
       <li>future Beginning balances</li>
       <li>Misc balances</li>
       <li>LTC balance</li>
       <li>Make sure I'm using data on Retirement Input page</li>
+      <li>estimated taxes (GB limo tips are deductible up to $25,000 thru 2028)</li>
     </ul>
     <p>Enhancements made in this branch...</p>
     <ul>
