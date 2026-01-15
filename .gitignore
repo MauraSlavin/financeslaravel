@@ -20,6 +20,8 @@ public_html/hot
 storage/*
 storage/logs/*
 .env
+.envlocal
+.envremote
 Homestead.yaml
 Homestead.json
 /.vagrant

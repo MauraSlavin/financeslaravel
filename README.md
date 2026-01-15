@@ -13,7 +13,12 @@
     <p>To Do:<p>
     <ul>
       <li>** Retirement Income
-        <br>See // left off here ret income forecast</br>
+        <br>See "left off here --" for places to update year to year values in retirement forecast
+        <br>
+        <br>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record.
+        <br>
+        <br>DO add .gitignore
+        <br>
       </li>
       <li>fix GB Limo income this year</li>
       <li>fix future expenses...
@@ -24,12 +29,10 @@
           <li>IncomeOtherWH</li>
         </ul>
       </li>
-      <li>Investment Growth</li>
       <li>Ending balances</li>
-      <li>future Beginning balances</li>
       <li>Misc balances</li>
       <li>LTC balance</li>
-      <li>Make sure I'm using data on Retirement Input page</li>
+      <li>Make sure I'm using ALL data on Retirement Input page</li>
       <li>estimated taxes (GB limo tips are deductible up to $25,000 thru 2028)</li>
     </ul>
     <p>Enhancements made in this branch...</p>
@@ -488,7 +491,6 @@
         <li>Mileageyymm - mileage of the car</li>
         <li>OldMaint - maintenance costs not in transactions file (before 2022)</li>
       </ul>
-  </ul>
 
 
 <h2>routes: (needs updating)</h2>
