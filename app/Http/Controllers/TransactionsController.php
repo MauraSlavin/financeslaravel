@@ -3156,6 +3156,7 @@ class TransactionsController extends Controller
                         break;   
                 }
             }   
+            error_log("test 4 -- retirementDataInfo: " . json_encode($retirementDataInfo));
 
             // accounts that need to sum transactions to get current balance
             $sumAccountsDB = json_decode($retirementDataInfo['sumAccountsDB']);
@@ -4900,6 +4901,7 @@ class TransactionsController extends Controller
             $invAccts = ['WF-Inv-Bal', 'EJ'];
             $retTaxAccts = ['WF-IRA-Taxable-Trad', 'RetirementDisc', 'TIAA'];
             $retNonTaxAccts = ['WF-IRA-non-taxable-Roth'];
+            $LTCAccts = ['WF-Inherited', 'LTC-Disc'];
 
             // get spending accounts balance from retirementdata table
             $beginOfThisMonthSpendingBal = DB::table("retirementdata") 
@@ -4923,50 +4925,93 @@ class TransactionsController extends Controller
                 ->sum("data");
 
             // get LTC balance
-            $ltcDataDB = DB::table("retirementdata")
-                ->select("description", "data", "type")
-                ->whereIn("description", ["LTCinWF", "LTCinWFdate", "LTCInvGrowth"])
-                ->whereIn("type", ["inpt", "con", "assm"])
-                ->whereNull("deleted_at")
-                ->orderBy("type", "asc")
+            // data to get LTC in WF Trad (taxable) IRAs
+            $ltcDataDB = DB::table('retirementdata') 
+                ->select('description', 'data', 'type')
+                ->whereIn('type', ['inpt', 'con', 'assm']) 
+                ->whereNull('deleted_at') 
+                ->where(function ($q) { 
+                    $q->where('description', 'like', 'LTCinWF%') 
+                    ->orWhere('description', '=', 'LTCInvGrowth'); 
+                }) 
                 ->get()->toArray();
-            $ltcData = [];
+            // LTC balances
+            $ltcAcctSum = DB::table('retirementdata')
+                ->whereIn("description", $LTCAccts)
+                ->where("type", "inpt")
+                ->whereNull("deleted_at")
+                ->sum("data");
+            error_log("ltcAcctSum: " . $ltcAcctSum);
 
+            $LTCinWF = [];
+            $LTCinWFdate = [];
             // subtract LTC balance from WF
             // left off here - REMEMBER to add it to LTC balance
             foreach($ltcDataDB as $data) {
                 switch($data->description) {
-                    case 'LTCinWFdate':
-                        $LTCinWFdate = $data->data;
+                    case substr($data->description, 0, 11) == 'LTCinWFdate':
+                        error_log("LTCinWFdate #: " . $data->description . " (" . substr($data->description, 11) . ") data: " . $data->data);
+                        $LTCinWFdate[substr($data->description, 11)] = $data->data;
                         break;
-                    case 'LTCInvGrowth':
+                    case $data->description == 'LTCInvGrowth':
                         $LTCInvGrowth = $data->data;
                         break;
-                    case 'LTCinWF':
-                        $LTCinWF = $data->data;
+                    case substr($data->description, 0, 7) == 'LTCinWF':
+                        error_log("LTCinWF #: " . $data->description . " (" . substr($data->description, 7) . ") data: " . $data->data);
+                        $LTCinWF[substr($data->description, 7)] = $data->data;
+                        break;
                 }
             }
-            error_log("LTC... LTCinvGrowth: " . $LTCInvGrowth . "; LTCinWF: " . $LTCinWF . "; LTCinWFdate: " . $LTCinWFdate);
 
-            // figure LTC balance in WF
-            //      balance
-            // $initLTCBal = $LTCinWF;
-            $initLTCBal = 17959.64;             // left off here (ltc)
+            // get init LTC bal
+            // first get what's in WF
+            $initLTCBal = 0;
+            error_log("LTC... LTCinvGrowth: " . $LTCInvGrowth . ";");
+
+            $idx = 1;
+            while(isset($LTCinWF[$idx])) {
+                error_log(" - LTCinWF[" . $idx . "]: " . $LTCinWF[$idx] . "; LTCinWFdate[" . $idx . "]: " . $LTCinWFdate[$idx]);
+                $initLTCBal += $LTCinWF[$idx];
+
+                $idx++;
+            }
+            // then add other LTC accts
+            error_log("initLTCBal: " . $initLTCBal);
+
+            // subract LTC princ that's in WF from retirement balance
+            error_log("retTaxAcctsBal (tot): " . $retTaxAcctsBal);
+            $retTaxAcctsBal -= $initLTCBal;
+            error_log("retTaxAcctsBal (-LTC): " . $retTaxAcctsBal);
+
+            error_log("ltcAcctSum: " . $ltcAcctSum);
+            $initLTCBal += $ltcAcctSum;
+            error_log("initLTCBal: " . $initLTCBal);
+
             //      interest rate
             $rate = $LTCInvGrowth/100;
             //      interest since date - get number of days elapsed
-            $initDate = substr($LTCinWFdate, 0, 2) . "/" . substr($LTCinWFdate, 2, 2) . "/" . '20' . substr($LTCinWFdate, 4, 2);
-            $initDate = new DateTime($initDate);
             $firstOfThisMonth = date("m/1/Y");
             $firstOfThisMonth = new DateTime($firstOfThisMonth);
-            $elapsedDays = date_diff($initDate, $firstOfThisMonth)->format('%a');
+            $totInterest = 0;
+            $idx = 1;
+            while(isset($LTCinWF[$idx])) {
+                $initDate = substr($LTCinWFdate[$idx], 0, 2) . "/" . substr($LTCinWFdate[$idx], 2, 2) . "/" . '20' . substr($LTCinWFdate[$idx], 4, 2);
+                $initDate = new DateTime($initDate);
+                error_log("initDate: " . $initDate->format('y-m-d'));
+                error_log("firstOfThisMonth: " . $firstOfThisMonth->format('y-m-d'));
+                error_log("date diff: " . date_diff($initDate, $firstOfThisMonth)->format('%a'));
+                $elapsedDays = date_diff($initDate, $firstOfThisMonth)->format('%a');
+                error_log("elapsed days " . $idx . ": " . $elapsedDays);
+                // interest
+                $interest = round($LTCinWF[$idx] * $rate * ($elapsedDays/365), 2);
+                error_log("interest " . $idx . ": " . $interest);
+                $totInterest += $interest;
 
-            // interest
-            $interest = round($initLTCBal * $rate * ($elapsedDays/365), 2);
-            $totalLTCinWF = $LTCinWF + $interest;
-
-            // subract LTC princ & int from taxable retirement balance
-            $retTaxAcctsBal -= $totalLTCinWF;
+                $idx++;
+            }
+            error_log("total interest: " . $totInterest);
+            $initLTCBal += $totInterest;
+            error_log("FINAL initLTCBal: " . $initLTCBal);
 
             // get balance of non-taxable (Roth) accts
             $retNonTaxAcctsBal = DB::table("retirementdata") 
@@ -4979,14 +5024,14 @@ class TransactionsController extends Controller
             $invAccts = implode(", ", $invAccts);
             $retTaxAccts = implode(", ", $retTaxAccts);
             $retNonTaxAccts = implode(", ", $retNonTaxAccts);
-            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts];
+            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal];
         }   // end of function initialBalances
 
 
         // get income expected for the rest of this year as of the first of this month
         function thisYearIncome($date, $twoDigitYear) {
 
-            $remainingIncomeThisYear = [];
+        $remainingIncomeThisYear = [];
             $inputIncomes = ["NH Retirement", "MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
             $inputIncomesDescriptions = ["NHRetirement", "MauraIBM", "MauraSS65", "MauraSS67", "RentalIncome".$twoDigitYear];
             $otherRetirementDataNeeded = ["GBLimoForExpenses", "EndGBJob", "EndTownJob", "EndRentalJob", "MauraIBMStart", "MauraSSStart", "SSIncomeLimit" ];
@@ -4994,11 +5039,42 @@ class TransactionsController extends Controller
             $dataBaseIncomestoFrom = ["Town of Durham", "Great Bay Limo", "MTS-IBM-Retirement", "SSMike"];
 
             $queryDescriptions = array_merge($inputIncomesDescriptions, $otherRetirementDataNeeded);
-            $retirementDataInfo = DB::table('retirementdata')
-                ->where("type", "inpt")
+            $retirementDataInfoDB = DB::table('retirementdata')
+                ->select("data", "description", "type")
                 ->whereIn("description", $queryDescriptions)
                 ->whereNull("deleted_at")
-                ->pluck( "data", "description");
+                ->get()->toArray();
+
+            $retirementDataInfo = [];
+            $retirementDataHaveInputValue = []; // if element is true, have the input value; if exists, have other value; if undefined, don't have a value
+            foreach($retirementDataInfoDB as $idx=>$retirementDatum) {
+                error_log("---" . $idx . ": " . json_encode($retirementDatum));
+
+                // if no data for this description found yet, note if it's "inpt" type and save the value
+                if(!isset($retirementDataHaveInputValue[$retirementDatum->description])) {
+                    // error_log("init " . $retirementDatum->description);
+                    $retirementDataHaveInputValue[$idx] = ($retirementDatum->type == 'inpt') ? true : false;
+                    $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
+
+                // if there is a data value for this description, only change it if the new value is type 'inpt'
+                } else {
+                    if($retirementDatum->type == 'inpt') {
+                        // error_log("update " . $retirementDatum->description);
+                        $retirementDataHaveInputValue[$idx] = true;
+                        $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
+                    }
+                    else error_log("ignore " . $retirementDatum->description);
+                }
+                // error_log("retirementDataHaveInputValue: " );
+                // error_log(json_encode($retirementDataHaveInputValue));
+                // error_log("retirementDataInfo:");
+                // foreach($retirementDataInfo as $thiss=>$thing) {
+                //     error_log(" -- " . $thiss . ": " . $thing);
+                // }
+                // error_log(json_encode($retirementDataInfo));
+                // error_log("retirementDataHaveInputValue[" . $retirementDatum->description . "]: " . $retirementDataHaveInputValue[$retirementDatum->description]);
+                // error_log("retirementDataInfo[" . $retirementDatum->description . "]: " . $retirementDataInfo['description']);
+            }
 
             // error_log("retirementDataInfo:");
             // foreach($retirementDataInfo as $desc=>$data) {
@@ -5011,18 +5087,13 @@ class TransactionsController extends Controller
             
             // error_log(" --- ");
             foreach($inputIncomesDescriptions as $income) {
-                // error_log("retirementDataInfo[".$income."]: " . $retirementDataInfo[$income]);
+                error_log("test 3 -- income: " . $income);
+                error_log("retirementDataInfo: " . json_encode($retirementDataInfo));
+                error_log("retirementDataInfo[".$income."]: " . $retirementDataInfo[$income]);
                 $remainingIncomeThisYear[$income] = $retirementDataInfo[$income];
                 // error_log(json_encode($remainingIncomeThisYear));
                 // error_log("------------------");
             }
-           
-            // left off here...
-            //      getting remaining income for this year as of the first of the month
-            // error_log("remainingincomeThisYear:");
-            // foreach($remainingIncomeThisYear as $idx=>$income) {
-            //     error_log(" - " . $idx . ": " . $income);
-            // }
 
             return $remainingIncomeThisYear;
         }   // end of function thisYearIncome
@@ -5376,9 +5447,10 @@ class TransactionsController extends Controller
         }   // end of function getSSIncomes
 
 
+        // get retirement incomes
+        // can only get parameters and dummy values.  Need data not calculated until in the retirementForecast blade.
         function  getRetIncomes($date) {
 
-            // left off here
             $taxableRetIncomes = [];
             $nonTaxableRetIncomes = [];
 
@@ -5390,8 +5462,8 @@ class TransactionsController extends Controller
             //  TIAA
             //  RetirementDisc
             //  (don't need WF-Inv-Bal - not retirement funds)
-            //  LTCinWF
-            //  LTCinWFdate
+            //  LTCinWF#        (need to use 'like')
+            //  LTCinWFdate#
             //  LTCinvGrowth
             //  
             // See 
@@ -5401,48 +5473,62 @@ class TransactionsController extends Controller
             //      LTC is in Traditional IRA since LTC might be tax deductible
             //      ALL of Inherited IRA is considered earmarked for LTC
 
-            $retDataFields = [
+            // 'LTCinWF',       // use 'like', 'LTCinWF%' for LTCinWF and LTCinWFdate
+            // 'LTCinWFdate',
+            $retirementParametersFields = [
                 'invWD',
                 'RetDistribBegin',
                 'WF-IRA-non-taxable-Roth',
                 'WF-IRA-Taxable-Trad',
                 'TIAA',
                 'RetirementDisc',
-                'LTCinWF',
-                'LTCinWFdate',
+                'InvGrowth',
                 'LTCinvGrowth'
             ];
-            $retDataDB = DB::table('retirementdata')
+            $retirementParametersDB = DB::table('retirementdata')
                 ->select('description', 'data', 'type')
                 ->whereIn('type', ['inpt', 'assm', 'val'])
-                ->whereIn('description', $retDataFields)
                 ->whereNull('deleted_at')
+                ->where(function($q) use ($retirementParametersFields) { 
+                    $q->whereIn('description', $retirementParametersFields)
+                    ->orWhere('description', 'like', 'LTCinWF%');
+                }) 
                 ->orderBy('description')
                 ->get()->toArray();
 
             //  Reformat into associative array
             //  When more than one 'description', use the type 'inpt' value
-            $retData = [];
-            foreach($retDataDB as $retDatum) {
-                if(!isset($retData[$retDatum->description])) {
-                    $retData[$retDatum->description] = $retDatum->data;
+            $retirementParameters = [];
+            foreach($retirementParametersDB as $retDatum) {
+                if(!isset($retirementParameters[$retDatum->description])) {
+                    $retirementParameters[$retDatum->description] = $retDatum->data;
                 } else {
                     if($retDatum->type == 'inpt') {
-                        $retData[$retDatum->description] = $retDatum->data;
+                        $retirementParameters[$retDatum->description] = $retDatum->data;
                     }
                 }
             }
 
-            error_log("retData:");
-            foreach($retData as $idx=>$retDatum) {
+            error_log("retirementParameters: ");
+            foreach($retirementParameters as $idx=>$retDatum) {
                 error_log($idx . ": " . json_encode($retDatum));
             }
+                
+            $thisYear = intval(substr($date, 0, 4));
+            $numberYearsForecast = 2062 - $thisYear + 1;
 
-            // left off here ret income forecast
-            
-            $taxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
-            $nonTaxableRetIncomes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
-            return [$taxableRetIncomes, $nonTaxableRetIncomes];
+            for($idx = 0; $idx < $numberYearsForecast; $idx++) {
+                $newvalue = $thisYear + $idx - 2000;
+                $taxableRetIncomes[] = $newvalue;
+                $nonTaxableRetIncomes[] = $newvalue;
+            }
+            // error_log("taxableRetIncomes:");
+            // error_log(json_encode($taxableRetIncomes));
+            // error_log("nonTaxableRetIncomes:");
+            // error_log(json_encode($nonTaxableRetIncomes));
+            // error_log("retirementParameters:");
+            // error_log(json_encode($retirementParameters));
+            return [$taxableRetIncomes, $nonTaxableRetIncomes, $retirementParameters];
 
         }    // end function getRetIncomes
         
@@ -5477,14 +5563,15 @@ class TransactionsController extends Controller
         $twoDigitYear = substr($date, 2, 2);
 
         // get beginning balances
-        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts] = initialBalances($date, $twoDigitYear);
-        $spending = [$beginOfThisMonthSpendingBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
+        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($date, $twoDigitYear);
+        $spending = [$beginOfThisMonthSpendingBal, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119 ];
         $investments = [$invAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
         $retirementTaxable = [$retTaxAcctsBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
         $retirementNonTaxable = [$retNonTaxAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
         $beginBalances = $this->addArraysByPosition($spending, $investments, $retirementTaxable, $retirementNonTaxable);
 
         // get rest of this year's expected income
+        error_log("test 1");
         $remainingIncomeThisYear = thisYearIncome($date, $twoDigitYear);
         
         // get Town of Durham income estimates
@@ -5513,7 +5600,7 @@ class TransactionsController extends Controller
         $mauraSSIncomes = getSSIncomes($date, $COLA, 'Maura');
         
         // get retirement incomes per year estimates
-        [$taxableRetIncomes, $nonTaxableRetIncomes] = getRetIncomes($date);
+        [$taxableRetIncomes, $nonTaxableRetIncomes, $retirementParameters] = getRetIncomes($date);
 
         // get expected investement growth per year
         $investmentGrowths = getInvestmentGrowths($date);
@@ -5777,7 +5864,7 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts'));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal'));
     }
 
 }

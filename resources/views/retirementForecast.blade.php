@@ -24,6 +24,7 @@
         <div hidden id="sumCategoriesWithDetailCategories">{{ json_encode($sumCategoriesWithDetailCategories) }}</div>
         <div hidden id="defaultInflationFactor">{{ $defaultInflationFactor }}</div>
         <div hidden id="incomeValues">{{ json_encode($incomeValues) }}</div>
+        <div hidden id="retirementParameters">{{ json_encode($retirementParameters) }}</div>
         @php 
         $currentYear = date("Y");
         $forecastLength = 2062 - $currentYear;
@@ -31,6 +32,7 @@
         @endphp
         <div hidden id="forecastYears">{{ json_encode($forecastYears) }}</div>
         <div hidden id="currentYear">{{ $currentYear }}</div>
+        <div hidden id="date">{{ $date }}</div>
 
         <div class="retirementForecast">
             <table id="retirementForecastTable" class="table table-striped table-bordered" style="background-color: lavender;">
@@ -85,7 +87,7 @@
 
                     <!-- Beginning Balances --> 
                     @php 
-                        $accountNames = ["Spending", "Investment", "Taxable Retirement", "Tax Free Retirement"];
+                        $spendingAccountNames = ["Spending", "Investment", "Taxable Retirement", "Tax Free Retirement"];
                         $accountValues = [
                             $spending, 
                             $investments,
@@ -93,6 +95,7 @@
                             $retirementNonTaxable
                         ];
                     @endphp
+                    <div hidden id="balanceCategories">{{ json_encode(str_replace(' ', '', $spendingAccountNames)) }}</div>
                     <tr id="beginningForecast">
                         <td style="background-color: blue; color: white;">Beginning balances</td>
                         <td style="background-color: blue; color: white;"></td>
@@ -113,17 +116,25 @@
                             $retNonTaxAccts   // tax free retirement accts
                         ];
                     @endphp
-                    @foreach($accountNames as $acctIdx=>$account)
+                    @foreach($spendingAccountNames as $acctIdx=>$account)
                         <tr>
                             <td></td>
+                            @php 
+                                $accountForId = str_replace(' ', '', $account);
+                                if($account == 'Taxable Retirement') {
+                                    $acctTooltip .= ' (minus some LTC from Trad IRA)';
+                                } else {
+                                    $acctTooltip = '';
+                                }
+                            @endphp
                             <td data-bs-toggle="tooltip"
                                 data-bs-placement="top"
-                                title="{{ $acctsIncludedArray[$acctIdx] }}">
+                                title="{{ $acctsIncludedArray[$acctIdx] }}{{ $acctTooltip }}">
                                 {{ $account }}
                             </td>
                             <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
-                                <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
+                                <td id="{{$accountForId}}{{$year}}">{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
                         </tr>
                     @endforeach
@@ -288,7 +299,6 @@
 
                     <!-- Ending Balances --> 
                     @php 
-                        $accountNames = ["Spending", "Investment", "Taxable Retirement", "Tax Free Retirement"];
                         $accountValues = [
                             [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ],
                             [11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ],
@@ -304,13 +314,13 @@
                             <td style="background-color: blue; color: white;">Dec 31</td>
                         @endforeach
                     </tr>
-                    @foreach($accountNames as $acctIdx=>$account)
+                    @foreach($spendingAccountNames as $acctIdx=>$account)
                         <tr>
                             <td></td>
                             <td>{{ $account }}</td>
                             <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
-                                <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
+                                <td id="end{{ str_replace(' ', '', $account) }}{{$year}}">{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
                         </tr>
                     @endforeach
@@ -338,7 +348,7 @@
                     @php 
                         $accountNames = ["LTC", "House"];
                         $accountValues = [
-                            [11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ],
+                            [$initLTCBal, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ],
                             [500000, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ]
                         ];
                     @endphp
@@ -354,10 +364,31 @@
                             @endif
                         @endforeach
                     </tr>
+
+                    <!-- LTC goal amts -->
+                    <tr>
+                        <td></td>
+                        <td  data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Goal amt at year end assuming $7500 annual contrib beginning 2021 at 5% interest">
+                            LTC goal
+                        </td>
+                        <td></td>
+                        @foreach($forecastYears as $yearIdx=>$year)
+                            <td id="LTCgoal{{$year}}"></td>
+                        @endforeach
+                    </tr>
                     @foreach($accountNames as $acctIdx=>$account)
                         <tr>
                             <td></td>
+                            @if($account == 'LTC')
+                            <td  data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                title="Inherited IRA, Discover LTC, rest in WF Trad IRA">{{ $account }}
+                            </td>
+                            @else
                             <td>{{ $account }}</td>
+                            @endif
                             <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
                                 <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
@@ -486,6 +517,8 @@
                         futureExpenses[year] = [];
                         futureExpensesSummary[year] = [];
                         expenseCategoriesWithSummaryCats.forEach( summary => {
+                            // left off here -- estimate Maura's Medical expenses at 65 and beyond differently (same as Mike's)
+                            //      Make this a retirement input field for Maura at ages 65 and 66 ??
                             const category = summary['name'];
                             const summaryCategory = summary['summaryCategory'];
                             futureExpenses[year][category] = 0;
@@ -547,6 +580,219 @@
 
                 }   // end function futureExpenses
 
+
+                // calc interest for amt since transferred date with interest rate given to nearest dollar
+                function calcInterest(thisLTCamt, dateTransferred, interestRate) {
+                    // calc days since deposited
+                    var today = new Date();
+                    var dateTransferred = new Date('20'+ dateTransferred.substring(4, 6), dateTransferred.substring(0, 2), dateTransferred.substring(2, 2));
+                
+                    // same unit of measure (milliseconds)
+                    today = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+                    dateTransferred = Date.UTC(dateTransferred.getFullYear(), dateTransferred.getMonth(), dateTransferred.getDate());
+
+                    // get diff and convert to days
+                    const term = Math.abs((dateTransferred.valueOf() - today.valueOf()) / (24 * 60 * 60 * 1000));
+
+                    // interest for that length term, rounded to the nearest dollar
+                    var interest = Math.round(thisLTCamt * interestRate/100 * (term/365));
+
+                    return interest;
+                }
+
+
+                // calculate future retirement income
+                function calcRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome) {
+                    console.log("in calcRetirementIncome");
+                    // when to start taking retirement funds
+                    const twoDigitYearStart = retirementParameters['RetDistribBegin'].substring(4, 6);
+
+                    console.log(" --- ", year, " --- ");
+                    const twoDigitIteratedYear = year-2000;
+
+                    // if not getting retirement yet, change the retirement income values to 0 for the year
+                    if(twoDigitYearStart > twoDigitIteratedYear) {
+                        console.log(" - no retirement yet");
+                        $('#TaxRetire' + year).text('0');
+                        $('#Non-TaxRetire' + year).text('0');
+
+                        // set ret income to use in future
+                        lastYearTaxableRetIncome = 0;
+                        lastYearNonTaxableRetIncome = 0;
+                    
+                    // else if beginning distributions this year
+                    } else if(twoDigitYearStart == twoDigitIteratedYear) {
+                        console.log(" - start this year");
+                        // Get current retirement account values (LTC funds should already be reported under LTC balance at bottom of page, not here)
+                        // get from retirementforecast page (this one) under Beginning Balances for this year
+
+                        WFIRATaxableTrad = $("#TaxableRetirement20" + twoDigitIteratedYear).text();
+                        console.log(" - Taxable Ret 20" + twoDigitIteratedYear + ": " + WFIRATaxableTrad);
+
+                        nonTaxableRothBal = $("#TaxFreeRetirement20" + twoDigitIteratedYear).text();
+                        console.log(" - NON Taxable Ret 20" + twoDigitIteratedYear + ": " + nonTaxableRothBal);
+
+                        // Distributions from Trad and Roth are proportional to initial balances
+                        // Determine proportions (TradProportion, RothProportion)
+                        var tradProportion = WFIRATaxableTrad/(WFIRATaxableTrad + nonTaxableRothBal);
+                        var rothProportion = nonTaxableRothBal/(WFIRATaxableTrad + nonTaxableRothBal);
+                        // console.log("tradProportion: ", tradProportion);
+                        // console.log("rothProportion: ", rothProportion);
+
+                        // totalDistribution = InvWD/100 * (WFIRATaxableTrad + WF-IRA-non-taxable-Roth)
+                        const totalDistribution = retirementParameters['InvWD']/100 * (WFIRATaxableTrad + nonTaxableRothBal);
+                        const taxableDist = Math.round(totalDistribution * tradProportion);
+                        const nonTaxableDist = Math.round(totalDistribution *  rothProportion);
+
+                        // put distribution values on the page 
+                        $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist);                      
+                        $('#Non-TaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist);                      
+
+                        // set ret income to use in future
+                        lastYearTaxableRetIncome = taxableDist;
+                        lastYearNonTaxableRetIncome = nonTaxableDist;
+
+                    } else {
+                        console.log(" - bumped ret income");
+                    // ELSE  ... just bump up last year's values by defaultInflationFactor
+                    //  and put on page
+                        taxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearTaxableRetIncome);
+                        nonTaxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearNonTaxableRetIncome);
+                        $('#TaxRetire' + year).text(taxableDist);
+                        $('#Non-TaxRetire' + year).text(nonTaxableDist);
+                        console.log("taxableDist: ", taxableDist);
+                        console.log("nonTaxableDist: ", nonTaxableDist);
+
+                        // set ret income to use in future
+                        lastYearTaxableRetIncome = taxableDist;
+                        lastYearNonTaxableRetIncome = nonTaxableDist;
+                    }
+
+                    return [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome];
+
+                }   // end function calcRetirementIncome
+
+
+                // calc values dependent on previous year:
+                //      beginning balances after first forecast year, 
+                //      retirement income (tax and non-tax)
+                //      income taxes,
+                //      incomeOtherWH,
+                //      ending balances
+                function calcYearByYear(forecastYears, retirementParameters, date) {
+
+                    const balanceCategories = JSON.parse($("#balanceCategories").text());
+                    console.log("balanceCategories: ", balanceCategories);
+
+                    const InvGrowth = Number(retirementParameters['InvGrowth'])/100;
+                    console.log("InvGrowth: ", InvGrowth);
+
+                    // add this year to begining of forecastYears array to calc this year's numbers, too
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    forecastYears.unshift(currentYear);
+
+                    forecastYears.forEach( (year, yrIdx) => {
+                        console.log(" --- year by year ", yrIdx, ": ", year, "; last year: ", (year - 1));
+
+                        // copy last year's ending balances to this year's beginning balances
+                        // no need to do it for current year
+                        if(yrIdx != 0) {
+                            balanceCategories.forEach(category => {
+                                console.log("category", category, "; last year's balance: ", $('#end' + category + (year-1)).text());
+                                $('#' + category + year).text( $('#end' + category + (year-1)).text() );
+                            });
+                        }
+
+                        // figure this year's retirement income
+                        if(yrIdx == 0) {
+                            // left off here -- this needs to be fixed to reflect values after retirement starts
+                            lastYearNonTaxableRetIncome = 0;
+                            lastYearTaxableRetIncome = 0;
+                        }
+                        [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome] = calcRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome);
+
+                        // figure this year's investment growth based on average balances
+                        // some interest already earned in first year
+                        if(yrIdx == 0) {
+                            console.log("date: ", date);
+                            // assume growth happened so far at expected rate, and add growth till end of year
+                            const month = Number(date.substring(5, 7));
+                            // number of months interest already earned
+                            const numMonthsToDate = month - 1;
+                            // number of months left to earn interest
+                            const numMonthsLeft = 12 - numMonthsToDate;
+                            console.log("month: ", month, "; numMonthsToDate: ", numMonthsToDate, "; numMonthsLeft: ", numMonthsLeft);
+                            // beginning_balance = balance_w_growth / ((interest_rate * months_interest_already_earned) + 1)
+                            //      derived from:  balance_w_growth = ((beginning_balance * interest_rate) * months_interest_already_earned) + beginning_balance
+                            //    where:
+                            //          origEst = beginning_balance
+                            //          $('#Investment' + year).text()  =  balance_w_growth
+                            //          InvGrowth   =   interest_rate
+                            //          numMonthsToDate = months_interest_already_earned
+                            const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
+                            // apply growth to original balance for number of months left
+                            const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
+                            $('#InvestmentGrowth' + year).text(growthLeft);
+                        } else {
+                            const beginBalance = $('#Investment' + year).text();
+                            const growth = Math.round(beginBalance * InvGrowth);
+                            $('#InvestmentGrowth' + year).text(growth);
+                        }
+
+                        // estimate income taxes and IncomeOtherWH (Medicare, SS)
+                        // left off here -- for current year, take into account what's already been withheld
+                        //      note: only earned income is subject to Medicare and SS
+                        //              GB limo tips are deductible up to $25,000 thru 2028
+
+                        // extraSpending is based on GBLimo income
+                        // left off here -- GBLimo income based
+
+                        // LTC only an expense if LTC balance is below the goal
+                        // left off here -- fix LTC expense
+
+                        // left off here --
+                        // NOTE: Need two more lines for tax retirement growth & non-tax retirement growth
+
+                        // update Ending balances
+                        // left off here -- ending balances
+                        // end spending = beginning spending + income (except retirement and inv growth) - expenses
+                        // end investments = begining investments + inv growth - needed for spending (if end spending is negative)
+                        // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
+                        // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
+
+
+
+                        
+                    });
+                }
+                            
+
+                // calc LTC goals per year & put on retirementforecast page
+                function calcLTCgoals(yearlyContrib, interestRate, yearFirstContrib, forecastYears) {
+                    
+                    var LTCbalance = 0;
+                    var interest, avgBal;
+                    
+                    // iterate through each year starting when first contrib made to LTC
+                    //      and ending with last forecast year
+                    const finalForecastYear = forecastYears[forecastYears.length-1];
+                    for(var year = yearFirstContrib; year <=finalForecastYear; year++) {
+
+                        // interest assumes yearlyContrib added throughout the year - so interest on average balance
+                        avgBal = LTCbalance + yearlyContrib/2;
+                        interest = avgBal * interestRate;
+                        LTCbalance += yearlyContrib + interest;
+                        LTCbalance = Math.round(LTCbalance * 100)/100;  // round to nearest cent
+
+                        // if within forecastYears, put on page (rounding to nearest dollar on page, but not in calculations)
+                        if(forecastYears.includes(year)) {
+                            $('#LTCgoal' + year).text(Math.round(LTCbalance));
+                        }
+                    }
+                }   // end of function calcLTCgoals
+
+
                 // get inflationFactors from page
                 const inflationFactors = JSON.parse($("#inflationFactors").text());
                 console.log(inflationFactors);
@@ -570,14 +816,32 @@
                 const defaultInflationFactor = $("#defaultInflationFactor").text();
                 console.log("defaultInflationFactor: ", defaultInflationFactor, " (", typeof defaultInflationFactor, ")");
                 
+                // get date (first of month) for forecast
+                const date = $('#date').text();
+                console.log("date: ", date);
+
                 // get incomeValues
                 const incomeValues = JSON.parse($("#incomeValues").text());
- 
+
+                var retirementParameters = $("#retirementParameters").text();
+                retirementParameters = JSON.parse(retirementParameters);
+                console.log("retirementParameters: ", retirementParameters);
+                console.log(" invWD: ", retirementParameters['InvWD']);
+
                 // need current year expenses by category and summary category
                 calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
 
-                // need future retirement income
-                calcRetirementIncome(forecastYears);
+                // calc values dependent on previous year:
+                //      beginning balances after first forecast year, 
+                //      retirement income (tax and non-tax)
+                //      income taxes,
+                //      incomeOtherWH,
+                //      ending balances
+                calcYearByYear(forecastYears, retirementParameters, date);
+
+                // calc LTC goal per year & put on page
+                // assume contrib $7500 per year beginning in 2021 at 5% interest
+                calcLTCgoals(7500, 0.05, 2021, forecastYears);
 
             });
 
