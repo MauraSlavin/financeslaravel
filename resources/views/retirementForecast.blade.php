@@ -25,6 +25,7 @@
         <div hidden id="defaultInflationFactor">{{ $defaultInflationFactor }}</div>
         <div hidden id="incomeValues">{{ json_encode($incomeValues) }}</div>
         <div hidden id="retirementParameters">{{ json_encode($retirementParameters) }}</div>
+        <div hidden id="lastYearRetirementIncome">{{ json_encode($lastYearRetirementIncome) }}</div>
         @php 
         $currentYear = date("Y");
         $forecastLength = 2062 - $currentYear;
@@ -402,46 +403,20 @@
             NOTES:
             <ul>
                 <li>IRA/Retirement distributions go to Spending</li>
-                <li>LTC in budget goes to LTC in Misc Balances</li>
-                <li>Income from Inherited IRA intended for LTC</li>
-                <li>Investment Growth: (end bal before growth - begin bal)/2 * growth
-                    <br>or (begin bal - w/ds) * growth
-                </li>
+                <li>Income from Inherited IRA should be earmarked for LTC</li>
                 <li>Health care inflation assumed to be 5% (in budget table)
-                    <br>US Health Care Inflation Rate is at 3.05%, compared to 3.28% last month and 3.08% last year. This is lower than the long term average of 5.09%.</br>
-                    <br>Source: https://ycharts.com/indicators/us_health_care_inflation_rate#:~:text=Basic%20Info,the%20US%20Consumer%20Price%20Index.</br>
+                    <br> - US Health Care Inflation Rate is at 3.05%, compared to 3.28% last month and 3.08% last year. This is lower than the long term average of 5.09%.
+                    <br> - Source: https://ycharts.com/indicators/us_health_care_inflation_rate#:~:text=Basic%20Info,the%20US%20Consumer%20Price%20Index.
                 </li>
+                <li>See 
+                    <br> - https://docs.google.com/spreadsheets/d/10UFYi7Hiqd_y4q02vT85QjEXc1MJep27Kw3PYU7lmns/edit?gid=1813417080#gid=1813417080
+                    <br> for details on future "Doctor" estimates
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Spending:
                     <ul>
                         <li>Savings (Big Bills)</li>
                         <li>Checking</li>
-                        <li>subtract CC (Disc & VISA) balances - I'm not doing this yet (12/25/25)</li>
-                    </ul>
-                </li>
-                <li>Investment:
-                    <ul>
-                        <li>WF non-IRA</li>
-                        <li>EJ</li>
-                    </ul>
-                </li>
-                <li>Taxable Retirement:
-                    <ul>
-                        <li>Trad IRA (- LTC portion)</li>
-                        <li>TIAA</li>
-                        <li>Retirement savings (Disc, Disc Svgs Ret bucket)</li>
-                    </ul>
-                </li>
-                <li>Non-Taxable Retirement:
-                    <ul>
-                        <li>Roth IRA</li>
-                    </ul>
-                </li>
-                <li>LTC:
-                    <ul>
-                        <li>Disc LTC</li>
-                        <li>Part of WF we transferred for LTC ($ 17,959.64 on 9/30/25)</li>
-                        <li>Inherited IRA (income stays in LTC)</li>
+                        <li>subtract CC (Disc & VISA) balances - I'm not doing this yet (1/15/26)</li>
                     </ul>
                 </li>
                 <li>Not included:
@@ -450,7 +425,6 @@
                         <li>Security Deposits (not ours)</li>
                         <li>Irreg Big Bills</li>
                         <li>Prudential LI</li>
-                        <li>House</li>
                     </ul>
                 </li>
                 <li>Expenses for current year are the max of the budget vs. actual expenses between the first of the current month through the end of the year.</li>
@@ -472,7 +446,7 @@
             $(document).ready(function() {
 
                 // calculate future forecasted expenses
-                function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues) {
+                function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters) {
 
                     function calcIncomeRelatedExpense(year, currentYear, lastYearsExpense, inflationFactor, incomeValue) {
                             
@@ -487,7 +461,20 @@
                             thisYearsExpense = Math.round(lastYearsExpense * (1 + inflationFactor/100));
                         }
                         return thisYearsExpense;
-                    }
+                    }   // end of function calcIncomeRelatedExpense
+
+                    function getDoctorExpense(year, lastYearsExpense, inflationFactor, retirementParameters) {
+
+                        // use estimates in retirementdata if they exist;
+                        //  otherwise bump up by inflation factor
+                        if(typeof retirementParameters['Doctor' + year] != 'undefined') {
+                            thisYearsExpense =  -parseInt(retirementParameters['Doctor' + year]);
+                        } else {
+                            thisYearsExpense = Math.round(lastYearsExpense * (1 + inflationFactor/100));
+                        }
+
+                        return thisYearsExpense;
+                    }   // end of function getDoctorExpense
 
                     // last year expenses set to current year expenses by category
                     var lastYearsExpenses = expectedExpensesForThisYearByCategory;
@@ -517,8 +504,6 @@
                         futureExpenses[year] = [];
                         futureExpensesSummary[year] = [];
                         expenseCategoriesWithSummaryCats.forEach( summary => {
-                            // left off here -- estimate Maura's Medical expenses at 65 and beyond differently (same as Mike's)
-                            //      Make this a retirement input field for Maura at ages 65 and 66 ??
                             const category = summary['name'];
                             const summaryCategory = summary['summaryCategory'];
                             futureExpenses[year][category] = 0;
@@ -548,15 +533,20 @@
                                 $('#' + category + 'INF').text(inflationFactor).css('background-color', 'yellow');
                             }
                             // handle special cases separately
+                            // rental expense and work expense (only when there's rental income or earned income)
                             if(category == 'RentalExpense' || category == 'WorkExpense') {
                                 // RentalIncome is index 2 in incomeValues; WorkExpense based on IncomePaycheck existing - index 0
                                 if(category == 'RentalExpense') catIdx = 2;
                                 else if(category == 'WorkExpense') catIdx = 0;
                                 futureExpenses[year][category] = calcIncomeRelatedExpense(year, currentYear, lastYearsExpenses[category], inflationFactor, incomeValues[catIdx]);
+                            // use doctor estimates from retirementdata table or input
+                            } else if(category == 'Doctor') {
+                                futureExpenses[year][category] = getDoctorExpense(year, lastYearsExpenses[category], inflationFactor, retirementParameters);
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
                                 futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
                             }
+
                             // add to summary category
                             futureExpensesSummary[year][summaryCategory] += futureExpenses[year][category];
 
@@ -578,7 +568,7 @@
                         lastYearsExpenses =futureExpenses[year];
                     }); // end of foreach year
 
-                }   // end function futureExpenses
+                }   // end function calcFutureExpenses
 
 
                 // calc interest for amt since transferred date with interest rate given to nearest dollar
@@ -679,7 +669,9 @@
                 //      income taxes,
                 //      incomeOtherWH,
                 //      ending balances
-                function calcYearByYear(forecastYears, retirementParameters, date) {
+                function calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date) {
+
+                    var lastYearNonTaxableRetIncome, lastYearTaxableRetIncome;
 
                     const balanceCategories = JSON.parse($("#balanceCategories").text());
                     console.log("balanceCategories: ", balanceCategories);
@@ -705,10 +697,33 @@
                         }
 
                         // figure this year's retirement income
-                        if(yrIdx == 0) {
-                            // left off here -- this needs to be fixed to reflect values after retirement starts
+                        if(yrIdx == 0 && year > 2025) {
+                            // Retirement income last year...
+                            //  if year > 2025
+                            //      and category = "IncomeRetirement"
+                            //      and amount > 0
+                            //      and toFrom in 'WF', 'WF-IRA', 'TIAA', 'DiscRet'
+                            //      notes should indicate if income is non-taxable (from Roth)
+                            //  I may not remember, so throw a message so I'll check
+                            var retirementIncomeMsg = 'If this is not correct, FIX IT!!  Retirement income for ' + (year - 1) + "\n";
                             lastYearNonTaxableRetIncome = 0;
                             lastYearTaxableRetIncome = 0;
+                            lastYearRetirementIncome.forEach( retIncome => {
+                                console.log("---- begin loop: ", retIncome);
+                                retirementIncomeMsg += " - " + JSON.stringify(retIncome) + "\n";
+                                if(retIncome['notes'].includes('nontaxable') || retIncome['notes'].includes('non-taxable')) {
+                                    lastYearNonTaxableRetIncome += Number(retIncome['amount']);
+                                    console.log("lastYearNonTaxableRetIncome: ", lastYearNonTaxableRetIncome);
+                                } else {
+                                    lastYearTaxableRetIncome += Number(retIncome['amount']);
+                                    console.log("lastYearTaxableRetIncome: ", lastYearTaxableRetIncome);
+                                }
+                            });
+
+                            retirementIncomeMsg += "Non Taxable total: " + lastYearNonTaxableRetIncome + "\n" +
+                                "Taxable total: " + lastYearTaxableRetIncome;
+                            alert(retirementIncomeMsg);
+
                         }
                         [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome] = calcRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome);
 
@@ -751,7 +766,7 @@
                         // LTC only an expense if LTC balance is below the goal
                         // left off here -- fix LTC expense
 
-                        // left off here --
+                        // left off here -- DO THIS NEXT
                         // NOTE: Need two more lines for tax retirement growth & non-tax retirement growth
 
                         // update Ending balances
@@ -828,8 +843,12 @@
                 console.log("retirementParameters: ", retirementParameters);
                 console.log(" invWD: ", retirementParameters['InvWD']);
 
+                var lastYearRetirementIncome = $("#lastYearRetirementIncome").text();
+                lastYearRetirementIncome = JSON.parse(lastYearRetirementIncome);
+                console.log("lastYearRetirementIncome: ", lastYearRetirementIncome);
+
                 // need current year expenses by category and summary category
-                calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues);
+                calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters);
 
                 // calc values dependent on previous year:
                 //      beginning balances after first forecast year, 
@@ -837,7 +856,7 @@
                 //      income taxes,
                 //      incomeOtherWH,
                 //      ending balances
-                calcYearByYear(forecastYears, retirementParameters, date);
+                calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date);
 
                 // calc LTC goal per year & put on page
                 // assume contrib $7500 per year beginning in 2021 at 5% interest

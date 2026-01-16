@@ -5475,6 +5475,7 @@ class TransactionsController extends Controller
 
             // 'LTCinWF',       // use 'like', 'LTCinWF%' for LTCinWF and LTCinWFdate
             // 'LTCinWFdate',
+            // 'Doctor20xx'     // use 'like', 'Doctor20%'
             $retirementParametersFields = [
                 'invWD',
                 'RetDistribBegin',
@@ -5491,7 +5492,8 @@ class TransactionsController extends Controller
                 ->whereNull('deleted_at')
                 ->where(function($q) use ($retirementParametersFields) { 
                     $q->whereIn('description', $retirementParametersFields)
-                    ->orWhere('description', 'like', 'LTCinWF%');
+                    ->orWhere('description', 'like', 'LTCinWF%')
+                    ->orWhere('description', 'like', 'Doctor20%');
                 }) 
                 ->orderBy('description')
                 ->get()->toArray();
@@ -5509,7 +5511,7 @@ class TransactionsController extends Controller
                 }
             }
 
-            error_log("retirementParameters: ");
+            error_log("new retirementParameters: ");
             foreach($retirementParameters as $idx=>$retDatum) {
                 error_log($idx . ": " . json_encode($retDatum));
             }
@@ -5560,6 +5562,9 @@ class TransactionsController extends Controller
         $date = date('Y-m-01'); // yyyy-mm-01 - first of current month
         $firstOfThisYear = substr($date, 0, 4) . '-01-01';
         $lastOfThisYear = substr($date, 0, 4) . '-12-31';
+        $lastYear = date("Y") - 1;
+        $firstOfLastYear = $lastYear . '-01-01';
+        $lastOfLastYear = $lastYear . '-12-31';
         $twoDigitYear = substr($date, 2, 2);
 
         // get beginning balances
@@ -5832,6 +5837,23 @@ class TransactionsController extends Controller
             ->get()->toArray();
         error_log("actualExpensesYTM:" . json_encode($actualExpensesYTM));
 
+        // get retirement income from last year (NOT SS, IBM, NH)
+        $retirementAccts = ['WF-IRA', 'TIAA', 'DiscRet'];
+        $lastYearRetirementIncome = DB::table('transactions')
+            ->select('amount', 'toFrom', 'notes')
+            ->whereBetween('trans_date', [$firstOfLastYear, $lastOfLastYear])  // last year
+            ->where('category', 'IncomeRetirement')
+            ->whereIn('toFrom', $retirementAccts)
+            ->where('amount', '<', 0)                                           // only withdrawals from retirement accts
+            ->whereNull('deleted_at')
+            ->where ('trans_date', '>', '2025-12-31')                           // nothing before 2026
+            ->get()->toArray();
+        // error_log("lastYearRetirementIncome:");
+        // foreach($lastYearRetirementIncome as $retItm) {
+        //     error_log(json_encode($retItm));
+        // }           
+            
+            
         // keep track of categories so categories with no expenses yet can be appended
         $categoriesCalculated = [];
         foreach($actualExpensesYTM as $actual) {
@@ -5864,7 +5886,7 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal'));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
 
 }
