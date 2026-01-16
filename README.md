@@ -8,13 +8,13 @@
 <hr>
 <hr>
 
-  <h2>NEXT:  ***  2025-10-13-retirement ***</h2>
-    <p>Last push: 1/10/26</p>
+  <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
+    <p>Last push: 1/15/26</p>
     <p>To Do:<p>
     <ul>
       <li>** Retirement Income
         <br>See "left off here --" for places to update year to year values in retirement forecast
-        <br>
+        <br>Subtract Disc CC and VISA balances from Spending
         <br>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record.
         <br>
         <br>DO add .gitignore
