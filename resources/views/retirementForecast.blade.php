@@ -27,9 +27,9 @@
         <div hidden id="retirementParameters">{{ json_encode($retirementParameters) }}</div>
         <div hidden id="lastYearRetirementIncome">{{ json_encode($lastYearRetirementIncome) }}</div>
         @php 
-        $currentYear = date("Y");
-        $forecastLength = 2062 - $currentYear;
-        $forecastYears = range($currentYear, $currentYear + $forecastLength);
+            $currentYear = date("Y");
+            $forecastLength = 2062 - $currentYear;
+            $forecastYears = range($currentYear, $currentYear + $forecastLength);
         @endphp
         <div hidden id="forecastYears">{{ json_encode($forecastYears) }}</div>
         <div hidden id="currentYear">{{ $currentYear }}</div>
@@ -105,7 +105,7 @@
                             @if($idxYear == 0)
                             <td style="background-color: blue; color: white;">{{ $date }}</td>
                             @else
-                            <td style="background-color: blue; color: white;">Jan 1</td>
+                            <td style="background-color: blue; color: white;">Jan 1, {{ $year }}</td>
                             @endif
                         @endforeach
                     </tr>
@@ -161,7 +161,7 @@
 
                     <!-- Income --> 
                     @php 
-                        $accountNames = ["Town of Durham", "GB Limo", "Rental", "NH Retirement", "Mike IBM", "Mike SS", "Maura IBM", "Maura SS", "Tax Retire", "Non-Tax Retire", "Investment Growth"];
+                        $accountNames = ["Town of Durham", "GB Limo", "Rental", "NH Retirement", "Mike IBM", "Mike SS", "Maura IBM", "Maura SS", "Tax Retire", "Non Tax Retire", "Investment Growth", "Taxable Retirement Growth", "Tax Free Retirement Growth"];
                         // NO inherited IRA - income from that goes to LTC
                     @endphp
                     <tr id="incomeForecast">
@@ -196,13 +196,14 @@
                         <td style="background-color: lightgreen;"></td>
                         <td style="background-color: lightgreen;"></td>
                         @foreach($forecastYears as $idxSubTot=>$year)
-                            <td style="background-color: lightgreen;">{{ number_format((float)$incomeSubTots[$idxSubTot]) }}</td>
+                            <td id="income{{ $year }}" style="background-color: lightgreen;">{{ number_format((float)$incomeSubTots[$idxSubTot]) }}</td>
                         @endforeach                        
                     </tr>
 
                     <!-- break -->
                     <tr>
                         <td style="background-color: #36454F; height: 10px;"></td>
+                        <td style="background-color: #36454F;"></td>
                         <td style="background-color: #36454F;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: #36454F;"></td>
@@ -223,7 +224,7 @@
                             @if($idxYear == 0)
                             <td style="background-color: red; color: white;">After {{ $date }}</td>
                             @else
-                            <td style="background-color: red; color: white;"></td>
+                            <td style="background-color: red; color: white;">{{ $year }}</td>
                             @endif
                         @endforeach
                     </tr>
@@ -280,11 +281,12 @@
                     <tr>
                         <td style="background-color: pink;">Sub-total:</td>
                         <td style="background-color: pink;"></td>
-                        <td style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
+                        <td style="background-color: pink;"></td>
+                        <td id="expenses{{ $forecastYears[0] }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
                         <!-- add sub totals here --> 
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear != 0)   <!-- first column is already done -->
-                            <td id="expenses{{ $year }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
+                                <td id="expenses{{ $year }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
                             @endif
                         @endforeach
                     </tr>
@@ -292,6 +294,7 @@
                     <!-- break -->
                     <tr>
                         <td style="background-color: #36454F; height: 10px;"></td>
+                        <td style="background-color: #36454F;"></td>
                         <td style="background-color: #36454F;"></td>
                         @foreach($forecastYears as $year)
                             <td style="background-color: #36454F;"></td>
@@ -331,7 +334,7 @@
                         <td style="background-color: lightblue;"></td>
                         <td style="background-color: lightblue;"></td>
                         @foreach($forecastYears as $year)
-                            <td style="background-color: lightblue;">(calc)</td>
+                            <td id="ending{{ $year }}" style="background-color: lightblue;"></td>
                         @endforeach                        
                     </tr>
 
@@ -412,6 +415,7 @@
                     <br> - https://docs.google.com/spreadsheets/d/10UFYi7Hiqd_y4q02vT85QjEXc1MJep27Kw3PYU7lmns/edit?gid=1813417080#gid=1813417080
                     <br> for details on future "Doctor" estimates
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
+                <li>Assume raises from earned income = COLA</li>
                 <li>Spending:
                     <ul>
                         <li>Savings (Big Bills)</li>
@@ -468,7 +472,7 @@
                         // use estimates in retirementdata if they exist;
                         //  otherwise bump up by inflation factor
                         if(typeof retirementParameters['Doctor' + year] != 'undefined') {
-                            thisYearsExpense =  -parseInt(retirementParameters['Doctor' + year]);
+                            thisYearsExpense = -parseInt(retirementParameters['Doctor' + year]);
                         } else {
                             thisYearsExpense = Math.round(lastYearsExpense * (1 + inflationFactor/100));
                         }
@@ -532,6 +536,7 @@
                             } else {
                                 $('#' + category + 'INF').text(inflationFactor).css('background-color', 'yellow');
                             }
+
                             // handle special cases separately
                             // rental expense and work expense (only when there's rental income or earned income)
                             if(category == 'RentalExpense' || category == 'WorkExpense') {
@@ -604,7 +609,7 @@
                     if(twoDigitYearStart > twoDigitIteratedYear) {
                         console.log(" - no retirement yet");
                         $('#TaxRetire' + year).text('0');
-                        $('#Non-TaxRetire' + year).text('0');
+                        $('#NonTaxRetire' + year).text('0');
 
                         // set ret income to use in future
                         lastYearTaxableRetIncome = 0;
@@ -662,6 +667,83 @@
 
                 }   // end function calcRetirementIncome
 
+
+                // end spending = beginning spending + income (except retirement growth and inv growth) - expenses
+                // end investments = begining investments + inv growth - needed for spending (if end spending is negative)
+                // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
+                // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
+                function updateEndingBalances(year) {
+                    console.log("UPDATEENDINGBAL");
+
+                    endingSubTotal = 0;    // for Sub-total
+
+                    summaryCategories = ['Spending', 'Investment', 'TaxableRetirement', 'TaxFreeRetirement'];
+                    selectorPrefixesToAdd = [];
+                    selectorPrefixesToSubtract = [];
+                    
+                    // spending
+                    selectorPrefixesToAdd['Spending'] = ['income', 'expenses'];     // expenses "added" because it's a negative number on the page
+                    selectorPrefixesToSubtract['Spending'] = ['InvestmentGrowth', 'TaxableRetirementGrowth', 'TaxFreeRetirementGrowth'];
+
+                    // investments
+                    selectorPrefixesToAdd['Investment'] = ['InvestmentGrowth'];
+                    selectorPrefixesToSubtract['Investment'] = [];
+                    
+                    // taxable retirement
+                    selectorPrefixesToAdd['TaxableRetirement'] = ['TaxableRetirementGrowth'];
+                    selectorPrefixesToSubtract['TaxableRetirement'] = ['TaxRetire'];
+
+                    // investments
+                    selectorPrefixesToAdd['TaxFreeRetirement'] = ['TaxFreeRetirementGrowth'];
+                    selectorPrefixesToSubtract['TaxFreeRetirement'] = ['NonTaxRetire'];
+
+                    // calc each ending balance
+                    summaryCategories.forEach( summaryCategory => {
+                        // start with beginning balance for the year
+                        // get value from page
+                        var endingBalance = $('#' + summaryCategory + year).text();
+
+                        // strip commas and make it a number
+                        endingBalance = Number(endingBalance.replaceAll(',', ''));
+                        
+                        // add incomes for this summary category
+                        selectorPrefixesToAdd[summaryCategory].forEach( addPrefix => {
+                            // get value from page
+                            var income = $('#' + addPrefix + year).text();
+
+                            // strip commas and make it a number
+                            income = Number(income.replaceAll(',', ''));
+
+                            // add to balance
+                            endingBalance += income;
+
+                        });
+
+                        // subtract expenses for this summary category
+                        selectorPrefixesToSubtract[summaryCategory].forEach( subPrefix => {
+                            // get value from page
+                            var expense = $('#' + subPrefix + year).text();
+
+                            // strip commas and make it a number
+                            expense = Number(expense.replaceAll(',', ''));
+
+                            // subtract from balance
+                            endingBalance -= expense;
+                        });
+
+                        // put result on page
+                        $('#end' + summaryCategory + year).text(endingBalance);
+
+                        // add to subTotal
+                        endingSubTotal += endingBalance;                        
+
+                    });
+
+                    // put subtotal on page
+                    $('#ending' + year).text(endingSubTotal);
+
+                    // ending balances for 
+                }   // end function updateEndingBalances
 
                 // calc values dependent on previous year:
                 //      beginning balances after first forecast year, 
@@ -729,6 +811,13 @@
 
                         // figure this year's investment growth based on average balances
                         // some interest already earned in first year
+                        const selectorPrefixes = ['#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
+
+                        // Income sub-totals need to be updated for these investment growths
+                        // Start with existing sub-total on page
+                        var newIncomeSubtotal = Number($('#income' + year).text().replaceAll(',',''));
+                        console.log("newIncomeSubtotal (start): ", newIncomeSubtotal, " for year ", year);
+
                         if(yrIdx == 0) {
                             console.log("date: ", date);
                             // assume growth happened so far at expected rate, and add growth till end of year
@@ -745,15 +834,39 @@
                             //          $('#Investment' + year).text()  =  balance_w_growth
                             //          InvGrowth   =   interest_rate
                             //          numMonthsToDate = months_interest_already_earned
-                            const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
-                            // apply growth to original balance for number of months left
-                            const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
-                            $('#InvestmentGrowth' + year).text(growthLeft);
+
+                            //      for investments, tax retire, non tax retire
+                            selectorPrefixes.forEach (selectorPrefix => {
+                                // const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
+                                const origEst = Number($(selectorPrefix + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
+                                // console.log("--- selectorPrefix: ", selectorPrefix);
+                                // console.log("- origEst: ", origEst);
+                                // apply growth to original balance for number of months left
+                                const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
+                                // console.log("- growthLeft: ", growthLeft);
+                                // $('#InvestmentGrowth' + year).text(growthLeft);
+                                $(selectorPrefix + 'Growth' + year).text(growthLeft);
+                                // add growth to subtotal
+                                newIncomeSubtotal += growthLeft;
+                                console.log("newIncomeSubtotal (udpated 1): ", newIncomeSubtotal, " for year ", year);
+                            });
                         } else {
-                            const beginBalance = $('#Investment' + year).text();
-                            const growth = Math.round(beginBalance * InvGrowth);
-                            $('#InvestmentGrowth' + year).text(growth);
+                            //      for investments, tax retire, non tax retire
+                            selectorPrefixes.forEach (selectorPrefix => { 
+                                // console.log("--- selectorPre...: ", selectorPrefix);
+                                const beginBalance = $(selectorPrefix + year).text();
+                                const growth = Math.round(beginBalance * InvGrowth);
+                                // console.log("- beginBalance: ", beginBalance, "; growth: ", growth);
+                                $(selectorPrefix + 'Growth' + year).text(growth);
+                                // add growth to subtotal
+                                newIncomeSubtotal += growth;
+                                console.log("newIncomeSubtotal (udpated 2): ", newIncomeSubtotal, " for year ", year);
+                            });
                         }
+
+                        // put updated income subtotal on page
+                        console.log("newIncomeSubtotal (final): ", newIncomeSubtotal, " for year ", year);
+                        $('#income' + year).text(newIncomeSubtotal);
 
                         // estimate income taxes and IncomeOtherWH (Medicare, SS)
                         // left off here -- for current year, take into account what's already been withheld
@@ -766,15 +879,13 @@
                         // LTC only an expense if LTC balance is below the goal
                         // left off here -- fix LTC expense
 
-                        // left off here -- DO THIS NEXT
-                        // NOTE: Need two more lines for tax retirement growth & non-tax retirement growth
-
                         // update Ending balances
                         // left off here -- ending balances
                         // end spending = beginning spending + income (except retirement and inv growth) - expenses
                         // end investments = begining investments + inv growth - needed for spending (if end spending is negative)
                         // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
                         // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
+                        updateEndingBalances(year);
 
 
 
