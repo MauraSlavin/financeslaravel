@@ -3095,7 +3095,7 @@ class TransactionsController extends Controller
         //      incomeIBMMike       last IBM dep for Mike
         //      incomeIBMMaura      last IBM dep for Maura (or retirement table or input)
         //      incomeGBLimoYTD     sum from transactions table
-        //      incomeGBLimoAnnual  pro-rated for year (or max allowed by SS)
+        //      incomeGBLimoAnnual  pro-rated for year (or max allowed by SS when <65)
         //      incomeTownYTD       sum from transactions table
         //      incomeTownAnnual    pro-rated for year
         //      incomeRentalYTD     sum from transactions table
@@ -5031,10 +5031,10 @@ class TransactionsController extends Controller
         // get income expected for the rest of this year as of the first of this month
         function thisYearIncome($date, $twoDigitYear) {
 
-        $remainingIncomeThisYear = [];
+            $remainingIncomeThisYear = [];
             $inputIncomes = ["NH Retirement", "MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
             $inputIncomesDescriptions = ["NHRetirement", "MauraIBM", "MauraSS65", "MauraSS67", "RentalIncome".$twoDigitYear];
-            $otherRetirementDataNeeded = ["GBLimoForExpenses", "EndGBJob", "EndTownJob", "EndRentalJob", "MauraIBMStart", "MauraSSStart", "SSIncomeLimit" ];
+            $otherRetirementDataNeeded = ["GBLimoForExpenses", "EndGBJob", "EndTownJob", "EndRentalJob", "MauraIBMStart", "MauraSSStart" ];
             $dataBaseIncomesLine = ["Town of Durham", "GB Limo", "Mike IBM", "Mike SS", "Tax Retire", "Non-Tax Retire", "Investment Growth"];
             $dataBaseIncomestoFrom = ["Town of Durham", "Great Bay Limo", "MTS-IBM-Retirement", "SSMike"];
 
@@ -5048,7 +5048,7 @@ class TransactionsController extends Controller
             $retirementDataInfo = [];
             $retirementDataHaveInputValue = []; // if element is true, have the input value; if exists, have other value; if undefined, don't have a value
             foreach($retirementDataInfoDB as $idx=>$retirementDatum) {
-                error_log("---" . $idx . ": " . json_encode($retirementDatum));
+                error_log("---*" . $idx . ": " . json_encode($retirementDatum));
 
                 // if no data for this description found yet, note if it's "inpt" type and save the value
                 if(!isset($retirementDataHaveInputValue[$retirementDatum->description])) {
@@ -5083,12 +5083,10 @@ class TransactionsController extends Controller
             //     error_log("===================================");
             // }
 
-            // error_log("retirementDataInfo[SSIncomeLimit]: " . $retirementDataInfo["SSIncomeLimit"]);
-            
             // error_log(" --- ");
             foreach($inputIncomesDescriptions as $income) {
                 error_log("test 3 -- income: " . $income);
-                error_log("retirementDataInfo: " . json_encode($retirementDataInfo));
+                // error_log("retirementDataInfo: " . json_encode($retirementDataInfo));
                 error_log("retirementDataInfo[".$income."]: " . $retirementDataInfo[$income]);
                 $remainingIncomeThisYear[$income] = $retirementDataInfo[$income];
                 // error_log(json_encode($remainingIncomeThisYear));
@@ -5135,7 +5133,7 @@ class TransactionsController extends Controller
 
             // assume yearly raises are 1% above cola
             $COLA = $townData[1]->data; // ss cola
-            $raise = 1+($COLA + 1)/100;         // assume raise is 1% over COLA
+            $raise = 1+$COLA/100;         // assume raise is COLA
 
             // get hourly rate and hours per week
             $hourlyRate = $townData[2]->data;
@@ -5170,33 +5168,59 @@ class TransactionsController extends Controller
         // GB Limo income predicitons based on SS income limits & pay so far
         function getGBLimoIncomes($date, $raise) {
 
+            // this will be populated with the expected GBLimo income for each year forecasted
             $gbLimoIncomes = [];
 
-            // get SSIncomeLimit (SS Income limit) and EndGBJob (when GB Limo job ends) from retirementdata table
-            $gbData = DB::table('retirementdata')
-                ->select('description', 'data')
-                ->where('type', 'inpt')
-                ->whereIn('description', ['SSIncomeLimit', 'EndGBJob'])
+            // get EndGBJob (when GB Limo job ends) from retirementdata table
+            $gbDataDB = DB::table('retirementdata')
+                ->select('description', 'data', 'type')
+                ->where('description', 'EndGBJob')
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get()->toArray();
             
-            // EndGBJob and SSIncomeLimit are returned in ABC order
-            $dateEndGBJob = '20' . substr($gbData[0]->data, 4) . '-' . substr($gbData[0]->data, 0, 2) . '-' . substr($gbData[0]->data, 2, 2);
-            $ssIncomeLimit = (int)$gbData[1]->data;
+            // keep 'inpt' type if it exists
+            $gbData = [];
+            foreach($gbDataDB as $idx=>$datum) {
+
+                // keep if no value yet, keep it
+                if(!isset($gbData[$datum->description])) {
+                    $gbData[$datum->description] = $datum->data;
+
+                // change value if type is 'inpt'
+                } else if($datum->type == 'inpt') {
+                    $gbData[$datum->description] = $datum->data;
+                }
+            }
+
+            // get date variables needed
+            $year = substr($date, 0, 4);
+            $currMonthNum = substr($date, 5, 1);
+            $firstOfYear = $year . '-01-01';
+            $firstOfMonth = $year . '-' . $currMonthNum . '-01';
+            $dateEndGBJob = '20' . substr($gbData['EndGBJob'], 4) . '-' . substr($gbData['EndGBJob'], 0, 2) . '-' . substr($gbData['EndGBJob'], 2, 2);
 
             // get GB income up to the first of this month for this year
             $thisYearIncome = DB::table('transactions')
                 ->where('toFrom', 'Great Bay Limo')
                 ->where('category', 'IncomeMisc')
-                ->whereBetween('trans_date', ['2025-01-01', $date])
+                ->whereBetween('trans_date', [$firstOfYear, $currMonthNum])
                 ->sum('amount');
 
-            // calc income for rest of year; and set to first element of income array
-            $gbLimoIncomes[] = $ssIncomeLimit - $thisYearIncome;
+            // get the budget for IncomeMisc (should only be GBLimo) for this year
+            $thisYearBudgetDB = DB::table('budget')
+                ->where('category', 'IncomeMisc')
+                ->where('year', $year)
+                ->first();      // should only be one record that matches
+
+            // remaining budget is full year - what's been earned so far
+            $thisYearRemainingBudget = $thisYearBudgetDB->total - $thisYearIncome;
+
+            // set income for the rest of this year to first element of income array
+            $gbLimoIncomes[] = $thisYearRemainingBudget;
 
             // subsequent years will be based on full year, so set prev year to this year's full income
-            $prevYearIncome = $ssIncomeLimit;         
+            $prevYearIncome = $thisYearRemainingBudget;         
 
             // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
             for($year = ((int)substr($date, 0, 4))+1; $year <= 2062; $year++) {
@@ -5520,9 +5544,11 @@ class TransactionsController extends Controller
             $numberYearsForecast = 2062 - $thisYear + 1;
 
             for($idx = 0; $idx < $numberYearsForecast; $idx++) {
-                $newvalue = $thisYear + $idx - 2000;
-                $taxableRetIncomes[] = $newvalue;
-                $nonTaxableRetIncomes[] = $newvalue;
+                // $newvalue = $thisYear + $idx - 2000;
+                // $taxableRetIncomes[] = $newvalue;
+                // $nonTaxableRetIncomes[] = $newvalue;
+                $taxableRetIncomes[] = 0;
+                $nonTaxableRetIncomes[] = 0;
             }
             // error_log("taxableRetIncomes:");
             // error_log(json_encode($taxableRetIncomes));
@@ -5542,7 +5568,7 @@ class TransactionsController extends Controller
 
         }    // end function getInvestmentGrowths
 
-        // global months array
+        // months array
         $months = [
             'january',
             'february',
@@ -5607,8 +5633,14 @@ class TransactionsController extends Controller
         // get retirement incomes per year estimates
         [$taxableRetIncomes, $nonTaxableRetIncomes, $retirementParameters] = getRetIncomes($date);
 
-        // get expected investement growth per year
+        // get dummy expected investement growth per year
         $investmentGrowths = getInvestmentGrowths($date);
+        
+        // get dummy expected taxable ret income growth per year
+        $taxableRetirementGrowths = getInvestmentGrowths($date);
+        
+        // get dummy expected nontaxable ret income growth per year
+        $taxFreeRetirementGrowths = getInvestmentGrowths($date);
 
         $incomeValues = [
             // town of durham
@@ -5632,7 +5664,11 @@ class TransactionsController extends Controller
             // non-taxable retirement
             json_encode($nonTaxableRetIncomes),
             // Investment Growth
-            json_encode($investmentGrowths)
+            json_encode($investmentGrowths),
+            // taxable retirement growth
+            json_encode($taxableRetirementGrowths),
+            // non taxable retirement growth
+            json_encode($taxFreeRetirementGrowths)
         ];
         $incomeSubTots = $this->addArraysByPosition($townOfDurhamIncomes, $GBLimoIncomes, $rentalIncomes, $nhRetirementIncomes, $mikeIBMIncomes, $mikeSSIncomes, $mauraIBMIncomes, $mauraSSIncomes, $taxableRetIncomes, $nonTaxableRetIncomes, $investmentGrowths);
 

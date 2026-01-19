@@ -12,24 +12,38 @@
     <p>Last push: 1/15/26</p>
     <p>To Do:<p>
     <ul>
+      <li>NOTE:
+        <br>11249.5  GB tips - w/held tax on, but aren't taxed.
+        <br> - @ 22% = 2,474.89
+      </li>
+      <br>
+      <li>NOTE (minor):
+        <br>Great Bay Limo (IncomeMisc) <> stub or Google Sheet, but not off by a lot
+      </li>
+      <br>
       <li>** Retirement Income
         <br>See "left off here --" for places to update year to year values in retirement forecast
         <br>Subtract Disc CC and VISA balances from Spending
         <br>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record.
         <br>
         <br>DO add .gitignore
-        <br>
+        <br>.
       </li>
-      <li>fix GB Limo income this year</li>
+      <li>fix GB Limo income this year, and
+        <br> -- tips not taxable
+        <br> -- max on contrib to household??
+        <br> -- put taxes set aside back to spending when withheld from pay
+      </li>
       <li>fix future expenses...
         <ul>
           <li>ExtraSpending</li>
-          <li>Doctor (when Maura starts Medicare)?</li>
-          <li>IncomeTaxes</li>
+          <li>IncomeTaxes
+            <br>-- Remember: GB Tips not taxable
+          </li>
           <li>IncomeOtherWH</li>
         </ul>
       </li>
-      <li>Ending balances</li>
+      <li>Ending balances -- checking 1/16/26</li>
       <li>Misc balances</li>
       <li>LTC balance</li>
       <li>Make sure I'm using ALL data on Retirement Input page</li>
