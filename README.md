@@ -9,7 +9,10 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 1/15/26</p>
+    <p>Last push: 1/18/26</p>
+      <ul>
+        <li>Added TaxDisc account</li>
+      </ul>
     <p>To Do:<p>
     <ul>
       <li>NOTE:
@@ -19,6 +22,16 @@
       <br>
       <li>NOTE (minor):
         <br>Great Bay Limo (IncomeMisc) <> stub or Google Sheet, but not off by a lot
+      </li>
+      <br>
+      <li>*** Tax free tips ***
+        <br> - updated Google Sheets
+        <br> - NEED TO:
+        <br> --- add new category to transactions (taxFreeIncome?)
+        <br> --- change existing GB Limo to separate taxable from tips
+        <br> --- change GB Limo interface to prompt for Taxable Income and Tax Free income separately
+        <br> ------ Add prompt for SS & Medicare separately
+        <br> --- Add tax free income to retirementforecast
       </li>
       <br>
       <li>** Retirement Income
@@ -45,7 +58,6 @@
       </li>
       <li>Ending balances -- checking 1/16/26</li>
       <li>Misc balances</li>
-      <li>LTC balance</li>
       <li>Make sure I'm using ALL data on Retirement Input page</li>
       <li>estimated taxes (GB limo tips are deductible up to $25,000 thru 2028)</li>
     </ul>
@@ -166,6 +178,15 @@
     <li>git checkout main</li>
     <li>git pull</li>
     <li>should now have all changes in the main branch, and ready to start again with a new branch</li>
+  </ul>
+
+
+<h2>Add a New Account</h2>
+  <p>To add a new account to the application</p>
+  <ul>
+    <li>Add an entry to the "accounts" table</li>
+    <li>Allow the new account name in the ENUM for the "account" column of the transactions table</li>
+    <li>Manually add a transaction - there needs to be a "lastBalanced" value</li>
   </ul>
 
 

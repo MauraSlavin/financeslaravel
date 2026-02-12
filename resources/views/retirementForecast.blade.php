@@ -350,7 +350,7 @@
                     
                     <!-- misc (LTC, etc) -->
                     @php 
-                        $accountNames = ["LTC", "House"];
+                        $accountNames = ["LTC", "House value"];
                         $accountValues = [
                             [$initLTCBal, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ],
                             [500000, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ]
@@ -374,7 +374,7 @@
                         <td></td>
                         <td  data-bs-toggle="tooltip"
                             data-bs-placement="top"
-                            title="Goal amt at year end assuming $7500 annual contrib beginning 2021 at 5% interest">
+                            title="Goal amt at year end assuming $7500 annual contrib beginning 2021 at <LTCInvGrowth> interest">
                             LTC goal
                         </td>
                         <td></td>
@@ -382,20 +382,21 @@
                             <td id="LTCgoal{{$year}}"></td>
                         @endforeach
                     </tr>
+                    <!-- LTC balances -->
                     @foreach($accountNames as $acctIdx=>$account)
                         <tr>
                             <td></td>
                             @if($account == 'LTC')
                             <td  data-bs-toggle="tooltip"
                                 data-bs-placement="top"
-                                title="Inherited IRA, Discover LTC, rest in WF Trad IRA">{{ $account }}
+                                title="Inherited IRA, Discover LTC, rest in WF Trad IRA">{{ $account }} balance
                             </td>
                             @else
                             <td>{{ $account }}</td>
                             @endif
                             <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
-                                <td>{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
+                                <td id="LTCBal{{$year}}">{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
                         </tr>
                     @endforeach             
@@ -407,6 +408,7 @@
             <ul>
                 <li>IRA/Retirement distributions go to Spending</li>
                 <li>Income from Inherited IRA should be earmarked for LTC</li>
+                <li>LTC goals are based on $7500 contributed each year beginning in 2021. Growth is input as LTCInvGrowth on previous page.</li>
                 <li>Health care inflation assumed to be 5% (in budget table)
                     <br> - US Health Care Inflation Rate is at 3.05%, compared to 3.28% last month and 3.08% last year. This is lower than the long term average of 5.09%.
                     <br> - Source: https://ycharts.com/indicators/us_health_care_inflation_rate#:~:text=Basic%20Info,the%20US%20Consumer%20Price%20Index.
@@ -761,14 +763,16 @@
                     const InvGrowth = Number(retirementParameters['InvGrowth'])/100;
                     console.log("InvGrowth: ", InvGrowth);
 
-                    // add this year to begining of forecastYears array to calc this year's numbers, too
+                    // add this year to beginning of forecastYears array to calc this year's numbers, too
                     const today = new Date();
                     const currentYear = today.getFullYear();
                     forecastYears.unshift(currentYear);
 
                     forecastYears.forEach( (year, yrIdx) => {
                         console.log(" --- year by year ", yrIdx, ": ", year, "; last year: ", (year - 1));
-
+                        console.log(" +++ year: ", year);
+                        lastYear = year - 1;
+                        console.log("lastYear: ", lastYear);
                         // copy last year's ending balances to this year's beginning balances
                         // no need to do it for current year
                         if(yrIdx != 0) {
@@ -818,6 +822,11 @@
                         var newIncomeSubtotal = Number($('#income' + year).text().replaceAll(',',''));
                         console.log("newIncomeSubtotal (start): ", newIncomeSubtotal, " for year ", year);
 
+                        // will need LTC investment growth to project LTC values
+                        LTCInvGrowth = retirementParameters['LTCInvGrowth'];
+                        console.log("LTCInvGrowth:", LTCInvGrowth);
+
+                        // first year calc'd differently
                         if(yrIdx == 0) {
                             console.log("date: ", date);
                             // assume growth happened so far at expected rate, and add growth till end of year
@@ -848,10 +857,13 @@
                                 $(selectorPrefix + 'Growth' + year).text(growthLeft);
                                 // add growth to subtotal
                                 newIncomeSubtotal += growthLeft;
-                                console.log("newIncomeSubtotal (udpated 1): ", newIncomeSubtotal, " for year ", year);
+                                console.log("newIncomeSubtotal (updated 1): ", newIncomeSubtotal, " for year ", year);
+
                             });
+
+                        // other than first year
                         } else {
-                            //      for investments, tax retire, non tax retire
+                            // for investments, tax retire, non tax retire
                             selectorPrefixes.forEach (selectorPrefix => { 
                                 // console.log("--- selectorPre...: ", selectorPrefix);
                                 const beginBalance = $(selectorPrefix + year).text();
@@ -860,8 +872,50 @@
                                 $(selectorPrefix + 'Growth' + year).text(growth);
                                 // add growth to subtotal
                                 newIncomeSubtotal += growth;
-                                console.log("newIncomeSubtotal (udpated 2): ", newIncomeSubtotal, " for year ", year);
+                                console.log("newIncomeSubtotal (updated 2): ", newIncomeSubtotal, " for year ", year);
                             });
+
+                            // -----------------------------
+                            // calc LTC contributions...
+                            var LTCgoal, OldLTCbalance, NewLTCbalance, contrib;
+
+                            // get LTC goal and LTC balance
+                            LTCgoal = Number($('#LTCgoal'+year).text().replaceAll(",",""));
+                            OldLTCbalance = Number($('#LTCBal'+lastYear).text().replaceAll(",",""));
+                            NewLTCbalance = Math.round(OldLTCbalance * (1+LTCInvGrowth/100));
+
+                            // if balance is more than goal, contrib is 0
+                            if(NewLTCbalance >= LTCgoal) {
+                                // put 0 LTC contribution on the page
+                                contrib = 0;    // needed later on
+                                $("#LTC"+year).text(contrib);
+
+                            // else contribution is difference, up to $7500
+                            } else {
+                                // needs to be displayed as a negative (expense) number
+                                contrib = -Math.round(Math.min(7500, LTCgoal - NewLTCbalance));
+                                // put LTC contribution on the page as an expense
+                                $("#LTC"+year).text(contrib.toLocaleString());
+                            }
+                            // -----------------------------
+
+                            // -----------------------------
+                            // Update LTC balances...
+                            var LTCInvGrowth, LTCgrowth;
+
+                            // handle as a positive number here
+                            contrib = -contrib;
+                            
+                            // estimate growth expected
+                            LTCgrowth = Math.round((OldLTCbalance + contrib)*LTCInvGrowth/100);
+                            
+                            // estimate new LTC balance
+                            NewLTCbalance = OldLTCbalance + contrib + LTCgrowth;
+
+                            // put new LTC balance on the page
+                            $("#LTCBal"+year).text(NewLTCbalance.toLocaleString());
+                            // -----------------------------
+
                         }
 
                         // put updated income subtotal on page
@@ -869,6 +923,7 @@
                         $('#income' + year).text(newIncomeSubtotal);
 
                         // estimate income taxes and IncomeOtherWH (Medicare, SS)
+                        // Finish updating GB Limo stuff first (separate out tips from paychecks)
                         // left off here -- for current year, take into account what's already been withheld
                         //      note: only earned income is subject to Medicare and SS
                         //              GB limo tips are deductible up to $25,000 thru 2028
@@ -876,19 +931,7 @@
                         // extraSpending is based on GBLimo income
                         // left off here -- GBLimo income based
 
-                        // LTC only an expense if LTC balance is below the goal
-                        // left off here -- fix LTC expense
-
-                        // update Ending balances
-                        // left off here -- ending balances
-                        // end spending = beginning spending + income (except retirement and inv growth) - expenses
-                        // end investments = begining investments + inv growth - needed for spending (if end spending is negative)
-                        // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
-                        // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
                         updateEndingBalances(year);
-
-
-
                         
                     });
                 }
@@ -896,7 +939,6 @@
 
                 // calc LTC goals per year & put on retirementforecast page
                 function calcLTCgoals(yearlyContrib, interestRate, yearFirstContrib, forecastYears) {
-                    
                     var LTCbalance = 0;
                     var interest, avgBal;
                     
@@ -913,11 +955,10 @@
 
                         // if within forecastYears, put on page (rounding to nearest dollar on page, but not in calculations)
                         if(forecastYears.includes(year)) {
-                            $('#LTCgoal' + year).text(Math.round(LTCbalance));
+                            $('#LTCgoal' + year).text(Math.round(LTCbalance).toLocaleString());
                         }
                     }
                 }   // end of function calcLTCgoals
-
 
                 // get inflationFactors from page
                 const inflationFactors = JSON.parse($("#inflationFactors").text());
@@ -961,6 +1002,12 @@
                 // need current year expenses by category and summary category
                 calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters);
 
+                // calc LTC goal per year & put on page
+                // assume contrib $7500 per year beginning in 2021 at LTCInvGrowth interest (from retirement parameters)
+                // get ltc growth
+                const LTCInvGrowth = retirementParameters['LTCInvGrowth'];
+                calcLTCgoals(7500, LTCInvGrowth/100, 2021, forecastYears);
+
                 // calc values dependent on previous year:
                 //      beginning balances after first forecast year, 
                 //      retirement income (tax and non-tax)
@@ -968,10 +1015,6 @@
                 //      incomeOtherWH,
                 //      ending balances
                 calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date);
-
-                // calc LTC goal per year & put on page
-                // assume contrib $7500 per year beginning in 2021 at 5% interest
-                calcLTCgoals(7500, 0.05, 2021, forecastYears);
 
             });
 
