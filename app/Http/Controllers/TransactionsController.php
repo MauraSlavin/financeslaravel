@@ -2048,17 +2048,22 @@ class TransactionsController extends Controller
     public function writeGBLimo(Request $request) {
 
         // transaction for gross paycheck deposit to checking
+        //      as two transactions...
+        //          1) IncomeMisc for taxable pay
+        //          2) IncomeTaxFree for tips not taxed
         function writeGBgrossPay($request) {
+
+            // write record for taxable income (IncomeMisc)
             $transaction = [];
             $transaction['trans_date'] = $request->input('gbpaycheckdate');
             $transaction['clear_date'] = $request->input('gbpaycheckdate');
             $transaction['account'] = "Checking";
             $transaction['toFrom'] = "Great Bay Limo";
-            // gross includes net + tax w/h + ss w/h + medicare w/h
-            $grossPay = $request->input('gbnetpay') + $request->input('gbtaxwh') + $request->input('gbsswh') + $request->input('gbmcwh');
-            $transaction['amount'] = $grossPay;
-            $transaction['amtMike'] = $grossPay / 2;
-            $transaction['amtMaura'] = $grossPay / 2;
+            // taxable includes taxable pay + tax w/h + ss w/h + medicare w/h
+            $taxablePay = $request->input('gbtaxpay');
+            $transaction['amount'] = $taxablePay;
+            $transaction['amtMike'] = $taxablePay / 2;
+            $transaction['amtMaura'] = $taxablePay / 2;
             $transaction['method'] = 'ACH';
             $transaction['category'] = 'IncomeMisc';
             $transaction['stmtDate'] = $request->input('gbstmtdate');
@@ -2075,8 +2080,30 @@ class TransactionsController extends Controller
                 ->whereNull('deleted_at')
                 ->update(["total_key" => $payId, 'copied' => 'needupt']);
 
+
+            // write record for tips income in paycheck (IncomeTaxFree)
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbpaycheckdate');
+            $transaction['clear_date'] = $request->input('gbpaycheckdate');
+            $transaction['account'] = "Checking";
+            $transaction['toFrom'] = "Great Bay Limo";
+            // gross includes taxable pay + tips (in paycheck) + tax w/h + ss w/h + medicare w/h
+            $tipsPay = $request->input('gbtaxfreepay');
+            $transaction['amount'] = $tipsPay;
+            $transaction['amtMike'] = $tipsPay / 2;
+            $transaction['amtMaura'] = $tipsPay / 2;
+            $transaction['method'] = 'ACH';
+            $transaction['category'] = 'IncomeTaxFree';
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+            $transaction['total_amt'] = $request->input('gbnetpay');
+            $transaction['total_key'] = $payId;
+            $transaction['notes'] = $request->input('gbpayperiodnote');
+           
+            DB::table("transactions")
+                ->insertGetId($transaction);
+
             return $payId;
-        }
+        }   // end of function write GBgrossPy
 
         // transaction for tax withheld from deposit to checking and
         // transaction for ss and medicare withheld
@@ -2128,10 +2155,19 @@ class TransactionsController extends Controller
             }
 
             return;
-        }
+        }   // end of function writeGBtaxWH
 
         // write spending transactions for Mike or Maura ($MorM) (checking to spending)
-        function writeGBspending($request, $MorM) {
+        function writeGBspending($request, $MorM, $repaySpending) {
+
+            // if spending is being repaid, no actual transfers to/from spending accounts happen,
+            //      but they get virtually recorded (to keep spending balances accurate)
+            if($repaySpending) $method = "Virtual";
+            else $method = "Internet"; 
+
+            // $MorM is either "Mike" or "MauraSCU"
+            if($MorM == 'MauraSCU') $name = 'Maura';
+            else $name = 'Mike';
 
             // Checking to spending record
             $transaction = [];
@@ -2143,7 +2179,7 @@ class TransactionsController extends Controller
             $transaction['amount'] = -$request->input('gbspending');
             $transaction['amtMike'] = -$request->input('gbspending') / 2;
             $transaction['amtMaura'] = -$request->input('gbspending') / 2;
-            $transaction['method'] = 'Internet';
+            $transaction['method'] = $method;
             $transaction['category'] = 'ExtraSpending';
             $transaction['stmtDate'] = $request->input('gbstmtdate');
             $transaction['notes'] = $request->input('gbspendingnote');
@@ -2168,8 +2204,107 @@ class TransactionsController extends Controller
             DB::table("transactions")
                 ->insert($transaction);
 
+            // if repay spending, create transactions to return the money to checking
+            if($repaySpending) {
+                // first, record for Checking...
+                $transaction['account'] = "Checking";
+                $transaction['toFrom'] = $MorM;
+                $transaction['amount'] = $request->input('gbspending');
+                if($MorM == 'Mike') {
+                    $transaction['amtMike'] = $request->input('gbspending');
+                    $transaction['amtMaura'] = 0;
+                } else {
+                    $transaction['amtMaura'] = $request->input('gbspending');
+                    $transaction['amtMike'] = 0;
+                }
+                $transaction['method'] = $method;
+                $transaction['category'] = $name . 'Spending';
+                $transaction['stmtDate'] = $request->input('gbstmtdate');
+                $transaction['notes'] = 'repay spending from GB pay';
+            
+                DB::table("transactions")
+                    ->insert($transaction);
+
+
+                // then, record for M/M spending...
+                $transaction['account'] = $MorM;
+                $transaction['toFrom'] = "Checking";
+                $transaction['amount'] = -$request->input('gbspending');
+                if($MorM == 'Mike') {
+                    $transaction['amtMike'] = -$request->input('gbspending');
+                    $transaction['amtMaura'] = 0;
+                } else {
+                    $transaction['amtMaura'] = -$request->input('gbspending');
+                    $transaction['amtMike'] = 0;
+                }
+                unset($transaction['category']);
+                $transaction['stmtDate'] = $request->input('gbstmtdate');
+                $transaction['notes'] = 'repay checking for spending from GB pay';
+            
+                DB::table("transactions")
+                    ->insert($transaction);
+            }  // end of if repaySpending
+
             return;
-        }
+        }   // end of function writeGBspending
+
+        // write spending transactions for Mike or Maura ($MorM) (checking to spending)
+        function writeTaxSetAside($request) {
+
+            // Checking to income tax acct
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbspendingdate');
+            $transaction['account'] = "Checking";
+            $transaction['toFrom'] = "TaxDisc";
+            $transaction['amount'] = -$request->input('gbtaxsetaside');
+            $transaction['amtMike'] = -$request->input('gbtaxsetaside') / 2;
+            $transaction['amtMaura'] = -$request->input('gbtaxsetaside') / 2;
+            $transaction['category'] = 'Transfer';
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+            $transaction['notes'] = "2026 GB Limo Tax";
+           
+            DB::table("transactions")
+                ->insert($transaction);
+
+            // Rcd for income tax acct
+            // Only make needed changes to transaction record
+            $transaction['account'] = "TaxDisc";
+            $transaction['toFrom'] = "Checking";
+            $transaction['amount'] = $request->input('gbtaxsetaside');
+            $transaction['amtMike'] = $request->input('gbtaxsetaside') / 2;
+            $transaction['amtMaura'] = $request->input('gbtaxsetaside') / 2;
+
+            DB::table("transactions")
+                ->insert($transaction);
+
+            return;
+        }   // end of function writeTaxSetAside
+
+        // write records in transactions table for other tips received directly from clients
+        // for MauraCash only (this app doesn't keep track of Mike's cash)
+        function writeOtherTips($request) {
+
+            // GB tips to Maura cash
+            $transaction = [];
+            $transaction['trans_date'] = $request->input('gbspendingdate');
+            $transaction['clear_date'] = $request->input('gbspendingdate');
+            $transaction['account'] = "MauraCash";
+            $transaction['toFrom'] = "GB tip";
+            $transaction['amount'] = $request->input('gbothertips');
+            $transaction['amtMike'] = 0;
+            $transaction['amtMaura'] = $request->input('gbothertips');
+            $transaction['stmtDate'] = $request->input('gbstmtdate');
+           
+            DB::table("transactions")
+                ->insert($transaction);
+
+            return;
+        }   // end of function writeOtherTips
+
+        // Is spending money for Mike/Maura to be immediately repaid to household checking?
+        $repaySpending = $request->input('gbrepayspending');  // if this is "repay", then repay spending
+        if($repaySpending == 'repay') $repaySpending = true;
+        else $repaySpending = false;
 
         // transaction for gross paycheck deposit to checking
         // $payId is the id for the paycheck record,
@@ -2180,13 +2315,28 @@ class TransactionsController extends Controller
         writeGBtaxWH($request, $payId);
 
         // write spending transactions for Mike (checking to spending)
-        writeGBspending($request, "Mike");
+        writeGBspending($request, "Mike", $repaySpending);
 
         // write spending transactions for Maura (checking to spending)
-        writeGBspending($request, "MauraSCU");
+        writeGBspending($request, "MauraSCU", $repaySpending);
+
+        // write transactions to move money from ckg to income tax acct
+        writeTaxSetAside($request);
+
+        // if there were additional tips, write transactions for that.
+        $gbothertips = $request->input('gbothertips');
+        if($gbothertips != 0 && $gbothertips != null) {
+            writeOtherTips($request);
+        }
 
         // go back to accounts page, with reminder wrt transfer
-        $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts, and write transactions in checkbook.";
+        if($repaySpending) {
+            $reminder = "REMEMBER to write transactions in checkbook (no transfer needed since Spending was repaid) \n\n";
+        } else {
+            $reminder = "REMEMBER to transfer " . $request->input('gbspending') . " each to Mike's and Maura's spending accounts,\n\nand write transactions in checkbook \n\n";
+        }
+        $reminder .= " and TRANSFER $" . $request->input('gbtaxsetaside') . " to Disc Tax acct (write that in checkbook, too).";
+
         return redirect()->route('accounts')->with('acctsMsg', $reminder);
     }   // end of writeGBLimo
 
@@ -5508,7 +5658,9 @@ class TransactionsController extends Controller
                 'TIAA',
                 'RetirementDisc',
                 'InvGrowth',
-                'LTCinvGrowth'
+                'LTCinvGrowth',
+                'HouseGrowth',
+                'House'
             ];
             $retirementParametersDB = DB::table('retirementdata')
                 ->select('description', 'data', 'type')
