@@ -384,19 +384,25 @@
                     </tr>
                     <!-- LTC balances -->
                     @foreach($accountNames as $acctIdx=>$account)
+                        @php
+                            if($account == 'LTC') $idPrefix = 'LTCBal';
+                            elseif($account == 'House value') $idPrefix = 'HouseValue';
+                            else $idPrefix = '';
+                        @endphp
                         <tr>
                             <td></td>
                             @if($account == 'LTC')
-                            <td  data-bs-toggle="tooltip"
-                                data-bs-placement="top"
-                                title="Inherited IRA, Discover LTC, rest in WF Trad IRA">{{ $account }} balance
-                            </td>
+                                <td  data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="Inherited IRA, Discover LTC, rest in WF Trad IRA">{{ $account }} balance
+                                </td>
+                                <td></td>
                             @else
-                            <td>{{ $account }}</td>
+                                <td>{{ $account }}</td>
+                                <td id="HouseGrowth"></td>
                             @endif
-                            <td></td>
                             @foreach($forecastYears as $yearIdx=>$year)
-                                <td id="LTCBal{{$year}}">{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
+                                <td id="{{$idPrefix}}{{$year}}">{{ number_format((float)$accountValues[$acctIdx][$yearIdx]) }}</td>
                             @endforeach
                         </tr>
                     @endforeach             
@@ -418,6 +424,7 @@
                     <br> for details on future "Doctor" estimates
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Assume raises from earned income = COLA</li>
+                <li>Default annual increase in value of house from 2004 to 2026 is about 3.75%.</li>
                 <li>Spending:
                     <ul>
                         <li>Savings (Big Bills)</li>
@@ -960,6 +967,41 @@
                     }
                 }   // end of function calcLTCgoals
 
+
+                // calc estimated house values
+                function calcHouseValues(forecastYears, retirementParameters) {
+                    // get current year, initial house value & expected house growth
+                    const currentYear = Number($('#currentYear').text());
+                    const initialHouseValue = Math.round(retirementParameters['House']);
+                    const houseGrowth = retirementParameters['HouseGrowth'];
+
+                    // previous year's values (to start)
+                    var previousYear = currentYear - 1;
+                    var previousYearValue = initialHouseValue;
+
+                    // put house growth on page
+                    $("#HouseGrowth").text(houseGrowth);
+
+                    // increase house value for each year by houseGrowth
+                    var newHouseValue;
+                    forecastYears.forEach( year => {
+                        if(year != currentYear) {
+                            // calc new value
+                            newHouseValue = Math.round(previousYearValue * (1 + houseGrowth/100));
+
+                            // put on page
+                            $("#HouseValue" + year).text(newHouseValue.toLocaleString());
+
+                            // set up for next year
+                            previousYear = year;
+                            previousYearValue = newHouseValue;
+                        } else {
+                            // set initial house value
+                            $("#HouseValue" + currentYear).text(initialHouseValue.toLocaleString());
+                        }
+                    })
+                }       // end of function calcHouseValues
+
                 // get inflationFactors from page
                 const inflationFactors = JSON.parse($("#inflationFactors").text());
                 console.log(inflationFactors);
@@ -1016,6 +1058,8 @@
                 //      ending balances
                 calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date);
 
+                // calc estimated house value
+                calcHouseValues(forecastYears, retirementParameters);
             });
 
 

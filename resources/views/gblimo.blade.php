@@ -27,9 +27,27 @@
                 <input class="form-control gbnetpayinput" type="number" id="gbnetpay" name="gbnetpay"  step="0.01" required>
             </div>
 
+            <!-- taxable pay amt -->
+            <div class="form-row">
+                <label class="gbtaxpaylabel" for="gbtaxpay">Taxable pay (from stub): </label><br>
+                <input class="form-control gbtaxpayinput" type="number" id="gbtaxpay" name="gbtaxpay"  step="0.01" required>
+            </div>
+
+            <!-- tips in paycheck amt -->
+            <div class="form-row">
+                <label class="gbtaxfreepaylabel" for="gbtaxfreepay">Tax free pay (tips on paystub): </label><br>
+                <input class="form-control gbtaxfreepayinput" type="number" id="gbtaxfreepay" name="gbtaxfreepay"  step="0.01" required>
+            </div>
+
+            <!-- additional tips (cash from clients - see Google Drive worksheet) -->
+            <div class="form-row">
+                <label class="gbothertipslabel" for="gbothertips">Additional tips (cash from clients): </label><br>
+                <input class="form-control gbothertipsinput" type="number" id="gbothertips" name="gbothertips"  step="0.01" required>
+            </div>
+
             <!-- SS withheld -->
             <div class="form-row">
-                <label class="gbsswhlabel" for="gbnetpay">SS withheld (from paystub): </label><br>
+                <label class="gbsswhlabel" for="gbsswh">SS withheld (from paystub): </label><br>
                 <input class="form-control gbsswhinput" type="number" id="gbsswh" name="gbsswh"  step="0.01" required>
             </div>
 
@@ -45,12 +63,26 @@
                 <input class="form-control gbtaxwhinput" type="number" id="gbtaxwh" name="gbtaxwh"  step="0.01" value=0>
             </div>
 
-            <!-- Amt that Mike & Maura get for spending -->
+            <!-- Money set aside for income taxes -->
             <div class="form-row">
-                <label class="gbspendinglabel" for="gbspending">M&M Spending (each, not total - from GB Limo Google Sheets): </label><br>
-                <input class="form-control gbspendinginput" type="number" id="gbspending" name="gbspending"  step="0.01" required>
+                <label class="gbtaxsetasidelabel" for="gbtaxwh">Set aside for income taxes: </label><br>
+                <input class="form-control gbtaxsetasideinput" type="number" id="gbtaxsetaside" name="gbtaxsetaside"  step="0.01" value=0>
             </div>
 
+            <!-- Amt that Mike & Maura get for spending -->
+            <div class="form-row">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input class="gbrepayspendinginput" type="checkbox" id="gbrepayspending" name="gbrepayspending" value="repay">
+                        <label class="gbrepayspendinglabel" for="gbrepayspending">Repay spending?</label>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="gbspendinglabel" for="gbspending">M&M Spending (each, not total - from GB Limo Google Sheets): </label>
+                        <input class="form-control gbspendinginput" type="number" id="gbspending" name="gbspending"  step="0.01" required>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Paycheck date -->
             <div class="form-row">
                 <label class="gbpaycheckdatelabel" for="gbpaycheckdate">Paycheck date (from checking): </label><br>

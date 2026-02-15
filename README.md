@@ -9,15 +9,14 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 1/18/26</p>
-      <ul>
-        <li>Added TaxDisc account</li>
-      </ul>
+    <p>Last push: 2/11/26
+    <br> *** included increases in house value *** </p>
+    <br> *** tax free tips; auto generate all GB trans *** </p>
     <p>To Do:<p>
     <ul>
       <li>NOTE:
         <br>11249.5  GB tips - w/held tax on, but aren't taxed.
-        <br> - @ 22% = 2,474.89
+        <br> - @ 22% = 2,474.89  (could've gone to spending)
       </li>
       <br>
       <li>NOTE (minor):
@@ -27,10 +26,19 @@
       <li>*** Tax free tips ***
         <br> - updated Google Sheets
         <br> - NEED TO:
-        <br> --- add new category to transactions (taxFreeIncome?)
-        <br> --- change existing GB Limo to separate taxable from tips
-        <br> --- change GB Limo interface to prompt for Taxable Income and Tax Free income separately
-        <br> ------ Add prompt for SS & Medicare separately
+        <br> --- DONE - add new category to transactions (IncomeTaxFree)
+        <br> --- DONE - change existing GB Limo to separate taxable from tips
+        <br> --- DONE - change GB Limo interface to prompt for Taxable Income and Tax Free income separately
+        <br> --- DONE - change interface to prompt for additional tips
+        <br> --- DONE - Add prompt for SS & Medicare separately
+        <br> --- DONE - test that Taxable Income and Tax Free income are added to db correctly
+        <br>  --- DONE - add prompt to interface to transfer additional tips to spending, or repay to household - TESTED
+        <br>  --- DONE - write transactions for paying back spending, if requested - TESTED
+        <br>  --- DONE - reminder msg includes transferring money for income taxes. - TESTED
+        <br>  --- TEST - write transactions to move money for Income taxes from ckg to DiscTax
+        <br>  --- TEST - write transactions to db for additional tips for Maura Cash
+        <br>  </br>
+        <br> --- Make sure budget, assets, budget vs. assets includes IncomeTaxFree
         <br> --- Add tax free income to retirementforecast
       </li>
       <br>
