@@ -145,7 +145,7 @@
                         <td style="background-color: lightblue;"></td>
                         <td style="background-color: lightblue;"></td>
                         @foreach($forecastYears as $idxSubTot=>$year)
-                            <td style="background-color: lightblue;">{{ number_format((float)$beginBalances[$idxSubTot]) }}</td>
+                            <td id="begSubTot{{$year}}" style="background-color: lightblue;">{{ number_format((float)$beginBalances[$idxSubTot]) }}</td>
                         @endforeach                        
                     </tr>
 
@@ -196,7 +196,7 @@
                         <td style="background-color: lightgreen;"></td>
                         <td style="background-color: lightgreen;"></td>
                         @foreach($forecastYears as $idxSubTot=>$year)
-                            <td id="income{{ $year }}" style="background-color: lightgreen;">{{ number_format((float)$incomeSubTots[$idxSubTot]) }}</td>
+                            <td id="income{{ $year }}" style="background-color: lightgreen;"></td>
                         @endforeach                        
                     </tr>
 
@@ -424,6 +424,7 @@
                     <br> for details on future "Doctor" estimates
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Assume raises from earned income = COLA</li>
+                <li>IncomeOtherWH is Medicare and SS withholdings. Earned income used to calculate this are Town of Durham and GB Limo income.</li>
                 <li>Default annual increase in value of house from 2004 to 2026 is about 3.75%.</li>
                 <li>Spending:
                     <ul>
@@ -461,6 +462,7 @@
                 // calculate future forecasted expenses
                 function calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters) {
 
+                    // for rental or work expenses
                     function calcIncomeRelatedExpense(year, currentYear, lastYearsExpense, inflationFactor, incomeValue) {
                             
                         var yearIdx = year-currentYear;
@@ -488,6 +490,22 @@
 
                         return thisYearsExpense;
                     }   // end of function getDoctorExpense
+
+
+                    function getIncomeOtherWHExpense(year, percentWithheld) {
+
+                        // get earned income, convert to numbers and add
+                        const townIncome = Number($('#TownofDurham' + year).text().replaceAll(",", ""));
+                        const GBLimoIncome = Number($('#GBLimo' + year).text().replaceAll(",", ""));
+                        const earnedIncome = townIncome + GBLimoIncome;
+
+                        // calc amount withheld
+                        const withheld = Math.round(percentWithheld/100 * earnedIncome);
+
+                        // return as a negative number (expense)
+                        return -withheld;
+
+                    }   // end of function getIncomeOtherWHExpense
 
                     // last year expenses set to current year expenses by category
                     var lastYearsExpenses = expectedExpensesForThisYearByCategory;
@@ -529,7 +547,7 @@
                         // for each catagory, 
                         expenseCategoriesWithSummaryCats.forEach( summary => {
                             const category = summary['name'];
-                            console.log("category: ", category);
+                            // console.log("category: ", category);
                             const summaryCategory = summary['summaryCategory'];
 
                             // get inflation factor
@@ -556,6 +574,8 @@
                             // use doctor estimates from retirementdata table or input
                             } else if(category == 'Doctor') {
                                 futureExpenses[year][category] = getDoctorExpense(year, lastYearsExpenses[category], inflationFactor, retirementParameters);
+                            } else if(category == 'IncomeOtherWH') {
+                                futureExpenses[year][category] = getIncomeOtherWHExpense(year, retirementParameters['SS-Med-WHs']);
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
                                 futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
@@ -650,7 +670,7 @@
 
                         // put distribution values on the page 
                         $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist);                      
-                        $('#Non-TaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist);                      
+                        $('#NonTaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist);                      
 
                         // set ret income to use in future
                         lastYearTaxableRetIncome = taxableDist;
@@ -663,9 +683,7 @@
                         taxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearTaxableRetIncome);
                         nonTaxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearNonTaxableRetIncome);
                         $('#TaxRetire' + year).text(taxableDist);
-                        $('#Non-TaxRetire' + year).text(nonTaxableDist);
-                        console.log("taxableDist: ", taxableDist);
-                        console.log("nonTaxableDist: ", nonTaxableDist);
+                        $('#NonTaxRetire' + year).text(nonTaxableDist);
 
                         // set ret income to use in future
                         lastYearTaxableRetIncome = taxableDist;
@@ -675,6 +693,33 @@
                     return [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome];
 
                 }   // end function calcRetirementIncome
+
+
+                // calc income sub-totals for the year
+                function updateIncomeSubTotal(year) {
+
+                    const incomeSelectorPrefixes = ['#TownofDurham', '#GBLimo', '#Rental', '#NHRetirement', '#MikeIBM', '#MikeSS', '#MauraIBM', '#MauraSS', '#TaxRetire', '#NonTaxRetire', '#InvestmentGrowth', '#TaxableRetirementGrowth', '#TaxFreeRetirementGrowth'];
+                    var currValue;  // to hold current income being added
+
+                    incomeSubTotal = 0;    // for Sub-total
+
+                    // calc income subtotal
+                    incomeSelectorPrefixes.forEach( selectorPrefix => {
+
+                        // get value for this prefix
+                        currValue = Number($(selectorPrefix + year).text().replaceAll(",", ""));
+
+                        // add to subtotal
+                        incomeSubTotal += currValue;
+
+                    });
+
+                    // put subtotal on page
+                    $('#income' + year).text(incomeSubTotal);
+
+                    return;
+
+                }   // end function updateIncomeSubTotal
 
 
                 // end spending = beginning spending + income (except retirement growth and inv growth) - expenses
@@ -687,6 +732,14 @@
                     endingSubTotal = 0;    // for Sub-total
 
                     summaryCategories = ['Spending', 'Investment', 'TaxableRetirement', 'TaxFreeRetirement'];
+
+                    // adjustments are needed to make sure balances don't fall below 0.
+                    // set all to 0 to start
+                    var adjustments = [];
+                    summaryCategories.forEach(category => {
+                        adjustments[category] = 0;
+                    });
+
                     selectorPrefixesToAdd = [];
                     selectorPrefixesToSubtract = [];
                     
@@ -740,6 +793,17 @@
                             endingBalance -= expense;
                         });
 
+                        // if balance is below 0, need to adjust; or highlight in red where it goes negative
+                        if(endingBalance < 0 && summaryCategory == 'Spending') {
+                            const adj = -endingBalance + 2000;  // Random $2000 buffer
+                            adjustments['Spending'] += adj;
+                            adjustments['Investment'] += -adj;
+                        }
+                        
+                        // Adjust endingBalance as needed; highlight if below 0
+                        endingBalance += adjustments[summaryCategory];
+                        if(endingBalance < 0) $('#end' + summaryCategory + year).css('background-color', 'red');
+
                         // put result on page
                         $('#end' + summaryCategory + year).text(endingBalance);
 
@@ -751,7 +815,7 @@
                     // put subtotal on page
                     $('#ending' + year).text(endingSubTotal);
 
-                    // ending balances for 
+                    return;
                 }   // end function updateEndingBalances
 
                 // calc values dependent on previous year:
@@ -762,8 +826,11 @@
                 //      ending balances
                 function calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date) {
 
+                    console.log("lastYearRetirementIncome: ", lastYearRetirementIncome);
+                    // declare needed vars
                     var lastYearNonTaxableRetIncome, lastYearTaxableRetIncome;
 
+                    // get data from page, retirementParameters
                     const balanceCategories = JSON.parse($("#balanceCategories").text());
                     console.log("balanceCategories: ", balanceCategories);
 
@@ -776,10 +843,8 @@
                     forecastYears.unshift(currentYear);
 
                     forecastYears.forEach( (year, yrIdx) => {
-                        console.log(" --- year by year ", yrIdx, ": ", year, "; last year: ", (year - 1));
-                        console.log(" +++ year: ", year);
                         lastYear = year - 1;
-                        console.log("lastYear: ", lastYear);
+                        console.log(" --- year by year ", yrIdx, ") year:", year, "; last year: ", lastYear);
                         // copy last year's ending balances to this year's beginning balances
                         // no need to do it for current year
                         if(yrIdx != 0) {
@@ -822,12 +887,12 @@
 
                         // figure this year's investment growth based on average balances
                         // some interest already earned in first year
-                        const selectorPrefixes = ['#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
+                        const growthSelectorPrefixes = ['#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
+                        const spendingSelectorPrefixes = ['#Spending', '#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
 
                         // Income sub-totals need to be updated for these investment growths
                         // Start with existing sub-total on page
-                        var newIncomeSubtotal = Number($('#income' + year).text().replaceAll(',',''));
-                        console.log("newIncomeSubtotal (start): ", newIncomeSubtotal, " for year ", year);
+                        incomeSubtotal = 0;
 
                         // will need LTC investment growth to project LTC values
                         LTCInvGrowth = retirementParameters['LTCInvGrowth'];
@@ -852,7 +917,7 @@
                             //          numMonthsToDate = months_interest_already_earned
 
                             //      for investments, tax retire, non tax retire
-                            selectorPrefixes.forEach (selectorPrefix => {
+                            growthSelectorPrefixes.forEach (selectorPrefix => {
                                 // const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
                                 const origEst = Number($(selectorPrefix + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
                                 // console.log("--- selectorPrefix: ", selectorPrefix);
@@ -863,24 +928,36 @@
                                 // $('#InvestmentGrowth' + year).text(growthLeft);
                                 $(selectorPrefix + 'Growth' + year).text(growthLeft);
                                 // add growth to subtotal
-                                newIncomeSubtotal += growthLeft;
-                                console.log("newIncomeSubtotal (updated 1): ", newIncomeSubtotal, " for year ", year);
+                                incomeSubtotal += growthLeft;
+                                console.log("incomeSubtotal (updated 1): ", incomeSubtotal, " for year ", year);
 
                             });
 
                         // other than first year
                         } else {
-                            // for investments, tax retire, non tax retire
-                            selectorPrefixes.forEach (selectorPrefix => { 
+                            // for investments, tax retire, non tax retire; increase by invGrowth
+                            growthSelectorPrefixes.forEach (selectorPrefix => { 
                                 // console.log("--- selectorPre...: ", selectorPrefix);
                                 const beginBalance = $(selectorPrefix + year).text();
                                 const growth = Math.round(beginBalance * InvGrowth);
                                 // console.log("- beginBalance: ", beginBalance, "; growth: ", growth);
                                 $(selectorPrefix + 'Growth' + year).text(growth);
                                 // add growth to subtotal
-                                newIncomeSubtotal += growth;
-                                console.log("newIncomeSubtotal (updated 2): ", newIncomeSubtotal, " for year ", year);
+                                incomeSubtotal += growth;
+                                console.log("incomeSubtotal (updated 2): ", incomeSubtotal, " for year ", year);
                             });
+
+                            // -----------------------------
+                            // sum beginning balances
+                            var beginBal = 0;
+                            spendingSelectorPrefixes.forEach(prefix => {
+                                beginBal += Number($(prefix + year).text().replaceAll(",",""))
+                            });
+
+                            // put on the page
+                            $("#begSubTot" + year).text(beginBal);
+                            // -----------------------------
+
 
                             // -----------------------------
                             // calc LTC contributions...
@@ -922,12 +999,17 @@
                             // put new LTC balance on the page
                             $("#LTCBal"+year).text(NewLTCbalance.toLocaleString());
                             // -----------------------------
-
-                        }
+                            
+                            
+                            // -----------------------------
+                            // calc IncomeOtherWH for each year based on earned income
+                            // mms maura
+                            // -----------------------------
+                        } // end else yrIdx = 0 (not 0 clause)
 
                         // put updated income subtotal on page
-                        console.log("newIncomeSubtotal (final): ", newIncomeSubtotal, " for year ", year);
-                        $('#income' + year).text(newIncomeSubtotal);
+                        console.log("incomeSubtotal (final): ", incomeSubtotal, " for year ", year);
+                        $('#income' + year).text(incomeSubtotal);
 
                         // estimate income taxes and IncomeOtherWH (Medicare, SS)
                         // Finish updating GB Limo stuff first (separate out tips from paychecks)
@@ -936,12 +1018,42 @@
                         //              GB limo tips are deductible up to $25,000 thru 2028
 
                         // extraSpending is based on GBLimo income
-                        // left off here -- GBLimo income based
+                        const percentGBtoHousehold = retirementParameters['GBLimoForExpenses'];
+                        const maxGBtoHousehold = 5000;  // left off here -- this should be in db and entered w/Retirement Forecast input
+                        console.log("percentGBtoHousehold: ", percentGBtoHousehold, "maxGBtoHousehold: ", maxGBtoHousehold);
+                        forecastYears.forEach( (year, yearIdx) => {
 
+                            // first year already done (from budget)
+                            if(yearIdx != 0) {
+                                // get GBLimo income
+                                var GBLimoIncome = Number($('#GBLimo' + year).text().replaceAll(",", ""));
+                                var withholdings = Math.round(GBLimoIncome*retirementParameters['SS-Med-WHs']/100);
+                                var estTaxes = Math.round(GBLimoIncome/2 * .22);
+                                var roundTrips = (GBLimoIncome == 0) ? 0 : 950; // a little more than 2025 cost
+                                var toHousehold = Math.min(GBLimoIncome * percentGBtoHousehold/100, maxGBtoHousehold);
+                                var GBincomeLeft = GBLimoIncome - Math.round(withholdings + estTaxes + roundTrips + toHousehold);
+                                if(yearIdx < 4) {  // left off here - for testing
+                                    console.log("GB Limo income: ", GBLimoIncome, "\n", 
+                                    "withholdings: ", withholdings, "\n",
+                                    "estTaxes: ", estTaxes, "\n",
+                                    "roundTrips: ", roundTrips, "\n",
+                                    "toHousehold: ", toHousehold);
+
+                                    console.log("GBincomeLeft: ", GBincomeLeft);
+                                }   // left off here -- for testing
+                                $('#ExtraSpending' + year).text(-GBincomeLeft);
+
+                            }
+                        });
+
+                        updateIncomeSubTotal(year);
                         updateEndingBalances(year);
                         
                     });
-                }
+
+                    return;
+
+                }   // end function calcYearByYear
                             
 
                 // calc LTC goals per year & put on retirementforecast page
@@ -965,6 +1077,9 @@
                             $('#LTCgoal' + year).text(Math.round(LTCbalance).toLocaleString());
                         }
                     }
+
+                    return;
+
                 }   // end of function calcLTCgoals
 
 
@@ -999,7 +1114,10 @@
                             // set initial house value
                             $("#HouseValue" + currentYear).text(initialHouseValue.toLocaleString());
                         }
-                    })
+                    });
+
+                    return;
+                    
                 }       // end of function calcHouseValues
 
                 // get inflationFactors from page

@@ -748,21 +748,37 @@ class TransactionsController extends Controller
 
         // check balances by account
         foreach($accounts as $account) {
-            // error_log("------------- account: " . $account);
+            error_log("------------- account: " . $account);
             $balanceRemote = DB::table('transactions')
                 ->where('account', $account)
                 ->whereNull('deleted_at')
                 ->sum('amount');
-            // error_log("balanceRemote: " . $balanceRemote);
+            error_log("balanceRemote: " . $balanceRemote);
+            
+            $copiedRemote = DB::table('transactions')
+                ->where('account', $account)
+                ->whereNot('copied', 'yes')
+                ->get()->toArray();
+            error_log("copiedRemote:  " . json_encode($copiedRemote));
 
             $balanceLocal = DB::connection('mysqllocal')
                 ->table('transactions')
                 ->where('account', $account)
                 ->whereNull('deleted_at')
                 ->sum('amount');
-            // error_log("balanceLocal: " . $balanceLocal);
+            error_log("balanceLocal:  " . $balanceLocal);
 
-            if($balanceRemote != $balanceLocal) {
+            $copiedLocal = DB::connection('mysqllocal')
+                ->table('transactions')
+                ->where('account', $account)
+                ->whereNot('copied', 'yes')
+                ->get()->toArray();
+            error_log("copiedLocal:   " . json_encode($copiedLocal));
+
+            if($balanceRemote != $balanceLocal
+                || count($copiedLocal) > 0
+                || count($copiedRemote) > 0
+            ) {
                 $outOfSyncAccounts[$account] = $account;
             }
         }
@@ -5198,7 +5214,7 @@ class TransactionsController extends Controller
             $retirementDataInfo = [];
             $retirementDataHaveInputValue = []; // if element is true, have the input value; if exists, have other value; if undefined, don't have a value
             foreach($retirementDataInfoDB as $idx=>$retirementDatum) {
-                error_log("---*" . $idx . ": " . json_encode($retirementDatum));
+                // error_log("---*" . $idx . ": " . json_encode($retirementDatum));
 
                 // if no data for this description found yet, note if it's "inpt" type and save the value
                 if(!isset($retirementDataHaveInputValue[$retirementDatum->description])) {
@@ -5560,7 +5576,7 @@ class TransactionsController extends Controller
 
             // if it's starting this year...
             if($startYear == $thisYear) {
-                //      First year benefits Apr - Dec (9 months)...so no more than that
+                // First year benefits Apr - Dec (9 months)...so no more than that
                 $monthsLeftThisYear = min(9, 12 - (int)date('m') + 1);
                 // set the first year's benefits
                 $SSIncomes[] = $initIncome * $monthsLeftThisYear;
@@ -5623,10 +5639,7 @@ class TransactionsController extends Controller
 
         // get retirement incomes
         // can only get parameters and dummy values.  Need data not calculated until in the retirementForecast blade.
-        function  getRetIncomes($date) {
-
-            $taxableRetIncomes = [];
-            $nonTaxableRetIncomes = [];
+        function  getRetParams($date) {
 
             // need 
             //  invWD
@@ -5639,6 +5652,8 @@ class TransactionsController extends Controller
             //  LTCinWF#        (need to use 'like')
             //  LTCinWFdate#
             //  LTCinvGrowth
+            //  GBLimoForExpenses
+            //  GBMaxForExpenses
             //  
             // See 
             //  https://docs.google.com/spreadsheets/d/1R3-hUoFWOH0Uy_slsT8UsA8CUeDRr2heCF57Z44LCYo/edit?gid=0#gid=0
@@ -5660,14 +5675,20 @@ class TransactionsController extends Controller
                 'InvGrowth',
                 'LTCinvGrowth',
                 'HouseGrowth',
-                'House'
+                'House',
+                'GBLimoForExpenses',
+                'GBMaxForExpenses',
+                'SS-Med-WHs'
             ];
+
+            // get the parameters from the retirementdata table
             $retirementParametersDB = DB::table('retirementdata')
                 ->select('description', 'data', 'type')
                 ->whereIn('type', ['inpt', 'assm', 'val'])
                 ->whereNull('deleted_at')
                 ->where(function($q) use ($retirementParametersFields) { 
-                    $q->whereIn('description', $retirementParametersFields)
+                   $taxableRetIncomes[] = 0;
+                $nonTaxableRetIncomes[] = 0; $q->whereIn('description', $retirementParametersFields)
                     ->orWhere('description', 'like', 'LTCinWF%')
                     ->orWhere('description', 'like', 'Doctor20%');
                 }) 
@@ -5692,25 +5713,10 @@ class TransactionsController extends Controller
                 error_log($idx . ": " . json_encode($retDatum));
             }
                 
-            $thisYear = intval(substr($date, 0, 4));
-            $numberYearsForecast = 2062 - $thisYear + 1;
 
-            for($idx = 0; $idx < $numberYearsForecast; $idx++) {
-                // $newvalue = $thisYear + $idx - 2000;
-                // $taxableRetIncomes[] = $newvalue;
-                // $nonTaxableRetIncomes[] = $newvalue;
-                $taxableRetIncomes[] = 0;
-                $nonTaxableRetIncomes[] = 0;
-            }
-            // error_log("taxableRetIncomes:");
-            // error_log(json_encode($taxableRetIncomes));
-            // error_log("nonTaxableRetIncomes:");
-            // error_log(json_encode($nonTaxableRetIncomes));
-            // error_log("retirementParameters:");
-            // error_log(json_encode($retirementParameters));
-            return [$taxableRetIncomes, $nonTaxableRetIncomes, $retirementParameters];
+            return $retirementParameters;
 
-        }    // end function getRetIncomes
+        }    // end function getRetParams
         
     
         function  getInvestmentGrowths($date) {
@@ -5745,8 +5751,12 @@ class TransactionsController extends Controller
         $lastOfLastYear = $lastYear . '-12-31';
         $twoDigitYear = substr($date, 2, 2);
 
+        $thisMonthIdx = substr($date, 5, 2);
+        $thisYear = substr($date, 0, 4);        
+
         // get beginning balances
         [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($date, $twoDigitYear);
+        // left off here -- fix this ... don't need placeholders anymore
         $spending = [$beginOfThisMonthSpendingBal, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119 ];
         $investments = [$invAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
         $retirementTaxable = [$retTaxAcctsBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
@@ -5754,7 +5764,6 @@ class TransactionsController extends Controller
         $beginBalances = $this->addArraysByPosition($spending, $investments, $retirementTaxable, $retirementNonTaxable);
 
         // get rest of this year's expected income
-        error_log("test 1");
         $remainingIncomeThisYear = thisYearIncome($date, $twoDigitYear);
         
         // get Town of Durham income estimates
@@ -5783,7 +5792,7 @@ class TransactionsController extends Controller
         $mauraSSIncomes = getSSIncomes($date, $COLA, 'Maura');
         
         // get retirement incomes per year estimates
-        [$taxableRetIncomes, $nonTaxableRetIncomes, $retirementParameters] = getRetIncomes($date);
+        $retirementParameters = getRetParams($date);
 
         // get dummy expected investement growth per year
         $investmentGrowths = getInvestmentGrowths($date);
@@ -5793,6 +5802,16 @@ class TransactionsController extends Controller
         
         // get dummy expected nontaxable ret income growth per year
         $taxFreeRetirementGrowths = getInvestmentGrowths($date);
+
+        // init taxableRetIncomes and nonTaxableRetIncomes for placeholders
+        $taxableRetIncomes = [];
+        $nonTaxableRetIncomes = [];
+        // use this to make sure they have the right number of elements.
+        $numberYearsForecast = 2062 - $thisYear + 1;
+        for($idx = 0; $idx < $numberYearsForecast; $idx++) {
+            $taxableRetIncomes[] = 0;
+            $nonTaxableRetIncomes[] = 0;
+        }
 
         $incomeValues = [
             // town of durham
@@ -5811,9 +5830,9 @@ class TransactionsController extends Controller
             json_encode($mauraIBMIncomes),
             // Maura SS
             json_encode($mauraSSIncomes),
-            // Taxable retirement
+            // Taxable retirement placeholders
             json_encode($taxableRetIncomes),
-            // non-taxable retirement
+            // non-taxable retirement placeholders
             json_encode($nonTaxableRetIncomes),
             // Investment Growth
             json_encode($investmentGrowths),
@@ -5822,7 +5841,6 @@ class TransactionsController extends Controller
             // non taxable retirement growth
             json_encode($taxFreeRetirementGrowths)
         ];
-        $incomeSubTots = $this->addArraysByPosition($townOfDurhamIncomes, $GBLimoIncomes, $rentalIncomes, $nhRetirementIncomes, $mikeIBMIncomes, $mikeSSIncomes, $mauraIBMIncomes, $mauraSSIncomes, $taxableRetIncomes, $nonTaxableRetIncomes, $investmentGrowths);
 
         // get expense categories
         $expenseCategoriesWithSummaryCats = DB::table('categories')
@@ -5865,8 +5883,6 @@ class TransactionsController extends Controller
         error_log("type date: " . gettype($date) . ", " . $date);
         error_log("type expenseCategories: " . gettype($expenseCategories));
         $monthsQueryArray = [];
-        $thisMonthIdx = substr($date, 5, 2);
-        $thisYear = substr($date, 0, 4);
         foreach($months as $monthIdx=>$month) {
             if($monthIdx+1 >= $thisMonthIdx) {
                 $monthsQueryArray[] = $month;
@@ -5962,7 +5978,6 @@ class TransactionsController extends Controller
         error_log("============  restOfYearActualsDB ==========");
         foreach($restOfYearActualsDB as $rest) error_log(json_encode($rest));
 
-        // left off here
         // FIX FORMAT to associative array where key is category -> amount
         $restOfYearActuals = [];
         foreach($restOfYearActualsDB as $restElmt) {
@@ -6034,7 +6049,7 @@ class TransactionsController extends Controller
             ->whereIn('toFrom', $retirementAccts)
             ->where('amount', '<', 0)                                           // only withdrawals from retirement accts
             ->whereNull('deleted_at')
-            ->where ('trans_date', '>', '2025-12-31')                           // nothing before 2026
+            // ->where ('trans_date', '>', '2025-12-31')                           // nothing before 2026
             ->get()->toArray();
         // error_log("lastYearRetirementIncome:");
         // foreach($lastYearRetirementIncome as $retItm) {
@@ -6060,10 +6075,10 @@ class TransactionsController extends Controller
         }
 
         error_log("expectedExpensesForThisYearByCategory:");
-        error_log(json_encode($expectedExpensesForThisYearByCategory));
         foreach($expectedExpensesForThisYearByCategory as $cat=>$actual) {
             error_log(" - " . $cat . ": " . $actual);
         }
+        error_log("-----");
 
         // get budgeted spending for the rest of the year, starting with all of this month
         // left off here...
@@ -6074,7 +6089,7 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'incomeSubTots', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
+        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
 
 }
