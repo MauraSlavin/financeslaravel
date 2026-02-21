@@ -525,8 +525,8 @@
                     const currentYear = $('#currentYear').text();
                     console.log("currentYear: ", currentYear);
                     
-                    forecastYears.forEach(year => {
-                        console.log("------------ Year: ",year," ----------------");
+                    forecastYears.forEach( year => {
+                        console.log("------------ Year: ", year, " ----------------");
                         futureExpenses[year] = [];
                         futureExpensesSummary[year] = [];
                         futureExpensesYearlyTotal[year] = 0;
@@ -547,7 +547,7 @@
                         // for each catagory, 
                         expenseCategoriesWithSummaryCats.forEach( summary => {
                             const category = summary['name'];
-                            // console.log("category: ", category);
+                            console.log("category: ", category);
                             const summaryCategory = summary['summaryCategory'];
 
                             // get inflation factor
@@ -575,7 +575,7 @@
                             } else if(category == 'Doctor') {
                                 futureExpenses[year][category] = getDoctorExpense(year, lastYearsExpenses[category], inflationFactor, retirementParameters);
                             } else if(category == 'IncomeOtherWH') {
-                                futureExpenses[year][category] = getIncomeOtherWHExpense(year, retirementParameters['SS-Med-WHs']);
+                                futureExpenses[year][category] = getIncomeOtherWHExpense(year, retirementParameters['SS-Med-WHs']);  
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
                                 futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
@@ -998,13 +998,8 @@
 
                             // put new LTC balance on the page
                             $("#LTCBal"+year).text(NewLTCbalance.toLocaleString());
-                            // -----------------------------
+                            // -----------------------------                           
                             
-                            
-                            // -----------------------------
-                            // calc IncomeOtherWH for each year based on earned income
-                            // mms maura
-                            // -----------------------------
                         } // end else yrIdx = 0 (not 0 clause)
 
                         // put updated income subtotal on page

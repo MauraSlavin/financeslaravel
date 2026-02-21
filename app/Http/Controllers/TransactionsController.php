@@ -5878,10 +5878,10 @@ class TransactionsController extends Controller
         error_log("expenseSummaryCategories: " . json_encode($expenseSummaryCategories));
 
         // get amt spent before current month (in this year) by category
-        error_log("type firstOfThisYear: " . gettype($firstOfThisYear) . ", " . $firstOfThisYear);
-        error_log("type lastOfThisYear: " . gettype($lastOfThisYear) . ", " . $lastOfThisYear);
-        error_log("type date: " . gettype($date) . ", " . $date);
-        error_log("type expenseCategories: " . gettype($expenseCategories));
+        // error_log("type firstOfThisYear: " . gettype($firstOfThisYear) . ", " . $firstOfThisYear);
+        // error_log("type lastOfThisYear: " . gettype($lastOfThisYear) . ", " . $lastOfThisYear);
+        // error_log("type date: " . gettype($date) . ", " . $date);
+        // error_log("type expenseCategories: " . gettype($expenseCategories));
         $monthsQueryArray = [];
         foreach($months as $monthIdx=>$month) {
             if($monthIdx+1 >= $thisMonthIdx) {
@@ -5909,7 +5909,7 @@ class TransactionsController extends Controller
         $expectedExpensesAfterTodayByCategory = [];
         $inflationFactors = [];
         $expectedExpensesAfterTodayTotal = 0;
-        error_log("total: " . $expectedExpensesAfterTodayTotal);
+        // error_log("total: " . $expectedExpensesAfterTodayTotal);
         foreach($expectedExpensesByCategory as $expensesRcd) {
             error_log("expensesRcd: " . json_encode($expensesRcd));
             $expectedExpensesAfterTodayByCategory[$expensesRcd->category] = 0;
@@ -5927,7 +5927,7 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->orderByDesc('type')       // so inpt - input (rather than assm - assumed) is first
             ->value('data');
-        error_log("defaultInflationFactor: " . $defaultInflationFactor);
+        // error_log("defaultInflationFactor: " . $defaultInflationFactor);
         error_log("expectedExpensesAfterTodayByCategory: " . json_encode($expectedExpensesAfterTodayByCategory));
         error_log("inflationFactors: " . json_encode($inflationFactors));
 
@@ -6074,6 +6074,18 @@ class TransactionsController extends Controller
             }
         }
 
+        // for MikeSpending & MauraSpending, expected expenses is based on budget, not history
+        $MMSpending = DB::table('budget')
+            ->select('category', 'total')
+            ->where('year', $thisYear)
+            ->whereIn('category', ['MikeSpending', 'MauraSpending'])
+            ->whereNull('deleted_at')
+            ->get()->toArray();
+
+        foreach($MMSpending as $MorM) {
+            $expectedExpensesForThisYearByCategory[$MorM->category] = $MorM->total;
+        }
+            
         error_log("expectedExpensesForThisYearByCategory:");
         foreach($expectedExpensesForThisYearByCategory as $cat=>$actual) {
             error_log(" - " . $cat . ": " . $actual);
@@ -6089,6 +6101,10 @@ class TransactionsController extends Controller
         foreach($incomeValues as $key=>$val) {
             error_log(" - " . $key . ": " . $val);
         }
+
+        error_log("spending:");
+        foreach($spending as $id=>$xxx) error_log($id . ": " . json_encode($xxx));
+
         return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
 

@@ -9,14 +9,9 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 2/15/26
+    <p>Last push: 2/19/26
     <br>NEW CHANGES:
-    <br>*** Better matching between remote and local databasese ***
-    <br>*** Calc ExtraSpending based on GB Limo income and deductions ***
-    <br>*** Added sub-total of beginning balances in retirementForecast ***
-    <br>*** Fixed income sub-total ***
-    <br>*** Fixed IncomeOtherWH ***
-    <br>Better matching between remote and local databases. In retirementForecast: Base ExtraSpending on GB Limo; calc beg balances sub-total; fix income sub-total; fix IncomeOtherWH.
+    <br>*** fix MikeSpending and MauraSpending in retirementForecast ***
     <br>
     </p>
     <p>To Do:<p>
