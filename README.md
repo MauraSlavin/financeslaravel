@@ -9,9 +9,10 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 2/19/26
+    <p>Last push: 2/20/26
     <br>NEW CHANGES:
-    <br>*** fix MikeSpending and MauraSpending in retirementForecast ***
+    <br>*** Handle retirement accounts being depleted ***
+    <br>*** Note on Food Inflation worksheet in retirementForecast ***
     <br>
     </p>
     <p>To Do:<p>
@@ -21,11 +22,10 @@
           <li>file for testing forecasting numbers:
             <br>https://docs.google.com/spreadsheets/d/1neJivwPzjkl-69PHrhNw9vOdbCvwwQm9FsoHL4GZ9Ik/edit?gid=2101335114#gid=2101335114
           </li>
+          <li>fix ExtraSpending in retirementforecast</li>
           <li>subtract cc debt from Spending first year</li>
           <li>Make sure IncomeTaxes does NOT include IncomeTaxFree
             <br>- and is including all taxable income
-          </li>
-          <li>MauraSpending and MikeSpending should be the same. Increase for inflation?
           </li>
         </ul>
       </li>

@@ -422,6 +422,10 @@
                 <li>See 
                     <br> - https://docs.google.com/spreadsheets/d/10UFYi7Hiqd_y4q02vT85QjEXc1MJep27Kw3PYU7lmns/edit?gid=1813417080#gid=1813417080
                     <br> for details on future "Doctor" estimates
+                </li>
+                <li>Food (Groceries) inflation worksheet:
+                    <br>https://docs.google.com/spreadsheets/d/1A41Xq_W51dHUSzA9vPjcqlHlvD3f7E7cKkTwOeeqzT8/edit?gid=260114027#gid=260114027
+                </li>
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Assume raises from earned income = COLA</li>
                 <li>IncomeOtherWH is Medicare and SS withholdings. Earned income used to calculate this are Town of Durham and GB Limo income.</li>
@@ -526,7 +530,7 @@
                     console.log("currentYear: ", currentYear);
                     
                     forecastYears.forEach( year => {
-                        console.log("------------ Year: ", year, " ----------------");
+                        // console.log("------------ Year: ", year, " ----------------");
                         futureExpenses[year] = [];
                         futureExpensesSummary[year] = [];
                         futureExpensesYearlyTotal[year] = 0;
@@ -547,7 +551,7 @@
                         // for each catagory, 
                         expenseCategoriesWithSummaryCats.forEach( summary => {
                             const category = summary['name'];
-                            console.log("category: ", category);
+                            // console.log("category: ", category);
                             const summaryCategory = summary['summaryCategory'];
 
                             // get inflation factor
@@ -650,10 +654,10 @@
                         // Get current retirement account values (LTC funds should already be reported under LTC balance at bottom of page, not here)
                         // get from retirementforecast page (this one) under Beginning Balances for this year
 
-                        WFIRATaxableTrad = $("#TaxableRetirement20" + twoDigitIteratedYear).text();
+                        WFIRATaxableTrad = Number($("#TaxableRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
                         console.log(" - Taxable Ret 20" + twoDigitIteratedYear + ": " + WFIRATaxableTrad);
 
-                        nonTaxableRothBal = $("#TaxFreeRetirement20" + twoDigitIteratedYear).text();
+                        nonTaxableRothBal = Number($("#TaxFreeRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
                         console.log(" - NON Taxable Ret 20" + twoDigitIteratedYear + ": " + nonTaxableRothBal);
 
                         // Distributions from Trad and Roth are proportional to initial balances
@@ -667,6 +671,7 @@
                         const totalDistribution = retirementParameters['InvWD']/100 * (WFIRATaxableTrad + nonTaxableRothBal);
                         const taxableDist = Math.round(totalDistribution * tradProportion);
                         const nonTaxableDist = Math.round(totalDistribution *  rothProportion);
+                        // adjustments needed if taxableDist or nonTaxableDist is negative  left off here mms maura
 
                         // put distribution values on the page 
                         $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist);                      
@@ -682,6 +687,15 @@
                     //  and put on page
                         taxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearTaxableRetIncome);
                         nonTaxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearNonTaxableRetIncome);
+
+                        // make sure distribution is not greater than the balance of the retirement accounts
+                        //  taxable & tax free    mms maura
+                        if(taxableDist > $('#endTaxableRetirement'+ (year-1)).text()) {
+                            taxableDist = Number($('#endTaxableRetirement'+ (year-1)).text().replaceAll(",", ""));
+                        }
+                        if(nonTaxableDist > $('#endTaxFreeRetirement'+ (year-1)).text()) {
+                            nonTaxableDist = Number($('#endTaxFreeRetirement'+ (year-1)).text().replaceAll(",", ""));
+                        }
                         $('#TaxRetire' + year).text(taxableDist);
                         $('#NonTaxRetire' + year).text(nonTaxableDist);
 
@@ -842,6 +856,7 @@
                     const currentYear = today.getFullYear();
                     forecastYears.unshift(currentYear);
 
+                    // for testing   left off here
                     forecastYears.forEach( (year, yrIdx) => {
                         lastYear = year - 1;
                         console.log(" --- year by year ", yrIdx, ") year:", year, "; last year: ", lastYear);
@@ -863,12 +878,12 @@
                             //      and toFrom in 'WF', 'WF-IRA', 'TIAA', 'DiscRet'
                             //      notes should indicate if income is non-taxable (from Roth)
                             //  I may not remember, so throw a message so I'll check
-                            var retirementIncomeMsg = 'If this is not correct, FIX IT!!  Retirement income for ' + (year - 1) + "\n";
+                            // var retirementIncomeMsg = 'If this is not correct, FIX IT!!  Retirement income for ' + (year - 1) + "\n";
                             lastYearNonTaxableRetIncome = 0;
                             lastYearTaxableRetIncome = 0;
                             lastYearRetirementIncome.forEach( retIncome => {
                                 console.log("---- begin loop: ", retIncome);
-                                retirementIncomeMsg += " - " + JSON.stringify(retIncome) + "\n";
+                                // retirementIncomeMsg += " - " + JSON.stringify(retIncome) + "\n";
                                 if(retIncome['notes'].includes('nontaxable') || retIncome['notes'].includes('non-taxable')) {
                                     lastYearNonTaxableRetIncome += Number(retIncome['amount']);
                                     console.log("lastYearNonTaxableRetIncome: ", lastYearNonTaxableRetIncome);
@@ -878,9 +893,9 @@
                                 }
                             });
 
-                            retirementIncomeMsg += "Non Taxable total: " + lastYearNonTaxableRetIncome + "\n" +
-                                "Taxable total: " + lastYearTaxableRetIncome;
-                            alert(retirementIncomeMsg);
+                            // retirementIncomeMsg += "Non Taxable total: " + lastYearNonTaxableRetIncome + "\n" +
+                                // "Taxable total: " + lastYearTaxableRetIncome;
+                            // alert(retirementIncomeMsg);
 
                         }
                         [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome] = calcRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome);
@@ -944,7 +959,7 @@
                                 $(selectorPrefix + 'Growth' + year).text(growth);
                                 // add growth to subtotal
                                 incomeSubtotal += growth;
-                                console.log("incomeSubtotal (updated 2): ", incomeSubtotal, " for year ", year);
+                                // console.log("incomeSubtotal (updated 2): ", incomeSubtotal, " for year ", year);
                             });
 
                             // -----------------------------
@@ -1003,7 +1018,7 @@
                         } // end else yrIdx = 0 (not 0 clause)
 
                         // put updated income subtotal on page
-                        console.log("incomeSubtotal (final): ", incomeSubtotal, " for year ", year);
+                        // console.log("incomeSubtotal (final): ", incomeSubtotal, " for year ", year);
                         $('#income' + year).text(incomeSubtotal);
 
                         // estimate income taxes and IncomeOtherWH (Medicare, SS)
@@ -1028,13 +1043,13 @@
                                 var toHousehold = Math.min(GBLimoIncome * percentGBtoHousehold/100, maxGBtoHousehold);
                                 var GBincomeLeft = GBLimoIncome - Math.round(withholdings + estTaxes + roundTrips + toHousehold);
                                 if(yearIdx < 4) {  // left off here - for testing
-                                    console.log("GB Limo income: ", GBLimoIncome, "\n", 
-                                    "withholdings: ", withholdings, "\n",
-                                    "estTaxes: ", estTaxes, "\n",
-                                    "roundTrips: ", roundTrips, "\n",
-                                    "toHousehold: ", toHousehold);
+                                    // console.log("GB Limo income: ", GBLimoIncome, "\n", 
+                                    // "withholdings: ", withholdings, "\n",
+                                    // "estTaxes: ", estTaxes, "\n",
+                                    // "roundTrips: ", roundTrips, "\n",
+                                    // "toHousehold: ", toHousehold);
 
-                                    console.log("GBincomeLeft: ", GBincomeLeft);
+                                    // console.log("GBincomeLeft: ", GBincomeLeft);
                                 }   // left off here -- for testing
                                 $('#ExtraSpending' + year).text(-GBincomeLeft);
 
