@@ -9,10 +9,12 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 2/21/26
+    <p>Last push: 2/22/26
     <br>NEW CHANGES:
-    <br>*** xxx ***
-    <br>
+    <br>*** subtract cc debt from Spending first year ***
+    <br>*** fix IncomeTaxes in retirementForecast ***
+    <br>*** clean up error_log msgs i TransactionsController ***
+    <br>*** remove function getInvestmentGrowths and related variables ***
     </p>
     <p>To Do:<p>
     <ul>
@@ -20,10 +22,6 @@
         <ul>
           <li>file for testing forecasting numbers:
             <br>https://docs.google.com/spreadsheets/d/1neJivwPzjkl-69PHrhNw9vOdbCvwwQm9FsoHL4GZ9Ik/edit?gid=2101335114#gid=2101335114
-          </li>
-          <li>subtract cc debt from Spending first year</li>
-          <li>Make sure IncomeTaxes does NOT include IncomeTaxFree
-            <br>- and is including all taxable income
           </li>
         </ul>
       </li>
@@ -49,54 +47,13 @@
         <br> -- max on contrib to household?? (take care of in Google Sheets)
         <br> -- put taxes set aside back to spending when withheld from pay (taken care of in GB Limo Google Sheets)
       </li>
-      <li>fix future expenses...
-        <ul>
-          <li>ExtraSpending</li>
-          <li>IncomeTaxes
-            <br>-- Remember: GB Tips not taxable (they're in IncomeTaxFree)
-          </li>
-          <li>IncomeOtherWH</li>
-        </ul>
-      </li>
-      <li>Ending balances -- checking 1/16/26</li>
-      <li>Misc balances</li>
       <li>Make sure I'm using ALL data on Retirement Input page</li>
-      <li>estimated taxes (GB limo tips are deductible up to $25,000 thru 2028)</li>
-    </ul>
-    <p>Enhancements made in this branch...</p>
-    <ul>
-      <li>SHOULD be working - SIDETRACKED updating how local & remote are sync'd</li>
-      <li>WORKING on retirement analysis</li>
     </ul>
     <p>Here's the retirement stuff...</p>
     <ul>
-      <li>SYNC ---    *** should be WORKING ***
-      <br>
-      <br>-- search for "left off here sync"
-      <br>-- copying new records done, updating changed records by id done.
-      <br>---- NEEDS testing
-      </li>
-      <br>
-      <li>DONE - Column in accts for how it shows up in Retirement Forecast</li>
-      <li>DONE - Store how much of WF is LTC - in RetirementData table?</li>
-      <br>
-      <li>Working on breaking expenses out by subcategory
-      <br>CHECK VALUES
-      <br>clean up code
-      </li>
-      <br>
       <li>Working on retirement analysis
-      <br>- Button "Retirement Forecast" gathers input fields needed.
-      <br>- Need to create and load new blade from retirementInput blade
-      <br>*** blade started: http://localhost:8000/retirement/forecast (view loaded is partially working)
-      <br>- do calc's in script of new blade.
       <br>- See "left off here" in retirementInput blade.
-      <br>- See Google Doc (link below) for layout of new blade.
       </li>
-      <li>**** NOTE ****  I'll need a more detailed budget forecast, too</li>
-      <li>Save intermediate WF values; and read in WF page (can do later - use to adjust individual WF acct numbers, if wanted)
-      </li>
-      <li>Test that other changes are saved in DB as needed (see other "left off here" notes)</li>
       <li>See "Retirement in app" (FIN -> Retirement -> Retirement in app) in Google Drive for beginning of design
       <br><br>link for design:
       <br>https://docs.google.com/spreadsheets/d/1mj0eThBHoXeK59SmpeuZcFknbCslUpIO_aOZhQRcJVQ/edit?usp=drive_link

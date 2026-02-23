@@ -715,31 +715,25 @@ class TransactionsController extends Controller
         // check for TABLES out of sync
         // if copied field is not new, it's out of sync
         foreach($tables as $table) {
-            // error_log("account: " . $table);
-            $uncopiedRemoteRcds = DB::table($table)
+
+        $uncopiedRemoteRcds = DB::table($table)
                 ->whereNot('copied', 'yes')
                 ->count();
-            // error_log("uncopiedRemoteRcds: " . $uncopiedRemoteRcds);
 
             $uncopiedLocalRcds = DB::connection('mysqllocal')
                 ->table($table)
                 ->whereNot('copied', 'yes')
                 ->count();
-            // error_log("uncopiedLocalRcds: " . $uncopiedLocalRcds);
 
             if($uncopiedRemoteRcds != 0 || $uncopiedLocalRcds != 0) {
                 $outOfSyncTables[] = $table;
             }
         }
-        // error_log("# outOfSyncTables: " . count($outOfSyncTables));
-        // error_log(json_encode($outOfSyncTables));
-        // error_log("\n\n");
 
         // update msg, if needed.
         if(count($outOfSyncTables) > 0) {
             $msg = "Tables out of sync: " . implode(", ", $outOfSyncTables) . ".  ";
         }
-        // error_log("msg: " . $msg);
 
         // Check for ACCOUNT balances out of sync.
         $accounts = DB::table('accounts')
@@ -921,8 +915,6 @@ class TransactionsController extends Controller
         $accounts = DB::table("accounts")
             ->whereNull('deleted_at')
             ->get()->toArray();
-        // error_log("\naccounts: ");
-        // foreach($accounts as $thisOne) error_log(" - " . json_encode($thisOne));
 
         // get all previously used toFrom values
         $toFroms = DB::table("transactions")
@@ -936,14 +928,10 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->get()->toArray();
         $tofromaliases = str_replace(" ", "%20", json_encode($tofromaliases));
-        // error_log("\ntofromaliases:");
-        // foreach($tofromaliases as $thisOne) error_log(" - " . json_encode($thisOne));
 
         // get all the defined account names
         $accountNames = array_column($accounts, 'accountName');
         $accountIds = array_column($accounts, 'id');
-        // error_log("accountNames: " . json_encode($accountNames));
-        // error_log("accountIds: " . json_encode($accountIds));
 
         // cut-off dates for a statement period, if not the end of the month
         $allLastStmtDates = array_column($accounts, 'lastStmtDate');
@@ -1019,7 +1007,6 @@ class TransactionsController extends Controller
         // Get today's date (for next few queries)
         $thisMonth = date('m');
         $thisYear = date('Y');
-        // error_log("thisMonth: " . $thisMonth . "; thisYear: " . $thisYear);
         $firstDay = $thisYear . "-01-01";
 
         // get amount spent for this category this year
@@ -1055,7 +1042,6 @@ class TransactionsController extends Controller
             ->where('year', $thisYear)
             ->groupBy('year', 'category')
             ->get()->toArray();
-        // error_log("new var: \n" . json_encode($ytmBudgets));
 
         // get full year budgets by category
         $yearBudgets = DB::table('budget')
@@ -1065,7 +1051,6 @@ class TransactionsController extends Controller
             ->groupBy()
             ->get()
             ->toArray();
-        // error_log("new yearBudgets: \n" . json_encode($yearBudgets));
 
         // add ytd spent, budget through current month, full year budget to transactions variable for each transaction
         // and fill in accountId
@@ -1165,8 +1150,6 @@ class TransactionsController extends Controller
         $accounts = DB::table("accounts")
             ->whereNull('deleted_at')
             ->get()->toArray();
-        // error_log("\naccounts: ");
-        // foreach($accounts as $thisOne) error_log(" - " . json_encode($thisOne));
         $accountIds = array_column($accounts, 'id');
 
         // get all previously used toFrom values
@@ -1279,7 +1262,6 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->groupBy('year', 'category')
             ->get()->toArray();
-        // error_log("new var: \n" . json_encode($ytmBudgets));
     
         // get full year budgets by category
         $yearBudgets = DB::table('budget')
@@ -1289,7 +1271,6 @@ class TransactionsController extends Controller
             ->groupBy()
             ->get()
             ->toArray();
-        // error_log("new yearBudgets: \n" . json_encode($yearBudgets));
 
         // add ytd spent, budget through current month, full year budget to transactions variable for each transaction
         foreach($transactions as $transaction) {
@@ -1495,14 +1476,12 @@ class TransactionsController extends Controller
             // get transaction to update from payload
             $data = json_decode($request->getContent(), true);
             $transaction = $data['newTransaction'];
-            error_log("transaction: " . $transaction);
 
             // remove url encoding
             $transaction = urldecode($transaction);
 
             // put it back as an object (from json)
             $transaction = json_decode($transaction);
-            error_log("transaction: " . json_encode($transaction));
             $id = $transaction->id;
 
             // set fields to be updated
@@ -1522,12 +1501,6 @@ class TransactionsController extends Controller
                 'notes' => $transaction->notes,
                 'copied' => $transaction->copied
             ];
-
-            error_log(" ***** ");
-            error_log("id: " . $id);
-            error_log("dataToUpdate: " );
-            foreach($dataToUpdate as $key=>$datum) error_log(" - " . $key . ": " . $datum);
-            error_log(" ***** ");
 
             $response = DB::table("transactions")
                 ->where('id', $id)
@@ -1970,13 +1943,11 @@ class TransactionsController extends Controller
         $retirementInput = json_decode($request->getContent(), true);
 
         $descriptions = array_keys($retirementInput);
-        // error_log("Descriptions: " . json_encode($descriptions));
 
         // delete old forecast inputs (type w/Inp)
         $response = DB::table('retirementdata')
             ->where('type', 'inpt')
             ->delete();
-        // error_log("response from delete: " . $response);
 
         // insert new forecast inputs
         // create array to insert (with type "Inpt")
@@ -2426,7 +2397,6 @@ class TransactionsController extends Controller
                 ];
             }
         }
-        // error_log("*** recentMaintTotAmt: " . $recentMaintTotAmt);
 
         // sum maintenance before 2022 (not in transactions table) to $oldMaint
         $oldMaint = DB::table('carcostdetails')
@@ -2434,7 +2404,6 @@ class TransactionsController extends Controller
             ->where('key', 'OldMaint')
             ->whereNull('deleted_at')
             ->pluck('value');
-        // error_log("*** oldMaint: " . $oldMaint);
         
         // if no old maintenance found, set to 0
         if(count($oldMaint) > 0) {
@@ -2442,11 +2411,9 @@ class TransactionsController extends Controller
         } else {
             $oldMaint = 0;
         }
-        // error_log("*** oldMaint: " . $oldMaint);
         
         // total maintenance is old + new
         $totMaint = $recentMaintTotAmt + $oldMaint;
-        // error_log("*** totMaint: " . $totMaint);
 
         // calc maint cost per mile
         $costPerMile = $totMaint/($recentMileage - $beginMiles);
@@ -2570,8 +2537,6 @@ class TransactionsController extends Controller
                 ->whereIn('key', $keys)
                 ->whereNull('deleted_at')
                 ->get()->toArray();
-            // error_log("------ carCostInfo:");
-            // error_log(json_encode($carCostInfo));
 
             // put in more usable format
             $fuel = null;
@@ -2622,8 +2587,6 @@ class TransactionsController extends Controller
 
             // all fuel bought (should be just all gas or kwh)
             $fuelBoughtEnRoute = $gasBought->unionAll($kwhBought)->get()->toArray();
-            error_log("fuelBoughtEnRoute: ");
-            error_log(json_encode($fuelBoughtEnRoute));
 
             // put in usable format
             $fuelVolumeEnRoute = 0;
@@ -2643,14 +2606,10 @@ class TransactionsController extends Controller
         // get how much purchase (amt) and what cost from record where fuel was purchase en route
         function findFuelCostAndAmt($fuelEvent, $fuel, $needUnitCost) {
             $msg = '';  // assume no msg's until something found.
-            error_log("findFuelCostAndAmt... passed in:");
-            error_log("  fuelEvent: " . json_encode($fuelEvent) . ";\n  fuel: " . $fuel . ";\n needUnitCost: " . ($needUnitCost ? 'true' : 'false'));
 
             if(!$needUnitCost) {
-                error_log("in !needUnitCost block");
                 // get cost of fuel from record
                 $cost = $fuelEvent->amount;
-                error_log("cost: " . $cost);
 
                 // get amt from "notes" column
                 if($fuel == 'electric') {
@@ -2663,7 +2622,6 @@ class TransactionsController extends Controller
                 }
 
                 preg_match($volPattern, $fuelEvent->notes, $matches);
-                error_log("matches: " . json_encode($matches));
                 // Get the matched number
                 if($fuel == 'gas') {
                     $unitCost = -$matches[1]; // Will contain string of volume purchased
@@ -2671,18 +2629,18 @@ class TransactionsController extends Controller
                 } else if($fuel == 'electric') {
                     $amt = $matches[1];
                 }
-                error_log("amt (from matches): " . $amt);
+
                 if($amt == '' || $amt == null) {
                     $msg = "No amount found.";
                 } else {
                     // Convert to float if needed
                     $amt = floatval($amt);
                 }
+
             } else {
                 $cost = null; // not requested
                 $amt = null;  // not requested
             }
-            error_log("amt (in findFuelCostAndAmt): " . $amt);
            
             if($needUnitCost) {
                 // get unit cost
@@ -2699,7 +2657,6 @@ class TransactionsController extends Controller
                 $unitCost = null;   // not requested
             }
 
-            error_log("in findFuelCostAndAmt, returning.. \n  cost: " . $cost . "\n  amt: " . $amt . "\n  unitCost: " . $unitCost . "\n  msg: " . $msg);
             return [$cost, $amt, $unitCost, $msg];
         }   // end of function findFuelCostAndAmt
     
@@ -2708,7 +2665,6 @@ class TransactionsController extends Controller
 
         // get data keys needed in carcostdetails
         [$fuel, $MPK, $MPG, $SolarKwh, $errMsg] = getCarCostData($tripData);
-        // error_log("\n\nfuel: " . $fuel . "\nMPG: " . $MPG . "\nMPK: " . $MPK . "\nSolarKwh: " . $SolarKwh . "\nerrMsg: " . $errMsg);
 
         // get fuel bought info (volume and cost)
         [$fuelVolumeEnRoute, $fuelCostEnRoute, $msg] = getFuelBoughtInfo($tripData, $fuel);
@@ -2738,11 +2694,8 @@ class TransactionsController extends Controller
                 $needUnitCost = true;
                 // recentGasCost and recentGasVolume not needed, should be null
                 [$recentGasCost, $recentGasVolume, $recentUnitPrice, $msg] = findFuelCostAndAmt($lastGas, $fuel, $needUnitCost); 
-                error_log("------ recentUnitPrice:");
-                error_log(json_encode($recentUnitPrice));
                 $errMsg .= $msg;
 
-                // error_log("-- recentUnitPrice: " . $recentUnitPrice);
             }
         }
 
@@ -2755,15 +2708,12 @@ class TransactionsController extends Controller
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalKwhUsed - $fuelVolumeEnRoute;
-            error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
             
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $SolarKwh/100;
-            error_log("fuelCostNotBoughtEnRoute: " . $fuelCostNotBoughtEnRoute);
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
-            error_log("total fuel volume: " . ($fuelVolumeEnRoute + $fuelVolumeNotBoughtEnRoute));
 
         } else if($fuel == 'gas') {
             // Gas bought en route + gas already in tank that was used
@@ -2773,27 +2723,15 @@ class TransactionsController extends Controller
 
             // fuel not purchased en route
             $fuelVolumeNotBoughtEnRoute = $totalGalUsed - $fuelVolumeEnRoute;
-            error_log("---");
-            error_log("totalGalused: " . $totalGalUsed);
-            error_log("fuelVolumeEnRoute: " . $fuelVolumeEnRoute);
-            error_log("fuelVolumeNotBoughtEnRoute: " . $fuelVolumeNotBoughtEnRoute);
-            error_log("---");
             
             // cost of fuel not bought en route
             $fuelCostNotBoughtEnRoute = $fuelVolumeNotBoughtEnRoute * $recentUnitPrice;
-            
-            error_log("fuel cost bought en route (gas): " . $fuelCostEnRoute);
-            error_log("fuel cost not bought en route (gas): " . $fuelCostNotBoughtEnRoute);
-            error_log("total cost (gas): " . ($fuelCostEnRoute + $fuelCostNotBoughtEnRoute));
-            error_log("---");
 
             // total fuel cost = bought en route + not bought en route
             $fuelCost = $fuelCostEnRoute + $fuelCostNotBoughtEnRoute;
 
         } else $errMsg .= "  Invalid fuel found on carCostDetails table.";
 
-        // $errMsg = trim($errMsg);
-        // error_log("errMsg (end of calcFuel): " . $errMsg);
         return [round($fuelCost,2), round($gallonsKwHused,2), $errMsg];
         
     }   // end of function calcFuel
@@ -2807,7 +2745,6 @@ class TransactionsController extends Controller
 
         // Do we have all the info?  Assume complete until find something missing
         $completeTripInfo = true;
-        // error_log("completeTripInfo (init): " . $completeTripInfo);
 
         // in case there are messages
         $errMsg = null;
@@ -2829,7 +2766,6 @@ class TransactionsController extends Controller
             if($request->input($field)) $tripData[$field] = $request->input($field);
             else $tripData[$field] = null;
         }
-        // error_log("tripData: " . json_encode($tripData));
 
         // write odometer reading, if it was entered
         if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') {
@@ -2877,7 +2813,6 @@ class TransactionsController extends Controller
             ->where("key", "like", "Mileage%")
             ->whereNull('deleted_at')
             ->max("value");
-        // error_log("recentMileage: " . json_encode($recentMileage));
 
         // pull data out of results
         foreach($dataNeeded as $dataRcd) {
@@ -2915,7 +2850,6 @@ class TransactionsController extends Controller
         // share of insurance payments
         [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
         if($msg != null) $completeTripInfo = false;
-        // error_log("completeTripInfo (sharIns): " . $completeTripInfo);
 
         $errMsg .= $msg;
         
@@ -2923,15 +2857,9 @@ class TransactionsController extends Controller
         //      handle gas/charging purchased during trip
         [$tripData["fuelCost"], $tripData['gallonsKwHused'], $msg] = $this->calcFuel($tripData);
         if($msg != null) $completeTripInfo = false;
-        // error_log("completeTripInfo (calcFuel): " . $completeTripInfo);
 
         $errMsg = $msg . $errMsg;
-        // error_log("errMsg (after calcFuel): " . $errMsg);
 
-        // error_log("Fuel cost: " . $tripData['fuelCost']);
-        // error_log("gallonsKwHused: " . $tripData['gallonsKwHused']);
-
-        // error_log("errMsg:" . $errMsg);
         $newTripRcd = [];
         $newTripRcd['trip'] = $tripData['tripName'];
         $newTripRcd['who'] = $tripData['tripWho'];
@@ -2951,10 +2879,6 @@ class TransactionsController extends Controller
         $result = DB::table("trips")->insert($newTripRcd);
         if($result) error_log("TRIPS record written");
         else error_log("TRIPS record NOT written: " . json_encode($result));
-
-        // trip errMsg
-        // $errMsg = trim($errMsg);
-        // error_log("completeTripInfo (end): " . $completeTripInfo);
 
         if($completeTripInfo) {
             $errMsg = "\n**** Trip recorded. Total cost was " 
@@ -3322,17 +3246,14 @@ class TransactionsController extends Controller
                         break;   
                 }
             }   
-            error_log("test 4 -- retirementDataInfo: " . json_encode($retirementDataInfo));
 
             // accounts that need to sum transactions to get current balance
             $sumAccountsDB = json_decode($retirementDataInfo['sumAccountsDB']);
             $sumAccountsVerbiage = json_decode($retirementDataInfo['sumAccountsVerbiage']);
-            // error_log("sumAccountsDB: " . json_encode($sumAccountsDB));
 
             // accounts to find latest balanced entered in DB
             $lastBalanceDB = json_decode($retirementDataInfo['lastBalanceDB']);
             $lastBalanceString = '"'. implode('", "', $lastBalanceDB) . '"';
-            // error_log("lastBalanceDB: " . json_encode($lastBalanceDB));
 
             // accounts to find last deposit
             $lastDeposit = json_decode($retirementDataInfo['lastDeposit']);
@@ -3351,14 +3272,10 @@ class TransactionsController extends Controller
             foreach($dbbalances as $balance) {
                 $balances[$balance->account] = [$balance->amount, "$", $balance->date, null];
             }
-            // error_log("dbbalances 1:");
-            // foreach($dbbalances as $bal) error_log(json_encode($bal));
 
             foreach($sumAccountsDB as $key => $acct) {
                 $retirementDataBalances[$sumAccountsVerbiage[$key]] = $balances[$acct];
             }
-            // error_log("retirementDataBalances:");
-            // foreach($retirementDataBalances as $data) error_log(json_encode($data));
 
             // get latest balances
             $dbbalances = DB::table('transactions as t1')
@@ -3374,19 +3291,12 @@ class TransactionsController extends Controller
                 ->select('t1.account', 't1.amount', 't1.clear_date as date')
                 ->get();
 
-            // error_log("dbbalances 2:");
-            // foreach($dbbalances as $bal) error_log(json_encode($bal));
-
             $balances = [];
             foreach($dbbalances as $balance) {
                 $balances[$balance->account] = [$balance->amount, "$", $balance->date, null];
             }
-            // error_log("balances:");
-            // foreach($balances as $bal) error_log(json_encode($bal));
 
             foreach($lastBalanceDB as $acct) {
-                // error_log("acct: " . $acct);
-                // error_log("balances[acct]: " . json_encode($balances[$acct]));
                 $retirementDataBalances[$acct] = $balances[$acct];
             }
 
@@ -3415,9 +3325,6 @@ class TransactionsController extends Controller
             }
 
             foreach($lastDeposit as $acct) {
-                // error_log("\n\nacct: " . $acct);
-                // error_log("retirementData[acct]: " );
-                // error_log(json_encode($retirementData[$acct]));
                 if(!isset($retirementData[$acct])) $retirementData[$acct] = [0, "$", null];
             }
 
@@ -3427,7 +3334,6 @@ class TransactionsController extends Controller
             foreach($retirementDataRents as $description=>$rentalRcd) {
                 $date = substr($description, 12, 4);
                 if($date < $yearMonth) {
-                    error_log(json_encode($rentalRcd));
                     $result = DB::table('retirementdata')
                         ->where('id', $rentalRcd[3])
                         ->whereNull('deleted_at')
@@ -3898,7 +3804,7 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->where(function ($query) use ($category, $who) {
                 $query->where('category', $category)
-                      ->whereNull('deleted_at')             // left off here - test this
+                      ->whereNull('deleted_at')
                         //  Mike has only account "Mike"
                         //  Maura has "MauraSCU" and "MauraDisc"
                       ->orWhere('account', 'like', $who . '%');
@@ -3991,7 +3897,7 @@ class TransactionsController extends Controller
         // get cars, drivers, and most recent mileage from carcostdetails table
         $DBCarsDriversMileages = DB::table('carcostdetails')
             ->where('key', 'Driver')
-            ->whereNull('deleted_at')       // left off here  test this
+            ->whereNull('deleted_at')
             ->orWhere('key', 'like', 'Mileage%')
             ->get()->toArray();
             
@@ -4026,8 +3932,6 @@ class TransactionsController extends Controller
 
         // Convert to array of objects
         $carInfo = array_values($carsDriversMileages);
-        // error_log("carInfo:");
-        // error_log(json_encode($carInfo));
 
         return $carInfo;
     }   // end of function getCarInfo
@@ -4040,8 +3944,6 @@ class TransactionsController extends Controller
         $tripNames = DB::table('trips')
             ->whereNull('deleted_at')
             ->pluck('trip');
-        // error_log("tripnames:");
-        // foreach($DBtripNames as $tripName) error_log($tripName);   
         
         return $tripNames;
     }
@@ -4414,21 +4316,15 @@ class TransactionsController extends Controller
     // blade to enter balances for each WF account, so Trad, Roth, and Inh accounts can be treated appropriately
     public function splitIRAs(Request $request) {
 
-        error_log("------------------------------ split IRAS ----------------------------------");
-        error_log("Mikes: " . json_encode($request->query("mikes")));
-        error_log("Mauras: " . json_encode($request->query("mauras")));
-
         // get ira account info in a useable form
         $rothAccounts = collect();
         for ($index = 1; $index <= $request->query("numberRoth"); $index++) {
             $rothAccounts[$index] = $request->query("roth_$index");
-            // error_log("index: " . $index . ":  roth_<index>: " . $request->query("roth_$index"));
         }
         
         $tradAccounts = collect();
         for ($index = 1; $index <= $request->query("numberTrad"); $index++) {
             $tradAccounts[$index] = $request->query("trad_$index");
-            // error_log("index: " . $index . ":  trad_<index>: " . $request->query("trad_$index"));
         }
         
         $inhAccount = $request->query('inh');
@@ -4663,9 +4559,6 @@ class TransactionsController extends Controller
 
                 error_log(" - # chgdRemoteRecords: " . count($chgdRemoteRecords));
                 error_log(" - # chgdLocalRecords: " . count($chgdLocalRecords));
-                // ... left off here sync ...  Coding is done - needs further testing
-                // what happens if there is no matching id??
-
 
                 // Copy remote records to local
                 if(count($chgdRemoteRecords) > 0) {
@@ -5064,6 +4957,7 @@ class TransactionsController extends Controller
         function initialBalances($date) {
             // group accounts
             $spendingAccts = ['Savings', 'Checking'];
+            $ccAccts = ['DiscCC', 'VISA'];
             $invAccts = ['WF-Inv-Bal', 'EJ'];
             $retTaxAccts = ['WF-IRA-Taxable-Trad', 'RetirementDisc', 'TIAA'];
             $retNonTaxAccts = ['WF-IRA-non-taxable-Roth'];
@@ -5075,7 +4969,15 @@ class TransactionsController extends Controller
                 ->where("type", "inpt")
                 ->whereNull("deleted_at")
                 ->sum("data");
-            
+
+            // get credit card debt balance
+            $ccdebtBal = DB::table("transactions") 
+                ->whereIn("account", $ccAccts)
+                // only cleared transactions.  If not cleared, $ still in spending
+                ->whereNotNull("clear_date")
+                ->whereNull("deleted_at")
+                ->sum("amount");
+
             // get investement accounts balance from retirementdata table
             $invAcctsBal = DB::table("retirementdata") 
                 ->whereIn("description", $invAccts)
@@ -5107,23 +5009,19 @@ class TransactionsController extends Controller
                 ->where("type", "inpt")
                 ->whereNull("deleted_at")
                 ->sum("data");
-            error_log("ltcAcctSum: " . $ltcAcctSum);
 
             $LTCinWF = [];
             $LTCinWFdate = [];
             // subtract LTC balance from WF
-            // left off here - REMEMBER to add it to LTC balance
             foreach($ltcDataDB as $data) {
                 switch($data->description) {
                     case substr($data->description, 0, 11) == 'LTCinWFdate':
-                        error_log("LTCinWFdate #: " . $data->description . " (" . substr($data->description, 11) . ") data: " . $data->data);
                         $LTCinWFdate[substr($data->description, 11)] = $data->data;
                         break;
                     case $data->description == 'LTCInvGrowth':
                         $LTCInvGrowth = $data->data;
                         break;
                     case substr($data->description, 0, 7) == 'LTCinWF':
-                        error_log("LTCinWF #: " . $data->description . " (" . substr($data->description, 7) . ") data: " . $data->data);
                         $LTCinWF[substr($data->description, 7)] = $data->data;
                         break;
                 }
@@ -5132,26 +5030,19 @@ class TransactionsController extends Controller
             // get init LTC bal
             // first get what's in WF
             $initLTCBal = 0;
-            error_log("LTC... LTCinvGrowth: " . $LTCInvGrowth . ";");
 
             $idx = 1;
             while(isset($LTCinWF[$idx])) {
-                error_log(" - LTCinWF[" . $idx . "]: " . $LTCinWF[$idx] . "; LTCinWFdate[" . $idx . "]: " . $LTCinWFdate[$idx]);
                 $initLTCBal += $LTCinWF[$idx];
 
                 $idx++;
             }
             // then add other LTC accts
-            error_log("initLTCBal: " . $initLTCBal);
 
             // subract LTC princ that's in WF from retirement balance
-            error_log("retTaxAcctsBal (tot): " . $retTaxAcctsBal);
             $retTaxAcctsBal -= $initLTCBal;
-            error_log("retTaxAcctsBal (-LTC): " . $retTaxAcctsBal);
 
-            error_log("ltcAcctSum: " . $ltcAcctSum);
             $initLTCBal += $ltcAcctSum;
-            error_log("initLTCBal: " . $initLTCBal);
 
             //      interest rate
             $rate = $LTCInvGrowth/100;
@@ -5163,21 +5054,16 @@ class TransactionsController extends Controller
             while(isset($LTCinWF[$idx])) {
                 $initDate = substr($LTCinWFdate[$idx], 0, 2) . "/" . substr($LTCinWFdate[$idx], 2, 2) . "/" . '20' . substr($LTCinWFdate[$idx], 4, 2);
                 $initDate = new DateTime($initDate);
-                error_log("initDate: " . $initDate->format('y-m-d'));
-                error_log("firstOfThisMonth: " . $firstOfThisMonth->format('y-m-d'));
-                error_log("date diff: " . date_diff($initDate, $firstOfThisMonth)->format('%a'));
+
                 $elapsedDays = date_diff($initDate, $firstOfThisMonth)->format('%a');
-                error_log("elapsed days " . $idx . ": " . $elapsedDays);
+
                 // interest
                 $interest = round($LTCinWF[$idx] * $rate * ($elapsedDays/365), 2);
-                error_log("interest " . $idx . ": " . $interest);
                 $totInterest += $interest;
 
                 $idx++;
             }
-            error_log("total interest: " . $totInterest);
             $initLTCBal += $totInterest;
-            error_log("FINAL initLTCBal: " . $initLTCBal);
 
             // get balance of non-taxable (Roth) accts
             $retNonTaxAcctsBal = DB::table("retirementdata") 
@@ -5187,10 +5073,11 @@ class TransactionsController extends Controller
                 ->sum("data");
 
             $spendingAccts = implode(", ", $spendingAccts);
+            $ccAccts = implode(", ", $ccAccts);
             $invAccts = implode(", ", $invAccts);
             $retTaxAccts = implode(", ", $retTaxAccts);
             $retNonTaxAccts = implode(", ", $retNonTaxAccts);
-            return [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal];
+            return [$beginOfThisMonthSpendingBal, $ccdebtBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $ccAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal];
         }   // end of function initialBalances
 
 
@@ -5214,49 +5101,23 @@ class TransactionsController extends Controller
             $retirementDataInfo = [];
             $retirementDataHaveInputValue = []; // if element is true, have the input value; if exists, have other value; if undefined, don't have a value
             foreach($retirementDataInfoDB as $idx=>$retirementDatum) {
-                // error_log("---*" . $idx . ": " . json_encode($retirementDatum));
 
                 // if no data for this description found yet, note if it's "inpt" type and save the value
                 if(!isset($retirementDataHaveInputValue[$retirementDatum->description])) {
-                    // error_log("init " . $retirementDatum->description);
                     $retirementDataHaveInputValue[$idx] = ($retirementDatum->type == 'inpt') ? true : false;
                     $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
 
                 // if there is a data value for this description, only change it if the new value is type 'inpt'
                 } else {
                     if($retirementDatum->type == 'inpt') {
-                        // error_log("update " . $retirementDatum->description);
                         $retirementDataHaveInputValue[$idx] = true;
                         $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
                     }
-                    else error_log("ignore " . $retirementDatum->description);
                 }
-                // error_log("retirementDataHaveInputValue: " );
-                // error_log(json_encode($retirementDataHaveInputValue));
-                // error_log("retirementDataInfo:");
-                // foreach($retirementDataInfo as $thiss=>$thing) {
-                //     error_log(" -- " . $thiss . ": " . $thing);
-                // }
-                // error_log(json_encode($retirementDataInfo));
-                // error_log("retirementDataHaveInputValue[" . $retirementDatum->description . "]: " . $retirementDataHaveInputValue[$retirementDatum->description]);
-                // error_log("retirementDataInfo[" . $retirementDatum->description . "]: " . $retirementDataInfo['description']);
             }
 
-            // error_log("retirementDataInfo:");
-            // foreach($retirementDataInfo as $desc=>$data) {
-            //     error_log("--- " . $desc . " ----");
-            //     error_log(json_encode($data));
-            //     error_log("===================================");
-            // }
-
-            // error_log(" --- ");
             foreach($inputIncomesDescriptions as $income) {
-                error_log("test 3 -- income: " . $income);
-                // error_log("retirementDataInfo: " . json_encode($retirementDataInfo));
-                error_log("retirementDataInfo[".$income."]: " . $retirementDataInfo[$income]);
                 $remainingIncomeThisYear[$income] = $retirementDataInfo[$income];
-                // error_log(json_encode($remainingIncomeThisYear));
-                // error_log("------------------");
             }
 
             return $remainingIncomeThisYear;
@@ -5488,7 +5349,6 @@ class TransactionsController extends Controller
 
             $thisMonth = substr($date, 5, 2);
             $monthsLeftThisYear = 12 - $thisMonth + 1;
-            // error_log("IncomeType: " . $incomeType . "\n - this year: " . date("y") . "\n - date: " . substr($date, 2, 2) . "\n - months left: " . $monthsLeftThisYear . "\n - startYear: " . $startYear . "\n - startDate: " . $startDate);
 
             // set pay the same for each year
             $firstYear = true;  // may need to pro-rate first year
@@ -5678,7 +5538,8 @@ class TransactionsController extends Controller
                 'House',
                 'GBLimoForExpenses',
                 'GBMaxForExpenses',
-                'SS-Med-WHs'
+                'SS-Med-WHs',
+                'TaxRateOver64'
             ];
 
             // get the parameters from the retirementdata table
@@ -5708,23 +5569,10 @@ class TransactionsController extends Controller
                 }
             }
 
-            error_log("new retirementParameters: ");
-            foreach($retirementParameters as $idx=>$retDatum) {
-                error_log($idx . ": " . json_encode($retDatum));
-            }
-                
-
             return $retirementParameters;
 
         }    // end function getRetParams
         
-    
-        function  getInvestmentGrowths($date) {
-            // left off here
-            $investmentGrowths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 11, 2, 3, 4, 5, 6, 7, 8, 9, 2, 2, 22, 23, 24, 25, 26, 27, 28, 29, 3, 4, 2, 3, 4, 5, 6, 7 ];
-            return $investmentGrowths;
-
-        }    // end function getInvestmentGrowths
 
         // months array
         $months = [
@@ -5755,13 +5603,14 @@ class TransactionsController extends Controller
         $thisYear = substr($date, 0, 4);        
 
         // get beginning balances
-        [$beginOfThisMonthSpendingBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($date, $twoDigitYear);
+        [$beginOfThisMonthSpendingBal, $ccdebtBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $ccAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($date, $twoDigitYear);
         // left off here -- fix this ... don't need placeholders anymore
         $spending = [$beginOfThisMonthSpendingBal, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119 ];
+        $ccdebt = [$ccdebtBal, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
         $investments = [$invAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
         $retirementTaxable = [$retTaxAcctsBal, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ];
         $retirementNonTaxable = [$retNonTaxAcctsBal, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ];
-        $beginBalances = $this->addArraysByPosition($spending, $investments, $retirementTaxable, $retirementNonTaxable);
+        $beginBalances = $this->addArraysByPosition($spending, $ccdebt, $investments, $retirementTaxable, $retirementNonTaxable);
 
         // get rest of this year's expected income
         $remainingIncomeThisYear = thisYearIncome($date, $twoDigitYear);
@@ -5794,15 +5643,6 @@ class TransactionsController extends Controller
         // get retirement incomes per year estimates
         $retirementParameters = getRetParams($date);
 
-        // get dummy expected investement growth per year
-        $investmentGrowths = getInvestmentGrowths($date);
-        
-        // get dummy expected taxable ret income growth per year
-        $taxableRetirementGrowths = getInvestmentGrowths($date);
-        
-        // get dummy expected nontaxable ret income growth per year
-        $taxFreeRetirementGrowths = getInvestmentGrowths($date);
-
         // init taxableRetIncomes and nonTaxableRetIncomes for placeholders
         $taxableRetIncomes = [];
         $nonTaxableRetIncomes = [];
@@ -5833,13 +5673,7 @@ class TransactionsController extends Controller
             // Taxable retirement placeholders
             json_encode($taxableRetIncomes),
             // non-taxable retirement placeholders
-            json_encode($nonTaxableRetIncomes),
-            // Investment Growth
-            json_encode($investmentGrowths),
-            // taxable retirement growth
-            json_encode($taxableRetirementGrowths),
-            // non taxable retirement growth
-            json_encode($taxFreeRetirementGrowths)
+            json_encode($nonTaxableRetIncomes)
         ];
 
         // get expense categories
@@ -5848,8 +5682,6 @@ class TransactionsController extends Controller
             ->select('name', 'summaryCategory')
             ->where('ie', 'E')
             ->get()->toArray();
-        error_log("expenseCategoriesWithSummaryCats: ");
-        foreach($expenseCategoriesWithSummaryCats as $sumcat) error_log(" - " . json_encode($sumcat));
 
         $sumCategoriesWithDetailCategories = [];
         foreach($expenseCategoriesWithSummaryCats as $expAndSumCat) {
@@ -5858,15 +5690,9 @@ class TransactionsController extends Controller
             }
             $sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory][] = $expAndSumCat->name;
         }
-        error_log("sumCategoriesWithDetailCategories:");
-        foreach($sumCategoriesWithDetailCategories as $sum=>$det) {
-            error_log(" - " . $sum . "; " . json_encode($det));
-        }
 
         $expenseCategories = [];
         $expenseCategories = array_column($expenseCategoriesWithSummaryCats, 'name');
-        error_log("expenseCategories: ");
-        foreach($expenseCategories as $expcat) error_log(" - " . $expcat);
         
         // get expense sumcategories
         $expenseSummaryCategories = DB::table('categories')
@@ -5875,13 +5701,8 @@ class TransactionsController extends Controller
             ->where('ie', 'E')  // where income/expense is expense
             ->get()->toArray();
         $expenseSummaryCategories = array_column($expenseSummaryCategories, 'summaryCategory');
-        error_log("expenseSummaryCategories: " . json_encode($expenseSummaryCategories));
 
         // get amt spent before current month (in this year) by category
-        // error_log("type firstOfThisYear: " . gettype($firstOfThisYear) . ", " . $firstOfThisYear);
-        // error_log("type lastOfThisYear: " . gettype($lastOfThisYear) . ", " . $lastOfThisYear);
-        // error_log("type date: " . gettype($date) . ", " . $date);
-        // error_log("type expenseCategories: " . gettype($expenseCategories));
         $monthsQueryArray = [];
         foreach($months as $monthIdx=>$month) {
             if($monthIdx+1 >= $thisMonthIdx) {
@@ -5901,17 +5722,12 @@ class TransactionsController extends Controller
             ->select('category', 'inflationFactor', ...$monthAggregates)
             ->groupBy('category')
             ->get()->toArray();
-        error_log("expectedExpensesByCategory:");
-        foreach($expectedExpensesByCategory as $key=>$expExp) {
-            error_log(" - " . $key . ": " . json_encode($expExp));
-        }
+
         // get this year's budget left by category
         $expectedExpensesAfterTodayByCategory = [];
         $inflationFactors = [];
         $expectedExpensesAfterTodayTotal = 0;
-        // error_log("total: " . $expectedExpensesAfterTodayTotal);
         foreach($expectedExpensesByCategory as $expensesRcd) {
-            error_log("expensesRcd: " . json_encode($expensesRcd));
             $expectedExpensesAfterTodayByCategory[$expensesRcd->category] = 0;
             if($expensesRcd->inflationFactor != null) {
                 $inflationFactors[$expensesRcd->category] = $expensesRcd->inflationFactor;
@@ -5927,10 +5743,6 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->orderByDesc('type')       // so inpt - input (rather than assm - assumed) is first
             ->value('data');
-        // error_log("defaultInflationFactor: " . $defaultInflationFactor);
-        error_log("expectedExpensesAfterTodayByCategory: " . json_encode($expectedExpensesAfterTodayByCategory));
-        error_log("inflationFactors: " . json_encode($inflationFactors));
-
 
         // init each summaryCategory total to 0
         $expectedExpensesAfterTodayBySUMMARYCategory = [];
@@ -5938,24 +5750,16 @@ class TransactionsController extends Controller
         foreach($expenseSummaryCategories as $sumcategory) {
             $expectedExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
             $actualExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
-            error_log("sumcategory: " . $sumcategory . ";  expectedExpensesAfterTodayBySUMMARYCategory[".$sumcategory."]: " . $expectedExpensesAfterTodayBySUMMARYCategory[$sumcategory]);
         }
 
         // sum subtotals for each sumcategory
         foreach($expectedExpensesAfterTodayByCategory as $idx=>$categoryRcd) {
-            error_log("---- " . $idx . " ------");
-            error_log($categoryRcd);
             $sumCat = collect($expenseCategoriesWithSummaryCats)
                 // ->where('name', $categoryRcd->category)
                 ->where('name', $idx)
                 ->first();
-            error_log("summary cat: " . json_encode($sumCat));
             if($sumCat != null) {
-                error_log(" -- " . $sumCat->summaryCategory);
                 $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
-                error_log("expectedExpensesAfterTodayBySUMMARYCategory[". $sumCat->summaryCategory . "]: " . $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory]);
-                // $expectedExpensesAfterTodayTotal += $categoryRcd;
-                // error_log("total: " . $expectedExpensesAfterTodayTotal);
             }
         }
 
@@ -5975,9 +5779,6 @@ class TransactionsController extends Controller
             ->get()
             ->toArray();
 
-        error_log("============  restOfYearActualsDB ==========");
-        foreach($restOfYearActualsDB as $rest) error_log(json_encode($rest));
-
         // FIX FORMAT to associative array where key is category -> amount
         $restOfYearActuals = [];
         foreach($restOfYearActualsDB as $restElmt) {
@@ -5989,26 +5790,15 @@ class TransactionsController extends Controller
             if(!isset($restOfYearActuals[$expenseCategory])) $restOfYearActuals[$expenseCategory] = 0.0;
         }
 
-        error_log(" ---- restOfYearActuals  (no DB) --------- ");
-        foreach($restOfYearActuals as $key=>$rest) error_log($key . ": " . $rest);
-
         // sum subtotals for each sumcategory for expenses this month and rest of year
-        error_log(" --- ");
-        error_log("restOfYear by summary cats:");
         foreach($restOfYearActuals as $idx=>$categoryRcd) {
-            // error_log("---- " . $idx . " ------");
-            // error_log($categoryRcd);
             $sumCat = collect($expenseCategoriesWithSummaryCats)
                 ->where('name', $idx)
                 ->first();
-            // error_log("summary cat: " . json_encode($sumCat));
             if($sumCat != null) {
-                // error_log(" -- " . $sumCat->summaryCategory);
                 $actualExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
             }
         }
-        // error_log(" --------- actualExpensesAfterTodayBySUMMARYCategory --------");
-        // foreach($actualExpensesAfterTodayBySUMMARYCategory as $key=>$actual) error_log($key . ": " . $actual);
 
         foreach($expectedExpensesAfterTodayBySUMMARYCategory as $key=>$expected) {
             // use "min" to get the bigger number since they are NEGATIVE.
@@ -6038,7 +5828,6 @@ class TransactionsController extends Controller
             ->whereIn('category', $expenseCategories)
             ->groupBy('category')
             ->get()->toArray();
-        error_log("actualExpensesYTM:" . json_encode($actualExpensesYTM));
 
         // get retirement income from last year (NOT SS, IBM, NH)
         $retirementAccts = ['WF-IRA', 'TIAA', 'DiscRet'];
@@ -6051,10 +5840,6 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             // ->where ('trans_date', '>', '2025-12-31')                           // nothing before 2026
             ->get()->toArray();
-        // error_log("lastYearRetirementIncome:");
-        // foreach($lastYearRetirementIncome as $retItm) {
-        //     error_log(json_encode($retItm));
-        // }           
             
             
         // keep track of categories so categories with no expenses yet can be appended
@@ -6085,27 +5870,8 @@ class TransactionsController extends Controller
         foreach($MMSpending as $MorM) {
             $expectedExpensesForThisYearByCategory[$MorM->category] = $MorM->total;
         }
-            
-        error_log("expectedExpensesForThisYearByCategory:");
-        foreach($expectedExpensesForThisYearByCategory as $cat=>$actual) {
-            error_log(" - " . $cat . ": " . $actual);
-        }
-        error_log("-----");
 
-        // get budgeted spending for the rest of the year, starting with all of this month
-        // left off here...
-        error_log("\n\n" . json_encode($expectedExpensesAfterTodayBySUMMARYCategory));
-        error_log("keys: " . json_encode(array_keys($expectedExpensesAfterTodayBySUMMARYCategory)));
-
-        error_log("incomeValues: " );
-        foreach($incomeValues as $key=>$val) {
-            error_log(" - " . $key . ": " . $val);
-        }
-
-        error_log("spending:");
-        foreach($spending as $id=>$xxx) error_log($id . ": " . json_encode($xxx));
-
-        return view('retirementForecast', compact('date', 'spending', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
+        return view('retirementForecast', compact('date', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
 
 }
