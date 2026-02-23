@@ -88,9 +88,10 @@
 
                     <!-- Beginning Balances --> 
                     @php 
-                        $spendingAccountNames = ["Spending", "Investment", "Taxable Retirement", "Tax Free Retirement"];
+                        $spendingAccountNames = ["Spending", "Credit Card Debt", "Investment", "Taxable Retirement", "Tax Free Retirement"];
                         $accountValues = [
                             $spending, 
+                            $ccdebt,
                             $investments,
                             $retirementTaxable,
                             $retirementNonTaxable
@@ -112,8 +113,9 @@
                     @php 
                         $acctsIncludedArray = [
                             $spendingAccts,   // Spending
-                            $invAccts, // Investment
-                            $retTaxAccts,  // taxable retirement accts
+                            $ccAccts,         // CC debt
+                            $invAccts,        // Investment
+                            $retTaxAccts,     // taxable retirement accts
                             $retNonTaxAccts   // tax free retirement accts
                         ];
                     @endphp
@@ -183,10 +185,10 @@
                         <td></td>
                         @foreach($forecastYears as $yearIdx=>$year)
                             @php 
-                                $incomeValueArray = json_decode($incomeValues[$acctIdx]);
+                                $incomeValueArray = json_decode($incomeValues[$acctIdx] ?? "[]");
                                 $htmlId = str_replace(' ', '', $account) . $year;
                             @endphp
-                            <td id="{{ $htmlId }}">{{ number_format((float)$incomeValueArray[$yearIdx]) }}</td>
+                            <td id="{{ $htmlId }}">{{ number_format((float)($incomeValueArray[$yearIdx] ?? 0)) }}</td>
                         @endforeach
                     </tr>
                     @endforeach
@@ -305,6 +307,7 @@
                     @php 
                         $accountValues = [
                             [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ],
+                            [ 0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,   0,   0 ],
                             [11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ],
                             [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110 ],
                             [11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111, 121, 131, 141, 151, 161, 171, 181, 191, 211, 211, 221, 231, 241, 251, 261, 271, 281, 291, 311, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 111 ]
@@ -451,7 +454,6 @@
                     <ul>
                         <li>Savings (Big Bills)</li>
                         <li>Checking</li>
-                        <li>subtract CC (Disc & VISA) balances - I'm not doing this yet (1/15/26)</li>
                     </ul>
                 </li>
                 <li>Not included:
@@ -512,7 +514,6 @@
                         return thisYearsExpense;
                     }   // end of function getDoctorExpense
 
-
                     function getIncomeOtherWHExpense(year, percentWithheld) {
 
                         // get earned income, convert to numbers and add
@@ -565,6 +566,36 @@
                         return -extraSpending;
 
                     }   // end of function getExtraSpendingExpense
+
+                    function getIncomeTaxesExpense(year, retirementParameters) {
+
+                        // estimate the Income Taxes for the year
+
+                        // get incomes needed
+                        const DurhamIncome = Number($('#TownofDurham' + year).text().replaceAll(",", ""));
+                        // only about 1/2 of GB Limo is taxable (tips are not taxable)
+                        const GBLimoIncome = .5 * Number($('#GBLimo' + year).text().replaceAll(",", ""));
+                        const rentalIncome = Number($('#RentalIncome' + year).text().replaceAll(",", ""));
+                        const NHRetIncome = Number($('#NHRetirement' + year).text().replaceAll(",", ""));
+                        const MikeIBMIncome = Number($('#MikeIBM' + year).text().replaceAll(",", ""));
+                        const MikeSSIncome = Number($('#MikeSS' + year).text().replaceAll(",", ""));
+                        const MauraIBMIncome = Number($('#MauraIBM' + year).text().replaceAll(",", ""));
+                        const MauraSSIncome = Number($('#MauraSS' + year).text().replaceAll(",", ""));
+                        const TaxRetireIncome = Number($('#TaxRetire' + year).text().replaceAll(",", ""));
+
+                        // total taxable income
+                        const totalTaxableIncome = DurhamIncome + GBLimoIncome + rentalIncome + NHRetIncome + MikeIBMIncome + MikeSSIncome + MauraIBMIncome + MauraSSIncome + TaxRetireIncome;
+
+                        // get estimated tax rate
+                        const taxRate = Number(retirementParameters['TaxRateOver64']);
+
+                        // calc taxes & return
+                        const taxes = Math.round(totalTaxableIncome * taxRate/100);
+
+                        // return as negative number since it's an expense
+                        return -taxes;
+
+                    }   // end of function getIncomeTaxesExpense
 
                     // last year expenses set to current year expenses by category
                     var lastYearsExpenses = expectedExpensesForThisYearByCategory;
@@ -637,6 +668,8 @@
                                 futureExpenses[year][category] = getIncomeOtherWHExpense(year, retirementParameters['SS-Med-WHs']);  
                             } else if(category == 'ExtraSpending') {
                                 futureExpenses[year][category] = getExtraSpendingExpense(year, futureExpenses[year]['IncomeOtherWH'], retirementParameters['SS-Med-WHs'], retirementParameters['GBLimoForExpenses']);
+                            } else if(category == 'IncomeTaxes') {
+                                futureExpenses[year][category] = getIncomeTaxesExpense(year, retirementParameters);
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
                                 futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
@@ -1150,7 +1183,7 @@
 
                     return;
                     
-                }       // end of function calcHouseValues
+                } // end of function calcHouseValues
 
                 // get inflationFactors from page
                 const inflationFactors = JSON.parse($("#inflationFactors").text());
