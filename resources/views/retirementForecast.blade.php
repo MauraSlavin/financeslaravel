@@ -426,6 +426,23 @@
                 <li>Food (Groceries) inflation worksheet:
                     <br>https://docs.google.com/spreadsheets/d/1A41Xq_W51dHUSzA9vPjcqlHlvD3f7E7cKkTwOeeqzT8/edit?gid=260114027#gid=260114027
                 </li>
+                <li>ExtraSpending is what's left of GB Limo Income after deductions are made for:
+                    <ul>
+                        <li>Withholdings for SS and Medicare</li>
+                        <li>Federal taxes 
+                            <ul>
+                                <li>Used 1/2 of income (about half are tips)</li>
+                                <li>Tips are not taxed through 2028 up to $25,000
+                                    <br>- assuming GB Limo income won't continue past that, and
+                                    <br>- tips won't exceed $25,000
+                                </li>
+                                <li>BUT the application doesn't check for income limit and past 2028.</li>
+                            </ul>
+                        </li>
+                        <li>Trips to N Hampton (assuming $1000 based on 2025 costs)</li>
+                        <li>Household (percent is in Retirement Input page)</li>
+                    </ul>
+                </li>
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Assume raises from earned income = COLA</li>
                 <li>IncomeOtherWH is Medicare and SS withholdings. Earned income used to calculate this are Town of Durham and GB Limo income.</li>
@@ -511,6 +528,44 @@
 
                     }   // end of function getIncomeOtherWHExpense
 
+                    function getExtraSpendingExpense(year, IncomeOtherWH, percentWithheld, GBLimoForExpenses) {
+
+                        // extra spending is what's left after other stuff taken from GB Limo income
+                        //  minus SS and Medicare withheld
+                        //  minus fed taxes
+                        //  minus $ for trips to N Hampton
+                        //  minus toward household
+                        // rest is ExtraSpending
+
+                        // get GBLimo income to start
+                        const GBLimoIncome = Number($('#GBLimo' + year).text().replaceAll(",", ""));
+
+                        // extra spending is 0 if no GB Limo income
+                        if(GBLimoIncome == 0) return 0; 
+
+                        // has ss & medicare wh been calc'd yet?  If not, get it.
+                        var withheld = IncomeOtherWH;
+                        if(IncomeOtherWH != 0) withheld = getIncomeOtherWHExpense(year, percentWithheld);
+
+                        // estimate federal income taxes.  Half of GB Limo is tips, which aren't taxable thru 2028 up to $25,000
+                        // assume 22% tax rate
+                        const taxes = (GBLimoIncome / 2) * .22;
+
+                        // trips to N Hampton (based on 2025)
+                        const trips = 1000;
+
+                        // towards household
+                        const household = GBLimoIncome * GBLimoForExpenses/100;
+
+                        // extra spending is what's left after everything else subtracted
+                        const extraSpending = Math.round(GBLimoIncome - (withheld + taxes + trips + household));
+                        console.log("ExtraSpending for year ", year, " is: ", extraSpending)
+
+                        // return as a negative number (expense)
+                        return -extraSpending;
+
+                    }   // end of function getExtraSpendingExpense
+
                     // last year expenses set to current year expenses by category
                     var lastYearsExpenses = expectedExpensesForThisYearByCategory;
 
@@ -580,6 +635,8 @@
                                 futureExpenses[year][category] = getDoctorExpense(year, lastYearsExpenses[category], inflationFactor, retirementParameters);
                             } else if(category == 'IncomeOtherWH') {
                                 futureExpenses[year][category] = getIncomeOtherWHExpense(year, retirementParameters['SS-Med-WHs']);  
+                            } else if(category == 'ExtraSpending') {
+                                futureExpenses[year][category] = getExtraSpendingExpense(year, futureExpenses[year]['IncomeOtherWH'], retirementParameters['SS-Med-WHs'], retirementParameters['GBLimoForExpenses']);
                             } else {
                                 // increase expense by inflation.  Use category's inflation factor, or default
                                 futureExpenses[year][category] = Math.round(lastYearsExpenses[category] * (1 + inflationFactor/100));
@@ -1020,41 +1077,6 @@
                         // put updated income subtotal on page
                         // console.log("incomeSubtotal (final): ", incomeSubtotal, " for year ", year);
                         $('#income' + year).text(incomeSubtotal);
-
-                        // estimate income taxes and IncomeOtherWH (Medicare, SS)
-                        // Finish updating GB Limo stuff first (separate out tips from paychecks)
-                        // left off here -- for current year, take into account what's already been withheld
-                        //      note: only earned income is subject to Medicare and SS
-                        //              GB limo tips are deductible up to $25,000 thru 2028
-
-                        // extraSpending is based on GBLimo income
-                        const percentGBtoHousehold = retirementParameters['GBLimoForExpenses'];
-                        const maxGBtoHousehold = 5000;  // left off here -- this should be in db and entered w/Retirement Forecast input
-                        console.log("percentGBtoHousehold: ", percentGBtoHousehold, "maxGBtoHousehold: ", maxGBtoHousehold);
-                        forecastYears.forEach( (year, yearIdx) => {
-
-                            // first year already done (from budget)
-                            if(yearIdx != 0) {
-                                // get GBLimo income
-                                var GBLimoIncome = Number($('#GBLimo' + year).text().replaceAll(",", ""));
-                                var withholdings = Math.round(GBLimoIncome*retirementParameters['SS-Med-WHs']/100);
-                                var estTaxes = Math.round(GBLimoIncome/2 * .22);
-                                var roundTrips = (GBLimoIncome == 0) ? 0 : 950; // a little more than 2025 cost
-                                var toHousehold = Math.min(GBLimoIncome * percentGBtoHousehold/100, maxGBtoHousehold);
-                                var GBincomeLeft = GBLimoIncome - Math.round(withholdings + estTaxes + roundTrips + toHousehold);
-                                if(yearIdx < 4) {  // left off here - for testing
-                                    // console.log("GB Limo income: ", GBLimoIncome, "\n", 
-                                    // "withholdings: ", withholdings, "\n",
-                                    // "estTaxes: ", estTaxes, "\n",
-                                    // "roundTrips: ", roundTrips, "\n",
-                                    // "toHousehold: ", toHousehold);
-
-                                    // console.log("GBincomeLeft: ", GBincomeLeft);
-                                }   // left off here -- for testing
-                                $('#ExtraSpending' + year).text(-GBincomeLeft);
-
-                            }
-                        });
 
                         updateIncomeSubTotal(year);
                         updateEndingBalances(year);

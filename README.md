@@ -9,10 +9,9 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 2/20/26
+    <p>Last push: 2/21/26
     <br>NEW CHANGES:
-    <br>*** Handle retirement accounts being depleted ***
-    <br>*** Note on Food Inflation worksheet in retirementForecast ***
+    <br>*** xxx ***
     <br>
     </p>
     <p>To Do:<p>
@@ -22,7 +21,6 @@
           <li>file for testing forecasting numbers:
             <br>https://docs.google.com/spreadsheets/d/1neJivwPzjkl-69PHrhNw9vOdbCvwwQm9FsoHL4GZ9Ik/edit?gid=2101335114#gid=2101335114
           </li>
-          <li>fix ExtraSpending in retirementforecast</li>
           <li>subtract cc debt from Spending first year</li>
           <li>Make sure IncomeTaxes does NOT include IncomeTaxFree
             <br>- and is including all taxable income
@@ -40,14 +38,14 @@
       </li>
       <br>
       <li>** Retirement Income
-        <br>See "left off here --" for places to update year to year values in retirement forecast
+        <br>See "left off here --" for places to update year to year values in retirement forecast (might be done - needs testing)
         <br>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record.
         <br>
         <br>DO add .gitignore
         <br>.
       </li>
       <li>fix GB Limo income this year, and
-        <br> MAKE SURE GB Lime max contrib, etc., are handled correctly in retirement forecast
+        <br> MAKE SURE GB Limo max contrib, etc., are handled correctly in retirement forecast
         <br> -- max on contrib to household?? (take care of in Google Sheets)
         <br> -- put taxes set aside back to spending when withheld from pay (taken care of in GB Limo Google Sheets)
       </li>
