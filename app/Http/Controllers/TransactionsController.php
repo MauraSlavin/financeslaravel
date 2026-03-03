@@ -742,32 +742,27 @@ class TransactionsController extends Controller
 
         // check balances by account
         foreach($accounts as $account) {
-            error_log("------------- account: " . $account);
             $balanceRemote = DB::table('transactions')
                 ->where('account', $account)
                 ->whereNull('deleted_at')
                 ->sum('amount');
-            error_log("balanceRemote: " . $balanceRemote);
             
             $copiedRemote = DB::table('transactions')
                 ->where('account', $account)
                 ->whereNot('copied', 'yes')
                 ->get()->toArray();
-            error_log("copiedRemote:  " . json_encode($copiedRemote));
 
             $balanceLocal = DB::connection('mysqllocal')
                 ->table('transactions')
                 ->where('account', $account)
                 ->whereNull('deleted_at')
                 ->sum('amount');
-            error_log("balanceLocal:  " . $balanceLocal);
 
             $copiedLocal = DB::connection('mysqllocal')
                 ->table('transactions')
                 ->where('account', $account)
                 ->whereNot('copied', 'yes')
                 ->get()->toArray();
-            error_log("copiedLocal:   " . json_encode($copiedLocal));
 
             if($balanceRemote != $balanceLocal
                 || count($copiedLocal) > 0
@@ -3300,23 +3295,25 @@ class TransactionsController extends Controller
                 $retirementDataBalances[$acct] = $balances[$acct];
             }
 
-            // get retirement income
-            $dbretincomes = DB::table('transactions')
-                ->whereIn('toFrom', $lastDeposit)
-                ->whereNull('deleted_at')
-                ->select([
-                    'toFrom',
-                    DB::raw('MAX(trans_date) as max_trans_date'),
-                    DB::raw('MAX(amount) as amount'),
-                    'total_amt'
-                ])
-                ->groupBy('toFrom')
-                ->get()->toArray();
+            $dbretincomes = [];
+            foreach($lastDeposit as $lastDep) {
+                // get retirement income
+                $dbretincome = DB::table('transactions')
+                    ->where('toFrom', $lastDep)
+                    ->whereNull('deleted_at')
+                    ->where('amount', '>', 0)
+                    ->orderByDesc('trans_date')
+                    ->select('trans_date', 'toFrom', 'amount', 'total_amt')
+                    ->first();
 
+                if($dbretincome != []) {
+                    $dbretincomes[] = $dbretincome;
+                }
+            }
             // get in useful formate
             $incomes = [];
             foreach($dbretincomes as $acct) {
-                $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->max_trans_date, null];
+                $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->trans_date, null];
             }
 
             // add retirement incomes to retirementData array
