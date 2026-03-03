@@ -2,6 +2,12 @@
     <head>
         <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Favicon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/favicon/apple-touch-icon.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/img/favicon/favicon-32x32.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/img/favicon/favicon-16x16.png') }}">
+        <link rel="shortcut icon" href="{{ asset('assets/img/favicon/favicon.ico') }}">
+        <link rel="manifest" href="{{ asset('assets/img/favicon/site.webmanifest') }}">
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </head>
@@ -21,7 +27,7 @@
                 <th style="width: 100px;">Bucket</th>
                 <th style="width: 100px;">Goal Amt</th>
                 <th style="width: 100px;">Balance</th>
-                <th style="width: 100px;">NEEDS</th>
+                <th style="width: 100px; background-color: orange; color: yellow;">NEEDS</th>
                 <th style="width: 150px;">Goal Date</th>
                 <th style="width: 450px;">notes</th>
             </tr>

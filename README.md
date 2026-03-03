@@ -9,12 +9,12 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 2/22/26
+    <p>Last push: 2/23/26
     <br>NEW CHANGES:
-    <br>*** subtract cc debt from Spending first year ***
-    <br>*** fix IncomeTaxes in retirementForecast ***
-    <br>*** clean up error_log msgs i TransactionsController ***
-    <br>*** remove function getInvestmentGrowths and related variables ***
+    <br>*** Cleaned up some error_logs ***
+    <br>*** Added a favicon ***
+    <br>*** Highlight "NEEDS" in bucket goals ***
+    <br>*** Fixed pulling in latest retirement income values ***
     </p>
     <p>To Do:<p>
     <ul>
@@ -23,6 +23,15 @@
           <li>file for testing forecasting numbers:
             <br>https://docs.google.com/spreadsheets/d/1neJivwPzjkl-69PHrhNw9vOdbCvwwQm9FsoHL4GZ9Ik/edit?gid=2101335114#gid=2101335114
           </li>
+          <li>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record, putting value in "modified" column.</li>
+          <li>Check beginning balances for first column/year for:
+            <br> - Investments (EJ might be wrong??)
+            <br> - Taxable Retirement
+            <br> - Tax Free Retirement
+          </li>
+          <li>testing</li>
+          <li>clean up console.logs in retirementForecast</li>
+          <li>clean up code</li>
         </ul>
       </li>
       <br>
@@ -37,7 +46,6 @@
       <br>
       <li>** Retirement Income
         <br>See "left off here --" for places to update year to year values in retirement forecast (might be done - needs testing)
-        <br>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record.
         <br>
         <br>DO add .gitignore
         <br>.
