@@ -689,12 +689,11 @@ class TransactionsController extends Controller
         $response = DB::table('retirementdata')
             ->where('type', 'inpt')
             ->delete();
-        error_log("Deleted from REMOTE retirementdata table: " . json_encode($response));
+
         $response = DB::connection('mysqllocal')
             ->table('retirementdata')
             ->where('type', 'inpt')
             ->delete();
-        error_log("Deleted from LOCAL retirementdata table: " . json_encode($response));
 
         $tables = [
             'accounts',
@@ -2272,9 +2271,9 @@ class TransactionsController extends Controller
             $transaction['clear_date'] = $request->input('gbspendingdate');
             $transaction['account'] = "MauraCash";
             $transaction['toFrom'] = "GB tip";
-            $transaction['amount'] = $request->input('gbothertips');
+            $transaction['amount'] = $request->input('gbothertips')/2;
             $transaction['amtMike'] = 0;
-            $transaction['amtMaura'] = $request->input('gbothertips');
+            $transaction['amtMaura'] = $request->input('gbothertips')/2;
             $transaction['stmtDate'] = $request->input('gbstmtdate');
            
             DB::table("transactions")
@@ -4467,13 +4466,9 @@ class TransactionsController extends Controller
                 }, $newRemoteRecords);
 
                 // change 'copied' field to 'yes'
-                $mmsCount = 0;
                 foreach($recordsToInsert as $idx=>$record) {
                     $recordsToInsert[$idx]['copied'] = 'yes';
-                    if($table == 'retirementdata') error_log(" -- mmsCount idx: " . $idx);
-                    $mmsCount++;
                 }
-                if($table == 'retirementdata') error_log("mmsCount: " . $mmsCount);
 
                 // insert records
                 $insertResult = DB::connection('mysqllocal')
@@ -4506,13 +4501,9 @@ class TransactionsController extends Controller
                 }, $newLocalRecords);
                 
                 // change 'copied' field to 'yes'
-                $mmsCount = 0;
                 foreach($recordsToInsert as $idx=>$record) {
                     $recordsToInsert[$idx]['copied'] = 'yes';
-                    error_log(" -- mmsCount idx: " . $idx);
-                    $mmsCount++;
                 }
-                error_log("mmsCount: " . $mmsCount);
                 
                 // insert records to REMOTE
                 $insertResult = DB::table($table)
@@ -5219,7 +5210,7 @@ class TransactionsController extends Controller
 
             // get date variables needed
             $year = substr($date, 0, 4);
-            $currMonthNum = substr($date, 5, 1);
+            $currMonthNum = substr($date, 5, 2);
             $firstOfYear = $year . '-01-01';
             $firstOfMonth = $year . '-' . $currMonthNum . '-01';
             $dateEndGBJob = '20' . substr($gbData['EndGBJob'], 4) . '-' . substr($gbData['EndGBJob'], 0, 2) . '-' . substr($gbData['EndGBJob'], 2, 2);
@@ -5227,8 +5218,8 @@ class TransactionsController extends Controller
             // get GB income up to the first of this month for this year
             $thisYearIncome = DB::table('transactions')
                 ->where('toFrom', 'Great Bay Limo')
-                ->where('category', 'IncomeMisc')
-                ->whereBetween('trans_date', [$firstOfYear, $currMonthNum])
+                ->whereIn('category', ['IncomeMisc', 'IncomeTaxFree'])
+                ->whereBetween('trans_date', [$firstOfYear, $firstOfMonth])
                 ->sum('amount');
 
             // get the budget for IncomeMisc (should only be GBLimo) for this year

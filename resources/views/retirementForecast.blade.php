@@ -566,7 +566,6 @@
 
                         // extra spending is what's left after everything else subtracted
                         const extraSpending = Math.round(GBLimoIncome - (withheld + taxes + trips + household));
-                        console.log("ExtraSpending for year ", year, " is: ", extraSpending)
 
                         // return as a negative number (expense)
                         return -extraSpending;
@@ -609,7 +608,6 @@
                     // categories with different (non-default) inflation factors
                     var inflationFactorCategories = Object.keys(inflationFactors);
 
-                    console.log("expectedExpensesForThisYearByCategory:", expectedExpensesForThisYearByCategory);
                     // for each year starting with next year
                     forecastYears.shift();
 
@@ -619,10 +617,8 @@
                     var summaryCategories = [];
 
                     const currentYear = $('#currentYear').text();
-                    console.log("currentYear: ", currentYear);
                     
                     forecastYears.forEach( year => {
-                        // console.log("------------ Year: ", year, " ----------------");
                         futureExpenses[year] = [];
                         futureExpensesSummary[year] = [];
                         futureExpensesYearlyTotal[year] = 0;
@@ -643,7 +639,6 @@
                         // for each catagory, 
                         expenseCategoriesWithSummaryCats.forEach( summary => {
                             const category = summary['name'];
-                            // console.log("category: ", category);
                             const summaryCategory = summary['summaryCategory'];
 
                             // get inflation factor
@@ -727,16 +722,13 @@
 
                 // calculate future retirement income
                 function calcRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome) {
-                    console.log("in calcRetirementIncome");
                     // when to start taking retirement funds
                     const twoDigitYearStart = retirementParameters['RetDistribBegin'].substring(4, 6);
 
-                    console.log(" --- ", year, " --- ");
                     const twoDigitIteratedYear = year-2000;
 
                     // if not getting retirement yet, change the retirement income values to 0 for the year
                     if(twoDigitYearStart > twoDigitIteratedYear) {
-                        console.log(" - no retirement yet");
                         $('#TaxRetire' + year).text('0');
                         $('#NonTaxRetire' + year).text('0');
 
@@ -746,22 +738,17 @@
                     
                     // else if beginning distributions this year
                     } else if(twoDigitYearStart == twoDigitIteratedYear) {
-                        console.log(" - start this year");
                         // Get current retirement account values (LTC funds should already be reported under LTC balance at bottom of page, not here)
                         // get from retirementforecast page (this one) under Beginning Balances for this year
 
                         WFIRATaxableTrad = Number($("#TaxableRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
-                        console.log(" - Taxable Ret 20" + twoDigitIteratedYear + ": " + WFIRATaxableTrad);
 
                         nonTaxableRothBal = Number($("#TaxFreeRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
-                        console.log(" - NON Taxable Ret 20" + twoDigitIteratedYear + ": " + nonTaxableRothBal);
 
                         // Distributions from Trad and Roth are proportional to initial balances
                         // Determine proportions (TradProportion, RothProportion)
                         var tradProportion = WFIRATaxableTrad/(WFIRATaxableTrad + nonTaxableRothBal);
                         var rothProportion = nonTaxableRothBal/(WFIRATaxableTrad + nonTaxableRothBal);
-                        // console.log("tradProportion: ", tradProportion);
-                        // console.log("rothProportion: ", rothProportion);
 
                         // totalDistribution = InvWD/100 * (WFIRATaxableTrad + WF-IRA-non-taxable-Roth)
                         const totalDistribution = retirementParameters['InvWD']/100 * (WFIRATaxableTrad + nonTaxableRothBal);
@@ -778,7 +765,6 @@
                         lastYearNonTaxableRetIncome = nonTaxableDist;
 
                     } else {
-                        console.log(" - bumped ret income");
                     // ELSE  ... just bump up last year's values by defaultInflationFactor
                     //  and put on page
                         taxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearTaxableRetIncome);
@@ -837,7 +823,6 @@
                 // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
                 // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
                 function updateEndingBalances(year) {
-                    console.log("UPDATEENDINGBAL");
 
                     endingSubTotal = 0;    // for Sub-total
 
@@ -936,16 +921,12 @@
                 //      ending balances
                 function calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date) {
 
-                    console.log("lastYearRetirementIncome: ", lastYearRetirementIncome);
                     // declare needed vars
                     var lastYearNonTaxableRetIncome, lastYearTaxableRetIncome;
 
                     // get data from page, retirementParameters
                     const balanceCategories = JSON.parse($("#balanceCategories").text());
-                    console.log("balanceCategories: ", balanceCategories);
-
                     const InvGrowth = Number(retirementParameters['InvGrowth'])/100;
-                    console.log("InvGrowth: ", InvGrowth);
 
                     // add this year to beginning of forecastYears array to calc this year's numbers, too
                     const today = new Date();
@@ -955,12 +936,10 @@
                     // for testing   left off here
                     forecastYears.forEach( (year, yrIdx) => {
                         lastYear = year - 1;
-                        console.log(" --- year by year ", yrIdx, ") year:", year, "; last year: ", lastYear);
                         // copy last year's ending balances to this year's beginning balances
                         // no need to do it for current year
                         if(yrIdx != 0) {
                             balanceCategories.forEach(category => {
-                                console.log("category", category, "; last year's balance: ", $('#end' + category + (year-1)).text());
                                 $('#' + category + year).text( $('#end' + category + (year-1)).text() );
                             });
                         }
@@ -978,14 +957,11 @@
                             lastYearNonTaxableRetIncome = 0;
                             lastYearTaxableRetIncome = 0;
                             lastYearRetirementIncome.forEach( retIncome => {
-                                console.log("---- begin loop: ", retIncome);
                                 // retirementIncomeMsg += " - " + JSON.stringify(retIncome) + "\n";
                                 if(retIncome['notes'].includes('nontaxable') || retIncome['notes'].includes('non-taxable')) {
                                     lastYearNonTaxableRetIncome += Number(retIncome['amount']);
-                                    console.log("lastYearNonTaxableRetIncome: ", lastYearNonTaxableRetIncome);
                                 } else {
                                     lastYearTaxableRetIncome += Number(retIncome['amount']);
-                                    console.log("lastYearTaxableRetIncome: ", lastYearTaxableRetIncome);
                                 }
                             });
 
@@ -1007,18 +983,15 @@
 
                         // will need LTC investment growth to project LTC values
                         LTCInvGrowth = retirementParameters['LTCInvGrowth'];
-                        console.log("LTCInvGrowth:", LTCInvGrowth);
 
                         // first year calc'd differently
                         if(yrIdx == 0) {
-                            console.log("date: ", date);
                             // assume growth happened so far at expected rate, and add growth till end of year
                             const month = Number(date.substring(5, 7));
                             // number of months interest already earned
                             const numMonthsToDate = month - 1;
                             // number of months left to earn interest
                             const numMonthsLeft = 12 - numMonthsToDate;
-                            console.log("month: ", month, "; numMonthsToDate: ", numMonthsToDate, "; numMonthsLeft: ", numMonthsLeft);
                             // beginning_balance = balance_w_growth / ((interest_rate * months_interest_already_earned) + 1)
                             //      derived from:  balance_w_growth = ((beginning_balance * interest_rate) * months_interest_already_earned) + beginning_balance
                             //    where:
@@ -1031,16 +1004,13 @@
                             growthSelectorPrefixes.forEach (selectorPrefix => {
                                 // const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
                                 const origEst = Number($(selectorPrefix + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
-                                // console.log("--- selectorPrefix: ", selectorPrefix);
-                                // console.log("- origEst: ", origEst);
+
                                 // apply growth to original balance for number of months left
                                 const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
-                                // console.log("- growthLeft: ", growthLeft);
-                                // $('#InvestmentGrowth' + year).text(growthLeft);
                                 $(selectorPrefix + 'Growth' + year).text(growthLeft);
+
                                 // add growth to subtotal
                                 incomeSubtotal += growthLeft;
-                                console.log("incomeSubtotal (updated 1): ", incomeSubtotal, " for year ", year);
 
                             });
 
@@ -1048,14 +1018,11 @@
                         } else {
                             // for investments, tax retire, non tax retire; increase by invGrowth
                             growthSelectorPrefixes.forEach (selectorPrefix => { 
-                                // console.log("--- selectorPre...: ", selectorPrefix);
                                 const beginBalance = $(selectorPrefix + year).text();
                                 const growth = Math.round(beginBalance * InvGrowth);
-                                // console.log("- beginBalance: ", beginBalance, "; growth: ", growth);
                                 $(selectorPrefix + 'Growth' + year).text(growth);
                                 // add growth to subtotal
                                 incomeSubtotal += growth;
-                                // console.log("incomeSubtotal (updated 2): ", incomeSubtotal, " for year ", year);
                             });
 
                             // -----------------------------
@@ -1114,7 +1081,6 @@
                         } // end else yrIdx = 0 (not 0 clause)
 
                         // put updated income subtotal on page
-                        // console.log("incomeSubtotal (final): ", incomeSubtotal, " for year ", year);
                         $('#income' + year).text(incomeSubtotal);
 
                         updateIncomeSubTotal(year);
@@ -1193,42 +1159,33 @@
 
                 // get inflationFactors from page
                 const inflationFactors = JSON.parse($("#inflationFactors").text());
-                console.log(inflationFactors);
 
                 // get forecastYears from page
                 const forecastYears = JSON.parse($("#forecastYears").text());
-                console.log(forecastYears);
 
                 // get expenses for current year by category
                 const expectedExpensesForThisYearByCategory = JSON.parse($("#expectedExpensesForThisYearByCategory").text());
                 
                 // get expense Categories With Summary Cats
                 const expenseCategoriesWithSummaryCats = JSON.parse($("#expenseCategoriesWithSummaryCats").text());
-                console.log("expenseCategoriesWithSummaryCats: " , expenseCategoriesWithSummaryCats);
 
                 // get summary Categories With detail Cats (same data as expenseCategoriesWithSummaryCats above structured differently)
                 const sumCategoriesWithDetailCategories = JSON.parse($("#sumCategoriesWithDetailCategories").text());
-                console.log("sumCategoriesWithDetailCategories: " , sumCategoriesWithDetailCategories);
                 
                 // get default inflation factor
                 const defaultInflationFactor = $("#defaultInflationFactor").text();
-                console.log("defaultInflationFactor: ", defaultInflationFactor, " (", typeof defaultInflationFactor, ")");
                 
                 // get date (first of month) for forecast
                 const date = $('#date').text();
-                console.log("date: ", date);
 
                 // get incomeValues
                 const incomeValues = JSON.parse($("#incomeValues").text());
 
                 var retirementParameters = $("#retirementParameters").text();
                 retirementParameters = JSON.parse(retirementParameters);
-                console.log("retirementParameters: ", retirementParameters);
-                console.log(" invWD: ", retirementParameters['InvWD']);
 
                 var lastYearRetirementIncome = $("#lastYearRetirementIncome").text();
                 lastYearRetirementIncome = JSON.parse(lastYearRetirementIncome);
-                console.log("lastYearRetirementIncome: ", lastYearRetirementIncome);
 
                 // need current year expenses by category and summary category
                 calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters);
