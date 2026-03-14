@@ -9,11 +9,9 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 3/3/26
+    <p>Last push: 3/8/26
     <br>NEW CHANGES:
-    <br>*** cleaned console.logs from retirementForecast & error_logs in TransactionsColntroller ***
-    <br>*** fixed GB Limo for first year in retirementForecast ***
-    <br>*** fix MauraCash part of GB tips (half, not all!)
+    <br>*** fix first year numbers in retirementForecast ***
     </p>
     <p>To Do:<p>
     <ul>
@@ -34,8 +32,55 @@
             <br>- INCOME
             <br>--- Town of Durham
             <br>--- GB Limo
-            <br>--- Rental Income -- Change so input has full year, and forecast subtracts what's been received till 1st of month 
-            <br> to be continued...  ************************
+            <br>--- Rental Income
+            <br>--- NH Retirement
+            <br>--- Mike IBM
+            <br>--- Mike SS
+            <br>--- Maura IBM
+            <br>--- Maura SS (age 67)
+            <br>--- Tax retire
+            <br>--- Non Tax retire
+            <br>--- Inv Growth
+            <br>--- Tax Ret Growth
+            <br>--- Tax Free Ret Growth
+            <br>- EXPENSES
+            <br>--- RetContribOut
+            <br>--- LoanPaid
+            <br>--- Charity
+            <br>--- Gift
+            <br>--- Groceries
+            <br>--- Holiday
+            <br>--- Home
+            <br>--- HomeInsurance
+            <br>--- LifeInsurance
+            <br>--- Loan
+            <br>--- Utilities
+            <br>--- Bolt
+            <br>--- CRZ
+            <br>--- College
+            <br>--- Kids
+            <br>--- Dentist
+            <br>--- Doctor
+            <br>--- Eyecare
+            <br>--- Prescriptions
+            <br>--- IncomeTaxes
+            <br>--- PropertyTax
+            <br>--- IncomeOtherWH
+            <br>--- MarinasMiles
+            <br>--- MiscExpense
+            <br>--- RentalExpense
+            <br>--- WorkExpense
+            <br>--- MauraSpending
+            <br>--- MikeSpending
+            <br>--- Vacation
+            <br>--- ExtraSpending
+            <br>--- BigExpenses
+            <br>--- LTC            
+            <br>--- Summary Category subtotals
+            <br>--- Income taxes
+            <br>--- Total expense total
+            <br>*** left off here
+            <br>*** Need to check subsequent years (working on 2026/27)
             <br>.
           </li>
           <li>testing</li>
