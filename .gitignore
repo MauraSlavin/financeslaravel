@@ -19,6 +19,9 @@ public_html/hot
 # storage/*.key
 storage/*
 storage/logs/*
+storage/framework/*
+storage/framework/sessions/*
+storage/framework/views/*
 .env
 .envlocal
 .envremote

@@ -39,7 +39,7 @@
         @endphp
         <div hidden id="forecastYears">{{ json_encode($forecastYears) }}</div>
         <div hidden id="currentYear">{{ $currentYear }}</div>
-        <div hidden id="date">{{ $date }}</div>
+        <div hidden id="firstOfThisMonth">{{ $firstOfThisMonth }}</div>
 
         <div class="retirementForecast">
             <table id="retirementForecastTable" class="table table-striped table-bordered" style="background-color: lavender;">
@@ -110,7 +110,7 @@
                         <td style="background-color: blue; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
-                            <td style="background-color: blue; color: white;">{{ $date }}</td>
+                            <td style="background-color: blue; color: white;">{{ $firstOfThisMonth }}</td>
                             @else
                             <td style="background-color: blue; color: white;">Jan 1, {{ $year }}</td>
                             @endif
@@ -178,7 +178,7 @@
                         <td style="background-color: green; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
-                            <td style="background-color: green; color: white;">After {{ $date }}</td>
+                            <td style="background-color: green; color: white;">After {{ $firstOfThisMonth }}</td>
                             @else
                             <td style="background-color: green; color: white;"></td>
                             @endif
@@ -220,17 +220,17 @@
 
                     <!-- Expenses --> 
                     @php 
-                        $sumCatNames = array_keys($expectedExpensesAfterTodayBySUMMARYCategory);
+                        $sumCatNames = array_keys($restOfYearBudgetBySUMMARYCategory);
                         // NO inherited IRA - income from that goes to LTC (no longer true)
                     @endphp
-                    <!-- header row for expenses, with date on first column -->
+                    <!-- header row for expenses, with first of month date on first column -->
                     <tr id="expenseForecast">
                         <td style="background-color: red; color: white;">Expenses</td>
                         <td style="background-color: red; color: white;"></td>
                         <td style="background-color: red; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
-                            <td style="background-color: red; color: white;">After {{ $date }}</td>
+                            <td style="background-color: red; color: white;">After {{ $firstOfThisMonth }}</td>
                             @else
                             <td style="background-color: red; color: white;">{{ $year }}</td>
                             @endif
@@ -257,7 +257,7 @@
                                 {{ $sumcat }}
                             </td>
                             <td  style="background-color: lightpink;"></td>  <!-- inflation column -->
-                            <td style="background-color: lightpink;">{{ $expectedExpensesAfterTodayBySUMMARYCategory[$sumcat] }}</td>
+                            <td style="background-color: lightpink;">{{ $restOfYearBudgetBySUMMARYCategory[$sumcat] }}</td>
                             <!-- summary category expenses for subsequent years -->
                             @foreach($forecastYears as $idxYear => $year)
                                 @if($idxYear != 0)
@@ -276,7 +276,7 @@
                                 <!-- expenses for subsequent years -->
                                 @foreach($forecastYears as $idxYear => $year)
                                     @if($idxYear == 0)
-                                    <td id="{{ $detailCategory }}{{ $year }}">{{ round($expectedExpensesAfterTodayByCategory[$detailCategory] ?? 0 ) }}</td>
+                                    <td id="{{ $detailCategory }}{{ $year }}">{{ round($restOfYearBudgetByCategory[$detailCategory] ?? 0 ) }}</td>
                                     @else
                                     <td id="{{ $detailCategory }}{{ $year }}">{{ $detailCategory }}{{ $year }}</td>
                                     @endif
@@ -290,11 +290,11 @@
                         <td style="background-color: pink;">Sub-total:</td>
                         <td style="background-color: pink;"></td>
                         <td style="background-color: pink;"></td>
-                        <td id="expenses{{ $forecastYears[0] }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
+                        <td id="expenses{{ $forecastYears[0] }}" style="background-color: pink;"></td>  <!-- current year -->
                         <!-- add sub totals here --> 
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear != 0)   <!-- first column is already done -->
-                                <td id="expenses{{ $year }}" style="background-color: pink;">{{ $expectedExpensesAfterTodayTotal }}</td>  <!-- current year -->
+                                <td id="expenses{{ $year }}" style="background-color: pink;"></td>  <!-- current year -->
                             @endif
                         @endforeach
                     </tr>
@@ -371,7 +371,7 @@
                         <td style="background-color: purple; color: white;"></td>
                         @foreach($forecastYears as $idxYear => $year)
                             @if($idxYear == 0)
-                            <td style="background-color: purple; color: white;">{{ $date }}</td>
+                            <td style="background-color: purple; color: white;">{{ $firstOfThisMonth }}</td>
                             @else
                             <td style="background-color: purple; color: white;">Dec 31</td>
                             @endif
@@ -452,6 +452,8 @@
                         <li>Household (percent is in Retirement Input page)</li>
                     </ul>
                 </li>
+                <li>Budget for IncomeTaxes is estimated in
+                    <br>- https://docs.google.com/spreadsheets/d/1Uyk-zKjbBLCmaV5GXPKeF2JYaNq-dasulqhCff7aEqA/edit?gid=0#gid=0
                 <li>Assume "Irregular Big" expenses are spent, so don't keep track of balance</li>
                 <li>Assume raises from earned income = COLA</li>
                 <li>IncomeOtherWH is Medicare and SS withholdings. Earned income used to calculate this are Town of Durham and GB Limo income.</li>
@@ -580,7 +582,7 @@
                         const DurhamIncome = Number($('#TownofDurham' + year).text().replaceAll(",", ""));
                         // only about 1/2 of GB Limo is taxable (tips are not taxable)
                         const GBLimoIncome = .5 * Number($('#GBLimo' + year).text().replaceAll(",", ""));
-                        const rentalIncome = Number($('#RentalIncome' + year).text().replaceAll(",", ""));
+                        const rentalIncome = Number($('#Rental' + year).text().replaceAll(",", ""));
                         const NHRetIncome = Number($('#NHRetirement' + year).text().replaceAll(",", ""));
                         const MikeIBMIncome = Number($('#MikeIBM' + year).text().replaceAll(",", ""));
                         const MikeSSIncome = Number($('#MikeSS' + year).text().replaceAll(",", ""));
@@ -591,8 +593,8 @@
                         // total taxable income
                         const totalTaxableIncome = DurhamIncome + GBLimoIncome + rentalIncome + NHRetIncome + MikeIBMIncome + MikeSSIncome + MauraIBMIncome + MauraSSIncome + TaxRetireIncome;
 
-                        // get estimated tax rate
-                        const taxRate = Number(retirementParameters['TaxRateOver64']);
+                        // get estimated tax rate (on taxable income)
+                        const taxRate = Number(retirementParameters['EstTaxRateOnTotalTaxInc']);
 
                         // calc taxes & return
                         const taxes = Math.round(totalTaxableIncome * taxRate/100);
@@ -919,7 +921,7 @@
                 //      income taxes,
                 //      incomeOtherWH,
                 //      ending balances
-                function calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date) {
+                function calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, firstOfThisMonth) {
 
                     // declare needed vars
                     var lastYearNonTaxableRetIncome, lastYearTaxableRetIncome;
@@ -987,7 +989,7 @@
                         // first year calc'd differently
                         if(yrIdx == 0) {
                             // assume growth happened so far at expected rate, and add growth till end of year
-                            const month = Number(date.substring(5, 7));
+                            const month = Number(firstOfThisMonth.substring(5, 7));
                             // number of months interest already earned
                             const numMonthsToDate = month - 1;
                             // number of months left to earn interest
@@ -1176,7 +1178,7 @@
                 const defaultInflationFactor = $("#defaultInflationFactor").text();
                 
                 // get date (first of month) for forecast
-                const date = $('#date').text();
+                const firstOfThisMonth = $('#firstOfThisMonth').text();
 
                 // get incomeValues
                 const incomeValues = JSON.parse($("#incomeValues").text());
@@ -1186,6 +1188,19 @@
 
                 var lastYearRetirementIncome = $("#lastYearRetirementIncome").text();
                 lastYearRetirementIncome = JSON.parse(lastYearRetirementIncome);
+
+                // get total expected expenses for rest of current year
+                // get this year and the expense categories
+                var thisYear = firstOfThisMonth.substr(0, 4);
+                const expenseKeys = Object.keys(expectedExpensesForThisYearByCategory);
+                // init total expenses
+                thisYearRemainingExpenses = 0;
+                // sum remaining expenses for this year
+                expenseKeys.forEach(expense => {
+                    thisYearRemainingExpenses += Number($('#'+expense+thisYear).text().replaceAll(",", ""));
+                });
+                // put sum on page
+                $("#expenses" + thisYear).text(thisYearRemainingExpenses);
 
                 // need current year expenses by category and summary category
                 calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, expectedExpensesForThisYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters);
@@ -1202,7 +1217,7 @@
                 //      income taxes,
                 //      incomeOtherWH,
                 //      ending balances
-                calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, date);
+                calcYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, firstOfThisMonth);
 
                 // calc estimated house value
                 calcHouseValues(forecastYears, retirementParameters);

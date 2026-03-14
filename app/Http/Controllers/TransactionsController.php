@@ -1234,7 +1234,7 @@ class TransactionsController extends Controller
         // get year-to-month budgets by category (budget this year up to and including this month)
 
         // months to sum budgets to get YTM budget
-                $months = [
+        $months = [
             'january',
             'february',
             'march',
@@ -3182,7 +3182,6 @@ class TransactionsController extends Controller
         //      incomeGBLimoAnnual  pro-rated for year (or max allowed by SS when <65)
         //      incomeTownYTD       sum from transactions table
         //      incomeTownAnnual    pro-rated for year
-        //      incomeRentalYTD     sum from transactions table
         //      houseAssessed       from retirement table or input
         //      houseEqRatio        from retirement table or input
 
@@ -3326,9 +3325,10 @@ class TransactionsController extends Controller
 
 
             // delete old rental records
-            $yearMonth = date("y") . date("m");
+            $yearMonth = date("y") . '01';  // Jan of current year
             foreach($retirementDataRents as $description=>$rentalRcd) {
                 $date = substr($description, 12, 4);
+                // if rent is previous year, delete it
                 if($date < $yearMonth) {
                     $result = DB::table('retirementdata')
                         ->where('id', $rentalRcd[3])
@@ -4942,7 +4942,7 @@ class TransactionsController extends Controller
 
 
         // get initial balances for accounts as of the first of the current month
-        function initialBalances($date) {
+        function initialBalances($firstOfThisMonth) {
             // group accounts
             $spendingAccts = ['Savings', 'Checking'];
             $ccAccts = ['DiscCC', 'VISA'];
@@ -5070,7 +5070,7 @@ class TransactionsController extends Controller
 
 
         // get income expected for the rest of this year as of the first of this month
-        function thisYearIncome($date, $twoDigitYear) {
+        function thisYearIncome($firstOfThisMonth, $twoDigitYear) {
 
             $remainingIncomeThisYear = [];
             $inputIncomes = ["NH Retirement", "MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
@@ -5113,11 +5113,11 @@ class TransactionsController extends Controller
 
 
         // Town of Durham income predictions based on hourly wage and hours worked per week.
-        function getTownOfDurhamIncomes($date) {
-            function getWeeksRemainingInYear($date): int
+        function getTownOfDurhamIncomes($firstOfThisMonth) {
+            function getWeeksRemainingInYear($firstOfThisMonth): int
             {
                 // Convert input to DateTime object if it's a string
-                $startDate = ($date instanceof \DateTime) ? clone $date : new \DateTime($date);
+                $startDate = ($firstOfThisMonth instanceof \DateTime) ? clone $firstOfThisMonth : new \DateTime($firstOfThisMonth);
 
                 // Get last day of the year
                 $lastDayOfYear = new \DateTime($startDate->format('Y') . '-12-31');
@@ -5155,14 +5155,14 @@ class TransactionsController extends Controller
             $hoursPerWeek = $townData[3]->data;
 
             // calc income for rest of year; and set to first element of income array
-            $thisYearRemainingIncome = getWeeksRemainingInYear($date) * $hoursPerWeek * $hourlyRate;
+            $thisYearRemainingIncome = getWeeksRemainingInYear($firstOfThisMonth) * $hoursPerWeek * $hourlyRate;
             $townOfDurhamIncomes[] = $thisYearRemainingIncome;
 
             // subsequent years will be based on full year, so calc full year pay
             $prevYearIncome = 52 * $hoursPerWeek * $hourlyRate;
 
             // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
-            for($year = ((int)substr($date, 0, 4))+1; $year <= 2062; $year++) {
+            for($year = ((int)substr($firstOfThisMonth, 0, 4))+1; $year <= 2062; $year++) {
                 if(($year . '-12-31') <= $dateEndTownJob) {
                     $thisYearIncome = $prevYearIncome * $raise;
                 } else {
@@ -5181,7 +5181,7 @@ class TransactionsController extends Controller
 
 
         // GB Limo income predicitons based on SS income limits & pay so far
-        function getGBLimoIncomes($date, $raise) {
+        function getGBLimoIncomes($firstOfThisMonth, $raise) {
 
             // this will be populated with the expected GBLimo income for each year forecasted
             $gbLimoIncomes = [];
@@ -5209,8 +5209,8 @@ class TransactionsController extends Controller
             }
 
             // get date variables needed
-            $year = substr($date, 0, 4);
-            $currMonthNum = substr($date, 5, 2);
+            $year = substr($firstOfThisMonth, 0, 4);
+            $currMonthNum = substr($firstOfThisMonth, 5, 2);
             $firstOfYear = $year . '-01-01';
             $firstOfMonth = $year . '-' . $currMonthNum . '-01';
             $dateEndGBJob = '20' . substr($gbData['EndGBJob'], 4) . '-' . substr($gbData['EndGBJob'], 0, 2) . '-' . substr($gbData['EndGBJob'], 2, 2);
@@ -5238,7 +5238,7 @@ class TransactionsController extends Controller
             $prevYearIncome = $thisYearRemainingBudget;         
 
             // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
-            for($year = ((int)substr($date, 0, 4))+1; $year <= 2062; $year++) {
+            for($year = ((int)substr($firstOfThisMonth, 0, 4))+1; $year <= 2062; $year++) {
                 if(($year . '-12-31') <= $dateEndGBJob) {
                     $thisYearIncome = $prevYearIncome * $raise;
                 } else {
@@ -5258,7 +5258,7 @@ class TransactionsController extends Controller
 
 
         // rental income predicitons
-        function getRentalIncomes($date, $raise) {
+        function getRentalIncomes($firstOfThisMonth, $raise, $thisYear, $thisMonthIdx) {
 
             $rentalIncomes = [];
 
@@ -5281,7 +5281,7 @@ class TransactionsController extends Controller
             $idx = 1;
 
             // increase pay by raise for subsequent years, until EndTownJob date (assumed end of year)
-            for($year = ((int)substr($date, 0, 4)); $year <= 2062; $year++) {
+            for($year = ((int)substr($firstOfThisMonth, 0, 4)); $year <= 2062; $year++) {
                 if(($year . '-12-31') <= $dateEndRentalJob) {
                     // use projected rental incomes in input; then just increase by $raise until done renting rooms
                     if($idx == 1) $thisYearIncome = $rentalIncomeY1;
@@ -5302,13 +5302,22 @@ class TransactionsController extends Controller
                 $prevYearIncome = $thisYearIncome;
             }
 
+            // reduce 1st year income by rent already received by first of month
+            // first get rent received through the first of the month
+            $rentReceived = DB::table('transactions')
+                ->whereBetween('trans_date', [$thisYear."-01-01", $thisYear."-".$thisMonthIdx."-01"])
+                ->where('category', 'IncomeRental')
+                ->sum('amount');
+            // subtract from expected rent for the year
+            $rentalIncomes[0] -= $rentReceived;
+
             return $rentalIncomes;
 
         }   // end of function getRentalIncomes
         
         
         // fixed income predicitons (doens't change)
-        function getFixedIncomes($date, $incomeType) {
+        function getFixedIncomes($firstOfThisMonth, $incomeType) {
 
             $fixedIncomes = [];
 
@@ -5335,19 +5344,19 @@ class TransactionsController extends Controller
                 $startDate = '2024-01-01';
             }
 
-            $thisMonth = substr($date, 5, 2);
+            $thisMonth = substr($firstOfThisMonth, 5, 2);
             $monthsLeftThisYear = 12 - $thisMonth + 1;
 
             // set pay the same for each year
             $firstYear = true;  // may need to pro-rate first year
-            for($year = ((int)substr($date, 0, 4)); $year <= 2062; $year++) {
+            for($year = ((int)substr($firstOfThisMonth, 0, 4)); $year <= 2062; $year++) {
                 // push new income to end of array
                 if($startYear <= $year) {
-                    if($firstYear && $startDate <= $date) {  
+                    if($firstYear && $startDate <= $firstOfThisMonth) {  
                         // if benefit has already started, income for rest of year
                         $fixedIncomes[] = $fixedIncome * $monthsLeftThisYear;
                         $firstYear = false; // don't do this in later years
-                    } else if ($firstYear && $startDate > $date) {
+                    } else if ($firstYear && $startDate > $firstOfThisMonth) {
                         // if benefit starts later this year, only months receiving it
                         $benefitMonths = 12 - substr($startDate, 5, 2) + 1;
                         $fixedIncomes[] = $fixedIncome * $benefitMonths;
@@ -5368,7 +5377,7 @@ class TransactionsController extends Controller
         
         
         // SS income predicitons
-        function getSSIncomes($date, $COLA, $who) {
+        function getSSIncomes($firstOfThisMonth, $COLA, $who) {
 
             // holds SS income estimate for each year 
             $SSIncomes = [];
@@ -5487,7 +5496,7 @@ class TransactionsController extends Controller
 
         // get retirement incomes
         // can only get parameters and dummy values.  Need data not calculated until in the retirementForecast blade.
-        function  getRetParams($date) {
+        function  getRetParams() {
 
             // need 
             //  invWD
@@ -5527,7 +5536,7 @@ class TransactionsController extends Controller
                 'GBLimoForExpenses',
                 'GBMaxForExpenses',
                 'SS-Med-WHs',
-                'TaxRateOver64'
+                'EstTaxRateOnTotalTaxInc'
             ];
 
             // get the parameters from the retirementdata table
@@ -5579,19 +5588,19 @@ class TransactionsController extends Controller
         ];
 
         // get first of this month
-        $date = date('Y-m-01'); // yyyy-mm-01 - first of current month
-        $firstOfThisYear = substr($date, 0, 4) . '-01-01';
-        $lastOfThisYear = substr($date, 0, 4) . '-12-31';
+        $firstOfThisMonth = date('Y-m-01'); // yyyy-mm-01 - first of current month
+        $firstOfThisYear = substr($firstOfThisMonth, 0, 4) . '-01-01';
+        $lastOfThisYear = substr($firstOfThisMonth, 0, 4) . '-12-31';
         $lastYear = date("Y") - 1;
         $firstOfLastYear = $lastYear . '-01-01';
         $lastOfLastYear = $lastYear . '-12-31';
-        $twoDigitYear = substr($date, 2, 2);
+        $twoDigitYear = substr($firstOfThisMonth, 2, 2);
 
-        $thisMonthIdx = substr($date, 5, 2);
-        $thisYear = substr($date, 0, 4);        
+        $thisMonthIdx = substr($firstOfThisMonth, 5, 2);
+        $thisYear = substr($firstOfThisMonth, 0, 4);        
 
         // get beginning balances
-        [$beginOfThisMonthSpendingBal, $ccdebtBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $ccAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($date, $twoDigitYear);
+        [$beginOfThisMonthSpendingBal, $ccdebtBal, $invAcctsBal, $retTaxAcctsBal, $retNonTaxAcctsBal, $spendingAccts, $ccAccts, $invAccts, $retTaxAccts, $retNonTaxAccts, $initLTCBal] = initialBalances($firstOfThisMonth, $twoDigitYear);
         // left off here -- fix this ... don't need placeholders anymore
         $spending = [$beginOfThisMonthSpendingBal, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119, 129, 139, 149, 159, 169, 179, 189, 199, 299, 219, 229, 239, 249, 259, 269, 279, 289, 299, 399, 19, 29, 39, 49, 59, 69, 79, 89, 99, 199, 119 ];
         $ccdebt = [$ccdebtBal, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ];
@@ -5601,35 +5610,35 @@ class TransactionsController extends Controller
         $beginBalances = $this->addArraysByPosition($spending, $ccdebt, $investments, $retirementTaxable, $retirementNonTaxable);
 
         // get rest of this year's expected income
-        $remainingIncomeThisYear = thisYearIncome($date, $twoDigitYear);
+        $remainingIncomeThisYear = thisYearIncome($firstOfThisMonth, $twoDigitYear);
         
         // get Town of Durham income estimates
-        [$townOfDurhamIncomes, $raise, $COLA] = getTownOfDurhamIncomes($date);
+        [$townOfDurhamIncomes, $raise, $COLA] = getTownOfDurhamIncomes($firstOfThisMonth);
         
         // get GB Lime income estimates
-        $GBLimoIncomes = getGBLimoIncomes($date, $raise);
+        $GBLimoIncomes = getGBLimoIncomes($firstOfThisMonth, $raise);
         
         // get rental income estimates
-        $rentalIncomes = getRentalIncomes($date, $raise);
+        $rentalIncomes = getRentalIncomes($firstOfThisMonth, $raise, $thisYear, $thisMonthIdx);
         
         // get NH Retirement income estimates
-        $nhRetirementIncomes = getFixedIncomes($date, 'NHRetirement');
+        $nhRetirementIncomes = getFixedIncomes($firstOfThisMonth, 'NHRetirement');
         
         // get Mike IBM income estimates
-        $mikeIBMIncomes = getFixedIncomes($date, 'MTS-IBM-Retirement');
+        $mikeIBMIncomes = getFixedIncomes($firstOfThisMonth, 'MTS-IBM-Retirement');
         
         // get Maura IBM income estimates
         // ... left off here ...
-        $mauraIBMIncomes = getFixedIncomes($date, 'MauraIBM');
+        $mauraIBMIncomes = getFixedIncomes($firstOfThisMonth, 'MauraIBM');
         
         // get Mike SS income estimates
-        $mikeSSIncomes = getSSIncomes($date, $COLA, 'Mike');
+        $mikeSSIncomes = getSSIncomes($firstOfThisMonth, $COLA, 'Mike');
         
         // get Maura SS income estimates
-        $mauraSSIncomes = getSSIncomes($date, $COLA, 'Maura');
+        $mauraSSIncomes = getSSIncomes($firstOfThisMonth, $COLA, 'Maura');
         
         // get retirement incomes per year estimates
-        $retirementParameters = getRetParams($date);
+        $retirementParameters = getRetParams();
 
         // init taxableRetIncomes and nonTaxableRetIncomes for placeholders
         $taxableRetIncomes = [];
@@ -5671,6 +5680,7 @@ class TransactionsController extends Controller
             ->where('ie', 'E')
             ->get()->toArray();
 
+        // initialize sumCategoriesWithDetailCategories
         $sumCategoriesWithDetailCategories = [];
         foreach($expenseCategoriesWithSummaryCats as $expAndSumCat) {
             if(!isset($sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory])) {
@@ -5679,6 +5689,7 @@ class TransactionsController extends Controller
             $sumCategoriesWithDetailCategories[$expAndSumCat->summaryCategory][] = $expAndSumCat->name;
         }
 
+        // init expenseCategories
         $expenseCategories = [];
         $expenseCategories = array_column($expenseCategoriesWithSummaryCats, 'name');
         
@@ -5690,39 +5701,44 @@ class TransactionsController extends Controller
             ->get()->toArray();
         $expenseSummaryCategories = array_column($expenseSummaryCategories, 'summaryCategory');
 
-        // get amt spent before current month (in this year) by category
-        $monthsQueryArray = [];
-        foreach($months as $monthIdx=>$month) {
-            if($monthIdx+1 >= $thisMonthIdx) {
-                $monthsQueryArray[] = $month;
-            }
-        }
-
-        // Build aggregate expressions for each month column.
-        $monthAggregates = collect($monthsQueryArray)
-            ->map(function ($month) {
-                return DB::raw("sum({$month}) as {$month}");
-            })
-            ->toArray();
-
-        $expectedExpensesByCategory = DB::table('budget')
+        // Expenses is total yearly budget - what's already been spent through the first of the current month
+        
+        // get yearly budget for each category
+        $annualBudgetByCategory = DB::table('budget')
             ->where('year', $thisYear)
-            ->select('category', 'inflationFactor', ...$monthAggregates)
+            ->whereIn('category', $expenseCategories)
+            ->select('category', 'inflationFactor', 'total')
             ->groupBy('category')
             ->get()->toArray();
 
-        // get this year's budget left by category
-        $expectedExpensesAfterTodayByCategory = [];
+        // get what's been spent through the first of the current month so far (ytd)
+        $DBytdSpendingByCategory = DB::table('transactions')
+            ->select(
+                'category',
+                DB::raw('SUM(amount) AS amount')
+            )
+            ->whereBetween('trans_date', [$firstOfThisYear, $firstOfThisMonth])
+            ->where('account', 'not like', 'Maura%')
+            ->where('account', 'not like', 'Mike%')
+            ->whereIn('category', $expenseCategories)
+            ->whereNull('deleted_at')
+            ->groupBy('category')
+            ->get()->toArray();
+        // reformat into ytdSpendingByCategory
+        $ytdSpendingByCategory = [];
+        foreach($DBytdSpendingByCategory as $DBrcd) {
+            $ytdSpendingByCategory[$DBrcd->category] = $DBrcd->amount;
+        }
+
+        // sum subCategory annual budget by summary category
+        $restOfYearBudgetByCategory = [];
         $inflationFactors = [];
-        $expectedExpensesAfterTodayTotal = 0;
-        foreach($expectedExpensesByCategory as $expensesRcd) {
-            $expectedExpensesAfterTodayByCategory[$expensesRcd->category] = 0;
-            if($expensesRcd->inflationFactor != null) {
-                $inflationFactors[$expensesRcd->category] = $expensesRcd->inflationFactor;
+        foreach($annualBudgetByCategory as $annualBudgetRcd) {
+            $restOfYearBudgetByCategory[$annualBudgetRcd->category] = 0;
+            if($annualBudgetRcd->inflationFactor != null) {
+                $inflationFactors[$annualBudgetRcd->category] = $annualBudgetRcd->inflationFactor;
             }
-            foreach($monthsQueryArray as $month) {
-                $expectedExpensesAfterTodayByCategory[$expensesRcd->category] += $expensesRcd->{$month};
-            }
+            $restOfYearBudgetByCategory[$annualBudgetRcd->category] = $annualBudgetRcd->total - ($ytdSpendingByCategory[$annualBudgetRcd->category] ?? 0);
         }
 
         // get default inflationFactor
@@ -5733,86 +5749,34 @@ class TransactionsController extends Controller
             ->value('data');
 
         // init each summaryCategory total to 0
-        $expectedExpensesAfterTodayBySUMMARYCategory = [];
-        $actualExpensesAfterTodayBySUMMARYCategory = [];
+        $restOfYearBudgetBySUMMARYCategory = [];
         foreach($expenseSummaryCategories as $sumcategory) {
-            $expectedExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
-            $actualExpensesAfterTodayBySUMMARYCategory[$sumcategory] = 0.00;
+            $restOfYearBudgetBySUMMARYCategory[$sumcategory] = 0.00;
         }
 
         // sum subtotals for each sumcategory
-        foreach($expectedExpensesAfterTodayByCategory as $idx=>$categoryRcd) {
+        foreach($restOfYearBudgetByCategory as $idx=>$categoryRcd) {
             $sumCat = collect($expenseCategoriesWithSummaryCats)
                 // ->where('name', $categoryRcd->category)
                 ->where('name', $idx)
                 ->first();
             if($sumCat != null) {
-                $expectedExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
+                $restOfYearBudgetBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
             }
-        }
-
-        // for rest of year expenses, need max of budget or actuals.
-        //      I have the budget.  Need to get actuals, sum by bigger category, and compare to budget.
-        $restOfYearActualsDB = DB::table("transactions")
-            ->select(
-                'category',
-                DB::raw('SUM(amount) AS amount')
-            )
-            ->whereNull('deleted_at')
-            ->whereBetween('trans_date', [$date, $lastOfThisYear])
-            ->where('account', 'not like', 'Maura%')
-            ->where('account', 'not like', 'Mike%')
-            ->whereIn('category', $expenseCategories)
-            ->groupBy('category')
-            ->get()
-            ->toArray();
-
-        // FIX FORMAT to associative array where key is category -> amount
-        $restOfYearActuals = [];
-        foreach($restOfYearActualsDB as $restElmt) {
-            $restOfYearActuals[$restElmt->category] = $restElmt->amount;
-        }
-
-        // if no spending for a category, set it to 0
-        foreach($expenseCategories as $expenseCategory) {
-            if(!isset($restOfYearActuals[$expenseCategory])) $restOfYearActuals[$expenseCategory] = 0.0;
-        }
-
-        // sum subtotals for each sumcategory for expenses this month and rest of year
-        foreach($restOfYearActuals as $idx=>$categoryRcd) {
-            $sumCat = collect($expenseCategoriesWithSummaryCats)
-                ->where('name', $idx)
-                ->first();
-            if($sumCat != null) {
-                $actualExpensesAfterTodayBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
-            }
-        }
-
-        foreach($expectedExpensesAfterTodayBySUMMARYCategory as $key=>$expected) {
-            // use "min" to get the bigger number since they are NEGATIVE.
-            $expectedExpensesAfterTodayBySUMMARYCategory[$key] = min($expectedExpensesAfterTodayBySUMMARYCategory[$key], $actualExpensesAfterTodayBySUMMARYCategory[$key]);
-            $expectedExpensesAfterTodayTotal += $expectedExpensesAfterTodayBySUMMARYCategory[$key];
         }
 
         // round to nearest dollar
-        foreach($expectedExpensesAfterTodayBySUMMARYCategory as $sumcatRcdIdx=>$sumcatRcd) {
-            $expectedExpensesAfterTodayBySUMMARYCategory[$sumcatRcdIdx] = round($sumcatRcd, 0);
+        foreach($restOfYearBudgetBySUMMARYCategory as $sumcatRcdIdx=>$sumcatRcd) {
+            $restOfYearBudgetBySUMMARYCategory[$sumcatRcdIdx] = round($sumcatRcd, 0);
         }
-        $expectedExpensesAfterTodayTotal = round($expectedExpensesAfterTodayTotal, 0);
         
-        // get expenses for the current year by category
-        //      actuals for Jan - last month +
-        //      expected expenses for rest of year
+        // init variable for remaining budget (expectedExpensesForThisYearByCategory)
         $expectedExpensesForThisYearByCategory = [];
-        // $actualExpensesYTMDB = DB::table('transactions')
-        //     ->select('category', SUM('amount') as amount)
-        //     ->where('trans_date', '>=', $firstOfThisYear)
-        //     ->where('trans_date', '<', $date)
-        //     ->get()->toArray();
+        // get actuals spent by category ytd thru first of this month
         $actualExpensesYTM = DB::table('transactions')
             ->select('category', DB::raw('SUM(amount) as amount'))
             ->where('trans_date', '>=', $firstOfThisYear)
-            ->where('trans_date', '<', $date)
+            ->where('trans_date', '<', $firstOfThisMonth)
             ->whereIn('category', $expenseCategories)
             ->groupBy('category')
             ->get()->toArray();
@@ -5837,13 +5801,14 @@ class TransactionsController extends Controller
             $categoriesCalculated[] = $category;
             $expectedExpensesForThisYearByCategory[$category] =
                 $actual->amount +
-                ($expectedExpensesAfterTodayByCategory[$category] ?? 0);
+                ($restOfYearBudgetByCategory[$category] ?? 0);
         }
+        
         // find categories missed and include those
         foreach($expenseCategories as $expenseCategory) {
             if(!in_array($expenseCategory, $categoriesCalculated)) {
                 $expectedExpensesForThisYearByCategory[$expenseCategory] =
-                    $expectedExpensesAfterTodayByCategory[$expenseCategory] ?? 0;
+                    $restOfYearBudgetByCategory[$expenseCategory] ?? 0;
             }
         }
 
@@ -5859,7 +5824,7 @@ class TransactionsController extends Controller
             $expectedExpensesForThisYearByCategory[$MorM->category] = $MorM->total;
         }
 
-        return view('retirementForecast', compact('date', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'expectedExpensesAfterTodayByCategory', 'expectedExpensesAfterTodayBySUMMARYCategory', 'expectedExpensesAfterTodayTotal', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
+        return view('retirementForecast', compact('firstOfThisMonth', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'restOfYearBudgetByCategory', 'restOfYearBudgetBySUMMARYCategory', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'expectedExpensesForThisYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
 
 }

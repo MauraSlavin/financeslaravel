@@ -414,8 +414,6 @@
                     // for each tenant, year, and month...
                     //      fill in that month's rent,
                     //      and add to yearly total for that year & tenant
-                    // If rent before this month, disable the input
-                    var disableInput = false;
                     monthlyRentalIncome.forEach( (tenantIncome, tenant) => {
                         tenantIncome.forEach( (yearIncome, year) => {
                             for( var monIdx = 0; monIdx < 12; monIdx++ ) {
@@ -428,16 +426,8 @@
                                 // get monthly rent to be written to page, and added to total
                                 var thisMonRent = yearIncome[monIdx];
 
-                                // set rent to 0 and disable input if rent is in the past
-                                if(year == 0 && Number(monIdx+1 < thisMonth) && year == 0) {
-                                    thisMonRent = 0;
-                                    disableInput = true;
-                                } else {
-                                    // if no rent found in db, set to 0; make sure it's a number
-                                    if(thisMonRent == 'undefined') thisMonRent = 0;
-                                    else thisMonRent = Number(thisMonRent);
-                                    disableInput = false;
-                                }
+                                if(thisMonRent == 'undefined') thisMonRent = 0;
+                                else thisMonRent = Number(thisMonRent);
 
                                 // add this to the yearly total, and format
                                 const newTotValue = (Number( $(totSelector).text().replace(/,/g, "")) + thisMonRent).toLocaleString('en-US', {
@@ -454,10 +444,6 @@
                                 // write this month's rent and updated total to page
                                 $(totSelector).html(newTotValue);
                                 $(monSelector).val(thisMonRent);
-                                // disable input, if indicated (in the past)
-                                if(disableInput) {
-                                    $(monSelector).prop("disabled", true);
-                                }
                             }
                         });
 
