@@ -9,9 +9,10 @@
 <hr>
 
   <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 3/8/26
+    <p>Last push: 3/14/26 (pi day!)
     <br>NEW CHANGES:
-    <br>*** fix first year numbers in retirementForecast ***
+    <br>*** future expenses based on current year budget (was done differently before) ***
+    <br>***
     </p>
     <p>To Do:<p>
     <ul>
@@ -79,14 +80,94 @@
             <br>--- Summary Category subtotals
             <br>--- Income taxes
             <br>--- Total expense total
-            <br>*** left off here
+            <br>*** left off here mms mms - where left off with new function to do all yearByYear calc in same function (calcYearByYear)
+            <br>*** // left off here -- working on calc'ing expenses
+            <br>------ fixing order of calculations
+            <br>***
+            <br>*** put breakpoint in just after calcYearByYear to see what new code is doing.
+            <br>*** 
+            <br>*** Delete redundant code after calcYearByYear
+            <br>***
+            <br>*** Delete lastYearRetirementIncome from TransactionsController and retirementForecast ??
             <br>*** Need to check subsequent years (working on 2026/27)
+            <br>*** research any "FALSE"s in "test forecast worksheet" 
+            <br>***
+            <br>*** Non-urgent fix: in calcRetirementIncome, when running this the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
             <br>.
           </li>
           <li>testing</li>
           <li>clean up code</li>
         </ul>
       </li>
+      <hr>
+      <hr>
+      <p><u>Hidden fields in retirementForcast</u></p>
+<p>sumCategoriesWithDetailCategories
+	<br>-- key is summary category
+	<br>-- property is detail categories for the sum cat</p>
+
+<p>expenseCategoriesWithSummaryCats
+	<br>-- name: category
+	<br>-- summaryCategory: summary cat
+  <br></p>
+
+IncomeValues
+<ul>
+<li>[0] - Town Of Durham</li>
+<li>[1] - GB Limo</li>
+<li>[2] - Rental</li>
+<li>[3] - NH Retirement</li>
+<li>[4] - Mike IBM</li>
+<li>[5] - Mike SS</li>
+<li>[6] - Maura IBM</li>
+<li>[7] - Maura SS</li>
+<li>[8] - Tax Ret (all 0's passed to forecast blade)	[9] - Non Tax Ret (all 0's passed to forecast blade)</li>
+</ul>
+
+inflationFactors:
+	<br>-- category, inflationFactor pairs (if missing, used default)
+
+defaultInflationFactor: 3.00
+
+budgetedExpensesForTHisFullYearByCategory:
+	<br>-- category, neg amt pairs for each Expense Category
+
+forecastYears: 2026, 2027, ... 2062
+
+currentYear: 2026
+
+firstOfThisMonth: 2026-03-01
+
+balanceCategories:  beginning and ending balances
+	<br>-- "Spending", "Credit Card Debt", "Investment", "TaxableRetirement", "TaxFreeRetirement"
+
+retirementParameters:
+<ul>
+	<li>Doctor2027:	12241</li>
+	<li>Doctor2028:	11533</li>
+	<li>EstTaxRateOnTotalTaxInc :	6.75%</li>
+	<li>GBLimoForExpenses :	33.33%</li>
+	<li>GBMaxForExpenses:	5000</li>
+	<li>House:	651900</li>
+	<li>HouseGrowth:	3.75%</li>
+	<li>InvGrowth:	6%</li>
+	<li>InvWD:	3.5%</li>
+	<li>LTCInvGrowth:	5%</li>
+	<li>LTCinWF1:	17959.64</li>
+	<li>LTCinWF2:	2218.15</li>
+	<li>LTCinWFdate1:	092425</li>
+	<li>LTCinWFdate2:	112125</li>
+  <li>LTCinWF3: 17200</li>
+  <li>LTCinWFdate3: 032526</li>
+	<li>RetDistribBegin:	010130</li>
+	<li>RetirementDisc:	1938.21</li>
+	<li>SS-Med-WHs:	15.3%</li>
+	<li>TIAA:	8614</li>
+	<li>WF-IRA-non-taxable-Roth:	587195</li>
+	<li>WF-IRA-Taxable-Trad:	318253.38</li>
+</ul>
+      <hr>
+      <hr>
       <br>
       <li>NOTE:
         <br>11249.5  GB tips - w/held tax on, but aren't taxed.
