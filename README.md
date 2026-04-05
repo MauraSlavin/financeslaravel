@@ -8,100 +8,36 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-01-10-retirement ***</h2>
-    <p>Last push: 3/14/26 (pi day!)
+  <h2>WORKING BRANCH:  ***  2026-04-05 ***</h2>
+    <p>Last push: 4/5/26
     <br>NEW CHANGES:
-    <br>*** future expenses based on current year budget (was done differently before) ***
+    <br>***
     <br>***
     </p>
     <p>To Do:<p>
     <ul>
+      <li>Automate uploading tolls - checking for duplicates
+      </li>
+      <br>
       <li>RetirementForecast
         <ul>
-          <li>file for testing forecasting numbers:
-            <br>https://docs.google.com/spreadsheets/d/1neJivwPzjkl-69PHrhNw9vOdbCvwwQm9FsoHL4GZ9Ik/edit?gid=2101335114#gid=2101335114
-          </li>
           <li>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record, putting value in "modified" column.</li>
           <li>Check beginning balances for first column/year for (OK if retirementData table is correct).  These have been checked:
-            <br>
-            <br>- BEGINNING BALANCES
-            <br>--- Spending
-            <br>--- Credit
-            <br>--- Investment
-            <br>--- Taxable Retirement
-            <br>--- Tax Free Retirement
-            <br>- INCOME
-            <br>--- Town of Durham
-            <br>--- GB Limo
-            <br>--- Rental Income
-            <br>--- NH Retirement
-            <br>--- Mike IBM
-            <br>--- Mike SS
-            <br>--- Maura IBM
-            <br>--- Maura SS (age 67)
-            <br>--- Tax retire
-            <br>--- Non Tax retire
-            <br>--- Inv Growth
-            <br>--- Tax Ret Growth
-            <br>--- Tax Free Ret Growth
-            <br>- EXPENSES
-            <br>--- RetContribOut
-            <br>--- LoanPaid
-            <br>--- Charity
-            <br>--- Gift
-            <br>--- Groceries
-            <br>--- Holiday
-            <br>--- Home
-            <br>--- HomeInsurance
-            <br>--- LifeInsurance
-            <br>--- Loan
-            <br>--- Utilities
-            <br>--- Bolt
-            <br>--- CRZ
-            <br>--- College
-            <br>--- Kids
-            <br>--- Dentist
-            <br>--- Doctor
-            <br>--- Eyecare
-            <br>--- Prescriptions
-            <br>--- IncomeTaxes
-            <br>--- PropertyTax
-            <br>--- IncomeOtherWH
-            <br>--- MarinasMiles
-            <br>--- MiscExpense
-            <br>--- RentalExpense
-            <br>--- WorkExpense
-            <br>--- MauraSpending
-            <br>--- MikeSpending
-            <br>--- Vacation
-            <br>--- ExtraSpending
-            <br>--- BigExpenses
-            <br>--- LTC            
-            <br>--- Summary Category subtotals
-            <br>--- Income taxes
-            <br>--- Total expense total
-            <br>*** left off here mms mms - where left off with new function to do all yearByYear calc in same function (calcYearByYear)
-            <br>*** // left off here -- working on calc'ing expenses
-            <br>------ fixing order of calculations
-            <br>***
-            <br>*** put breakpoint in just after calcYearByYear to see what new code is doing.
-            <br>*** 
+            <br>*** left off here mms mms - handle investment distributions when "spending" falls below $0.
+            <br>****** adjust income taxes when this happens
             <br>*** Delete redundant code after calcYearByYear
             <br>***
             <br>*** Delete lastYearRetirementIncome from TransactionsController and retirementForecast ??
-            <br>*** Need to check subsequent years (working on 2026/27)
-            <br>*** research any "FALSE"s in "test forecast worksheet" 
             <br>***
-            <br>*** Non-urgent fix: in calcRetirementIncome, when running this the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
+            <br>*** Is this fixes?? Non-urgent fix: in calcRetirementIncome, when running the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
             <br>.
           </li>
-          <li>testing</li>
           <li>clean up code</li>
         </ul>
       </li>
       <hr>
       <hr>
-      <p><u>Hidden fields in retirementForcast</u></p>
+<p><u>Hidden fields in retirementForcast</u></p>
 <p>sumCategoriesWithDetailCategories
 	<br>-- key is summary category
 	<br>-- property is detail categories for the sum cat</p>
@@ -127,84 +63,12 @@ IncomeValues
 inflationFactors:
 	<br>-- category, inflationFactor pairs (if missing, used default)
 
-defaultInflationFactor: 3.00
-
 budgetedExpensesForTHisFullYearByCategory:
 	<br>-- category, neg amt pairs for each Expense Category
 
 forecastYears: 2026, 2027, ... 2062
 
-currentYear: 2026
-
-firstOfThisMonth: 2026-03-01
-
-balanceCategories:  beginning and ending balances
-	<br>-- "Spending", "Credit Card Debt", "Investment", "TaxableRetirement", "TaxFreeRetirement"
-
-retirementParameters:
-<ul>
-	<li>Doctor2027:	12241</li>
-	<li>Doctor2028:	11533</li>
-	<li>EstTaxRateOnTotalTaxInc :	6.75%</li>
-	<li>GBLimoForExpenses :	33.33%</li>
-	<li>GBMaxForExpenses:	5000</li>
-	<li>House:	651900</li>
-	<li>HouseGrowth:	3.75%</li>
-	<li>InvGrowth:	6%</li>
-	<li>InvWD:	3.5%</li>
-	<li>LTCInvGrowth:	5%</li>
-	<li>LTCinWF1:	17959.64</li>
-	<li>LTCinWF2:	2218.15</li>
-	<li>LTCinWFdate1:	092425</li>
-	<li>LTCinWFdate2:	112125</li>
-  <li>LTCinWF3: 17200</li>
-  <li>LTCinWFdate3: 032526</li>
-	<li>RetDistribBegin:	010130</li>
-	<li>RetirementDisc:	1938.21</li>
-	<li>SS-Med-WHs:	15.3%</li>
-	<li>TIAA:	8614</li>
-	<li>WF-IRA-non-taxable-Roth:	587195</li>
-	<li>WF-IRA-Taxable-Trad:	318253.38</li>
-</ul>
-      <hr>
-      <hr>
-      <br>
-      <li>NOTE:
-        <br>11249.5  GB tips - w/held tax on, but aren't taxed.
-        <br> - @ 22% = 2,474.89  (could've gone to spending)
-      </li>
-      <br>
-      <li>NOTE (minor):
-        <br>Great Bay Limo (IncomeMisc) <> stub or Google Sheet, but not off by a lot
-      </li>
-      <br>
-      <li>** Retirement Income
-        <br>See "left off here --" for places to update year to year values in retirement forecast (might be done - needs testing)
-        <br>
-        <br>DO add .gitignore
-        <br>.
-      </li>
-      <li>fix GB Limo income this year, and
-        <br> MAKE SURE GB Limo max contrib, etc., are handled correctly in retirement forecast
-        <br> -- max on contrib to household?? (take care of in Google Sheets)
-        <br> -- put taxes set aside back to spending when withheld from pay (taken care of in GB Limo Google Sheets)
-      </li>
-      <li>Make sure I'm using ALL data on Retirement Input page</li>
-    </ul>
-    <p>Here's the retirement stuff...</p>
-    <ul>
-      <li>Working on retirement analysis
-      <br>- See "left off here" in retirementInput blade.
-      </li>
-      <li>See "Retirement in app" (FIN -> Retirement -> Retirement in app) in Google Drive for beginning of design
-      <br><br>link for design:
-      <br>https://docs.google.com/spreadsheets/d/1mj0eThBHoXeK59SmpeuZcFknbCslUpIO_aOZhQRcJVQ/edit?usp=drive_link
-      <br><br>current retirement forecast:
-      <br>https://docs.google.com/spreadsheets/d/13H8T0OAOkpzwRAhjt2-adY4RZBkQVls2WIcjjOmu0I0/edit?usp=sharing
-      </li>
-    </ul>
-
-  <h2>Check at some point...</h2>
+<h2>Check at some point...</h2>
   <ul>
     <li>Do I need 2 Eversource entries - one if there's a credit, and one if payment comes from Checking?</li>
     <li>add new/delete monthly transactions (need add and delete buttons) to update monthlies table</li>
