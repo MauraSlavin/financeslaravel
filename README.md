@@ -8,7 +8,7 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-04-05 ***</h2>
+  <h2>WORKING BRANCH:  ***  (create new one) ***</h2>
     <p>Last push: 4/5/26
     <br>NEW CHANGES:
     <br>***
@@ -16,9 +16,6 @@
     </p>
     <p>To Do:<p>
     <ul>
-      <li>Automate uploading tolls - checking for duplicates
-      </li>
-      <br>
       <li>RetirementForecast
         <ul>
           <li>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record, putting value in "modified" column.</li>
@@ -84,9 +81,7 @@ forecastYears: 2026, 2027, ... 2062
     
 <h2>To do:</h2>
     <ul>
-      <li>Allow dupes in TOLLS upload - detect duplicates and only write unique tolls to database
-        <br>- Detect by unique date, time and car
-      </li>
+      <li>Autofill "Car" during TOLLS upload; prompt for trip?</li>
       <li>Is changing Monthlies working??</li>
       <li>Add charges en route to trips table - alert if 0 (may not be getting charges)</li>
       <li>splitting Spending transaction may still not be working correctly</li>

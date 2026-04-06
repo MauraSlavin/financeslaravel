@@ -357,7 +357,7 @@
                         },
                         success: function(response) {
                             console.log("response: ", response);
-                            alert("Tolls successfully written to tolls table.");
+                            alert("Tolls successfully written to tolls table.\n\n*** IMPT NOTE: Edit tolls table to include Car and Trip in table.\n\nselect * from tolls where updated_at >= <today>;\n\nSee tolls MySQL script.");
                         },
                         error: function(xhr, status, error) {
                             var errorMsg = "Error writing tolls to tolls table";
