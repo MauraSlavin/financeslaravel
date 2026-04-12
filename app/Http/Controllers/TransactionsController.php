@@ -4487,6 +4487,16 @@ class TransactionsController extends Controller
             'trips',
             'uploadmatch'
         ];
+        // table with a column that is generated with a formula, so it can't be inserted
+        $tablesWithFormulas = [
+            'trips',
+            'budget'
+        ];
+        // columns for the above tables
+        $formulasByTable = [
+            "trips"=>'totalCost',
+            "budget"=>'total'
+        ];
 
         // process one table at a time
         foreach($tables as $table) {
@@ -4510,6 +4520,13 @@ class TransactionsController extends Controller
                 // change 'copied' field to 'yes'
                 foreach($recordsToInsert as $idx=>$record) {
                     $recordsToInsert[$idx]['copied'] = 'yes';
+                }
+
+                // drop generated columns (w/formula)
+                if(in_array($table, $tablesWithFormulas)) {
+                    foreach($recordsToInsert as $idx=>$record) {
+                        unset($recordsToInsert[$idx][$formulasByTable[$table]]);
+                    }
                 }
 
                 // insert records

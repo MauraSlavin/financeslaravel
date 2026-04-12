@@ -8,17 +8,12 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026=04-06 ***    (NOTE =!!)</h2>
-    <p>Last push: 4/5/26
+  <h2>WORKING BRANCH:  ***  2026-04-13 ***</h2>
+    <p>Last push: 4/12/26
     <br>NEW CHANGES:
-    <br>*** Fixed when GBMaxForExpenses changed
-    <br>*** Disallow changing WF #'s directly (use "Split IRAs" button)
-    <br>*** Disallow changing balances
-    <br>*** Stopped using "inpt" type in retirementdata. Use "modified" column instead.
-    <br>*** Calc annual rental income when rental income changed and save in retirementdata table. Don't calc every time forecast done.
-    <br>*** Ensure "modified" is null when value is default ("data" column in retirementdata).
+    <br>*** 
     </p>
-    <p>Working on</p>
+    <p>Working on (paused)</p>
       <ul>
         <li>RetirementForecast
           <br>Some Assumptions & Balances 'disabled' so I can't changed them, and should be able to.
@@ -115,14 +110,13 @@ forecastYears: 2026, 2027, ... 2062
       <li>Get saving aliases to work.  Include extraDefaults.</li>
       <li>Don't allow "Category" for spending accounts (Mike, MauraSCU, MauraDisc).  Remove from page for those accounts.</li>
       <li>In transactions.blade, a lot of the checking (see // transDate, // clearDate, etc) are similar.  Should they be combined into one reusable method?</li>
-      <li>Different users so Mike can have copy of the application?</li>
+      <li>Different users so Mike can have copy of the application? (Mike's not interested/doesn't think his Chromebook can do it)</li>
       <li>Ability to change year in Spending view?</li>
-      <li>Write transactions in Spending view to a file or Google sheet?</li>
+      <li>Write transactions in Spending view to a file or Google sheet? (copy & Paste is easy enough for now)</li>
     </ul>
 
 <h2>Future Functionality:</h2>
   <ul>
-    <li>Append Spending transactions to Google Sheets<br> -- https://www.phind.com/search?cache=f8twduhlg5g1fo4ca2bkrs7c</li>
     <li>Use tables (datatables?) that can sort & filter transactions</li>
     <li>Handle trips accounting<br>
     - automate each part of the cost calculations</li>
