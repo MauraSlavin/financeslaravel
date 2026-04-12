@@ -38,6 +38,7 @@
                         <th style="width: 100px;">correction</th>
                         <th style="width: 5px;">save</th>
                         <th style="width: 75px;">date</th>
+                        <th hidden></th>
                     </tr>
                 </thead>
 
@@ -60,9 +61,9 @@
                     @endphp
 
                     @foreach($types as $idx=>$type)
-                        <!-- for Values (all WF stuff), disable input.
+                        <!-- for Values (all WF stuff) and Balances, disable input.
                          use "Split IRAs..." button to change these values -->
-                        @if( $type == 'Values' ) 
+                        @if( $type == 'Values (1st of mon)' || $type == 'Balances (1st of mon)') 
                             @php
                                 $disabled = "disabled";
                             @endphp
@@ -102,6 +103,14 @@
                                     }
                                 @endphp
                             @endif
+
+                            <!-- disable rental income --> 
+                            @if(substr($key, 0, 6) == 'Rental')
+                                @php
+                                    $disabled = 'disabled';
+                                @endphp
+                            @endif
+
                             <tr>
                                 <!-- data point -->
                                 <td class="retInputAccount">{{ $key ?? NULL }}</td>
@@ -131,9 +140,14 @@
                                     >
                                 </td>
 
-                                @if( $type == "Income" || $type == "Balances")
+                                <!-- no Save button for Income, Balance, or Rental income -->
+                                @if( $type == "Income" || $type == "Balances" )
                                 <td class="saveCorrection">
                                     Can't save
+                                </td>
+                                @elseif( substr($key, 0, 6) == "Rental")
+                                <td class="saveCorrection">
+                                    Use Rental Inc button
                                 </td>
                                 @else
                                 <!-- save correction button -->
@@ -148,52 +162,11 @@
                                     
                                 <!-- date of value -->
                                 <td class="retInputDate">{{ $balance[2] ?? NULL  }}</td>
+
+                                <!-- set text to TRUE if it's been changed --> 
+                                <td hidden>false</td>
                             </tr>
                         @endforeach
-    
-                        <!-- Add rentalIncome at the end of Incomes --> 
-                        @if($type == "Income")
-                            @foreach( $years as $year )
-                                <tr>
-                                    <!-- data point -->
-                                    <td class="retInputAccount">RentalIncome{{ $year }}</td>
-
-                                    <!-- type of data point -->
-                                    <td class="retType" style="font-weight: bold; color: {{$colors[$idx]}};">Income</td>
-                                    
-                                    <!-- stored value  - filled in w/code -->
-                                    <td 
-                                        class="retInputBalance"
-                                        id="rental{{ $year }}"
-                                        style="text-align: right;">
-                                    </td>
-
-                                    <!-- unit of measure (UOM) -->
-                                    <td style="width: 5px; text-align: center;">$</td>
-
-                                    <!-- input field to override stored value 
-                                        use "Rental Income" button to change details -->
-                                    <td class="retInputCorrection">
-                                        <input 
-                                            class="retCorrection" 
-                                            id="rentalInput{{ $year }}"
-                                            name="retCorrection[]" 
-                                            style="width: 100%; text-align: right;" 
-                                            data-field=RentalIncome{{ $year }}
-                                            disabled
-                                        >
-                                    </td>
-
-                                    <!-- save correction button -->
-                                    <td class="saveCorrection">
-                                        Use Rental Inc btn
-                                    </td>
-
-                                    <!-- date of value -->
-                                    <td class="retInputDate" id="rentalDate{{ $year }}"></td>
-                                </tr>                            
-                            @endforeach
-                        @endif
 
                     @endforeach
 
@@ -245,90 +218,6 @@
                     if(a > b) return a;
                     else return b;
                 }
-
-                // calc rental income for this year & the next 2 years for the page (if they're in the retirementdata table)
-
-                // get the rental income data
-                var retirementDataRents = @json($retirementDataRents);
-
-                // get today's date (to get current year)
-                const now = new Date();
-
-                // init 3 years out (2 digit year and total rental income for that year)
-                const year1 = String(now.getFullYear()).slice(-2);
-                const year2 = String(Number(year1) + 1).slice(-2);
-                const year3 = String(Number(year2) + 1).slice(-2);
-
-                // need this month when inputting rental income by month
-                const thisMonth = String(now.getMonth() + 1).slice(-2);
-                // monthlyRentalIncome variable also used when inputting rental income by month
-                const monthlyRentalIncome = Array.from({length: 2}, (_, tenant) =>
-                    Array.from({length: 3}, (_, year) =>
-                        Array.from({length: 12}, (_, month) => 
-                            0
-                        )
-                    )
-                );
-
-                // yearly rental totals and dates for Retirement Data page
-                var year1tot = 0;
-                var year2tot = 0;
-                var year3tot = 0;
-                var year1date = null;
-                var year2date = null;
-                var year3date = null;
-
-                // sum per year from what's in the retirementdata table
-                var rentKeys = Object.keys(retirementDataRents);
-                rentKeys.forEach( (key,idx) => {
-                    var rentYear = key.substring(12, 14);
-                    var rentMonth = key.substring(14, 16);
-                    var tenant = key.substring(17, 18);
-                    if(rentYear == year1){
-                        year1tot += Number(retirementDataRents[key][0]);
-                        year1date = max(year1date, retirementDataRents[key][2]);
-                    }
-                    else if(rentYear == year2){
-                        year2tot += Number(retirementDataRents[key][0]);
-                        year2date = max(year2date, retirementDataRents[key][2]);
-                    }
-                    else if(rentYear == year3){
-                        year3tot += Number(retirementDataRents[key][0]);
-                        year3date = max(year3date, retirementDataRents[key][2]);
-                    }
-
-                    // get monthly rental in case details need to be updated
-                    if(typeof retirementDataRents[key][0] !== 'undefined') {
-                        monthlyRentalIncome[tenant][rentYear-year1][rentMonth-1] = Number(retirementDataRents[key][0]);
-                    }
-                    
-                });
-
-                // format totals
-                year1tot = year1tot.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                year2tot = year2tot.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                year3tot = year3tot.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-
-                // put totals on page
-                $("#rental" + year1).text(year1tot);
-                $("#rental" + year2).text(year2tot);
-                $("#rental" + year3).text(year3tot);
-                $("#rentalInput" + year1).val(year1tot);
-                $("#rentalInput" + year2).val(year2tot);
-                $("#rentalInput" + year3).val(year3tot);
-                $("#rentalDate" + year1).text(year1date);
-                $("#rentalDate" + year2).text(year2date);
-                $("#rentalDate" + year3).text(year3date);
-
 
                 // listener for split IRAs button
                 $('#splitIRAs').on('click', function(e) {
@@ -486,11 +375,19 @@
                     var newValue = $(this).parent().prev().find("input").val().trim();
                     var fieldChanged = $(this).data('item-id');
                     var type = $(this).parent().prev().prev().text();
+                    console.log("origValue: ", origValue);
+                    console.log("newValue: ", newValue);
+                    console.log("fieldChanged: ", fieldChanged);
+                    console.log("type: ", type);
 
                     // wipe out modified field if newValue is the same as the original
                     // straight compare; then compare values if it's a number (not d for date)
-                    if( origValue == newValue) newValue = null;
-                    else if( parseFloat(origValue) == parseFloat(newValue) && type != 'd') newValue = null;
+                    if( type != 'd') {
+                        if( parseFloat(origValue.replaceAll(",", "")) == parseFloat(newValue.replaceAll(",", "")) ) {
+                            newValue = null;
+                        }
+                    } else if( origValue == newValue) newValue = null;
+                    // else if( parseFloat(origValue) == parseFloat(newValue) && type != 'd') newValue = null;
 
                     // save the change.
                     $.ajax({
@@ -512,11 +409,15 @@
                             alert("Error saving change.");
                         }
                     });
+
+                    // change hidden value back to "false"
+                    $(this).parent().next().next().text("false");
                 });
 
                 // listener to do retirement forecast
                 $('#retirementForecast').on('click', function(e) {
                     var retirementInput = {};
+                    var retirementDefault = {};
 
                     // Iterate over all input fields, write values to use in DB.
                     $('input').each(function() {
@@ -524,11 +425,20 @@
                         const name = input.attr('name');
                         const value = input.val();
                         const field = input.attr('data-field');
-                        
-                        retirementInput[field] = value;
-                        if(name != "retCorrection[]") {
-                            return false;
+                        const defaultValue = input.parent().prev().prev().text().trim();
+                        const changed = input.parent().next().next().next().text();
+
+                        // write 
+
+                        if(changed == 'true') {
+                            if(value !== defaultValue) {
+                                retirementInput[field] = value;
+                            } else {
+                                retirementInput[field] = null;
+                            }
                         }
+                        retirementDefault[field] = defaultValue;
+
                     });
 
                     // save data to do forecast with.
@@ -538,7 +448,7 @@
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
-                        data: JSON.stringify(retirementInput),
+                        data: JSON.stringify([retirementInput, retirementDefault]),
                         contentType: 'application/json',
 
                         success: function(response) {
@@ -550,6 +460,11 @@
                         }
                     });
 
+                });
+
+                // listener when data changed
+                $('.retInputCorrection').on('change', function(e) {
+                    $(this).next().next().next().text('true');
                 });
             });
 
