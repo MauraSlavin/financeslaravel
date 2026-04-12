@@ -685,16 +685,6 @@ class TransactionsController extends Controller
         $outOfSyncAccounts = [];
         $msg = '';
 
-        // delete "inpt" fields from retirementdata, first
-        $response = DB::table('retirementdata')
-            ->where('type', 'inpt')
-            ->delete();
-
-        $response = DB::connection('mysqllocal')
-            ->table('retirementdata')
-            ->where('type', 'inpt')
-            ->delete();
-
         $tables = [
             'accounts',
             'bucketgoals',
@@ -1930,34 +1920,55 @@ class TransactionsController extends Controller
     }   // end of function writeRetirementDatum
 
 
-    // update/save all retirement data to be used
+    // update/save all retirement data to be used; where it differs from the default
     public function writeRetirementInput(Request $request) {
-
-        // get inputs needed
-        $retirementInput = json_decode($request->getContent(), true);
-
-        $descriptions = array_keys($retirementInput);
-
-        // delete old forecast inputs (type w/Inp)
-        $response = DB::table('retirementdata')
-            ->where('type', 'inpt')
+        
+        // erase old temp rcds from retirementdata table first
+        $results = DB::table('retirementdata')
+            ->where('type', 'temp')
             ->delete();
 
-        // insert new forecast inputs
-        // create array to insert (with type "Inpt")
-        $insertRetirementInput = [];
-        foreach($descriptions as $description) {
-            $retirementInput[$description] = str_replace("/", "", $retirementInput[$description]); // remove /s (specifically for dates)
-            $retirementInput[$description] = str_replace(",", "", $retirementInput[$description]); // remove ,s (specifically for numbers)
-            $insertRetirementInput[] = [
-                'description' => $description,
-                'data' => $retirementInput[$description],
-                'type' => 'inpt'
-            ];
+        // get inputs needed
+        [$retirementInput, $retirementDefault] = json_decode($request->getContent(), true);
+
+        // get descriptions already in the retirementdata table. Write ones missing.
+        $descriptions = array_keys($retirementInput);
+        $descriptionsInTableDB = DB::table('retirementdata')
+            ->distinct()
+            ->select('description')
+            ->whereNull('deleted_at')
+            ->get()->toArray();
+        $descriptionsInTable = [];
+        foreach($descriptionsInTableDB as $desc) $descriptionsInTable[] = $desc->description;
+
+        // update "modified" where default is changed
+        foreach($retirementInput as $description=>$inputRcd) {
+
+            $inputRcd = str_replace("/", "", $inputRcd); // remove /s (specifically for dates)
+            $inputRcd = str_replace(",", "", $inputRcd); // remove ,s (specifically for numbers)
+            if($inputRcd == '') $inputRcd = null;
+
+            $results = DB::table('retirementdata')
+                ->where('description', $description)
+                ->whereNull('deleted_at')
+                ->update(['modified' => $inputRcd]);
+
         }
-        // insert the array
-        DB::table('retirementdata')
-            ->insert($insertRetirementInput);
+
+        // write missing data (refreshed each run) to retirementdata table
+        foreach($retirementDefault as $description=>$defaultRcd) {
+            if(!in_array($description, $descriptionsInTable)) {
+                $newRetirementDataRcd = [];
+                $newRetirementDataRcd['description'] = $description;
+                $newRetirementDataRcd['type'] = 'temp';
+                $newRetirementDataRcd['data'] = (float)str_replace(",", "", $defaultRcd);
+                $newRetirementDataRcd['UOM'] = "$";
+                $newRetirementDataRcd['copied'] = "needupt";
+                
+                DB::table('retirementdata')
+                    ->insert($newRetirementDataRcd);
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -3207,7 +3218,7 @@ class TransactionsController extends Controller
             $retirementDataIncomes = [];
             $retirementDataValues = [];
             $retirementDataBalances = [];
-            $retirementDataRents = [];
+            // $retirementDataRents = [];
             $retirementDataInfo = [];
 
             // current year & month - delete rental income before this
@@ -3231,9 +3242,9 @@ class TransactionsController extends Controller
                     case 'val':
                         $retirementDataValues[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->modified];
                         break;
-                    case 'rent':
-                        $retirementDataRents[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->id];
-                        break;   
+                    // case 'rent':
+                    //     $retirementDataRents[$dataPoint->description] = [$dataPoint->data, $dataPoint->UOM, $date, $dataPoint->id];
+                    //     break;   
                     case 'info':
                         $retirementDataInfo[$dataPoint->description] = $dataPoint->data;
                         break;   
@@ -3260,7 +3271,7 @@ class TransactionsController extends Controller
                 ->whereNull('deleted_at')
                 ->groupBy('account')
                 ->get()->toArray();
-
+          
             $balances = [];
             foreach($dbbalances as $balance) {
                 $balances[$balance->account] = [$balance->amount, "$", $balance->date, null];
@@ -3308,7 +3319,7 @@ class TransactionsController extends Controller
                     $dbretincomes[] = $dbretincome;
                 }
             }
-            // get in useful formate
+            // get in useful format
             $incomes = [];
             foreach($dbretincomes as $acct) {
                 $incomes[$acct->toFrom] = [max($acct->amount, $acct->total_amt), "$", $acct->trans_date, null];
@@ -3325,20 +3336,36 @@ class TransactionsController extends Controller
 
 
             // delete old rental records
+            // re-wrote when retirementDataRents was deleted
             $yearMonth = date("y") . '01';  // Jan of current year
-            foreach($retirementDataRents as $description=>$rentalRcd) {
-                $date = substr($description, 12, 4);
-                // if rent is previous year, delete it
-                if($date < $yearMonth) {
-                    $result = DB::table('retirementdata')
-                        ->where('id', $rentalRcd[3])
-                        ->whereNull('deleted_at')
-                        ->update([
-                            'deleted_at' => now(), 'copied' => 'needupt'
-                        ]);
+            // foreach($retirementDataRents as $description=>$rentalRcd) {
+            //     $date = substr($description, 12, 4);
+            //     // if rent is previous year, delete it
+            //     if($date < $yearMonth) {
+            //         $result = DB::table('retirementdata')
+            //             ->where('id', $rentalRcd[3])
+            //             ->whereNull('deleted_at')
+            //             ->update([
+            //                 'deleted_at' => now(), 'copied' => 'needupt'
+            //             ]);
+            //     }
+            // }
+
+            // get all the rental records
+            $allRents = DB::table('retirementdata')
+                ->where('description', 'like', 'RentalIncome%')
+                ->whereNull('deleted_at')
+                ->get();
+            // for each record, if it's before this year, delete it
+            foreach($allRents as $rentRcd) {
+                $rentalYear = (int)substr($rentRcd->description, 12, 2);
+                if($rentalYear < date("y")) {
+                    $results = DB::table('retirementdata')
+                        ->where('id', $rentRcd->id)
+                        ->delete();
                 }
             }
-
+           
             return [
                 $retirementDataAcctNums,
                 $retirementDataAssumptions,
@@ -3346,10 +3373,9 @@ class TransactionsController extends Controller
                 $retirementDataIncomes,
                 $retirementDataValues,
                 $retirementDataBalances,
-                $retirementDataRents
+                // $retirementDataRents
             ];
         }
-
 
         // get existing retirement data
         [
@@ -3359,7 +3385,7 @@ class TransactionsController extends Controller
             $retirementDataIncomes,
             $retirementDataValues,
             $retirementDataBalances,
-            $retirementDataRents
+            // $retirementDataRents
         ] = getRetirementData();
         
         // return view with input data to calc retirement outlook
@@ -3370,7 +3396,7 @@ class TransactionsController extends Controller
             'retirementDataIncomes' => $retirementDataIncomes,
             'retirementDataValues' => $retirementDataValues,
             'retirementDataBalances' => $retirementDataBalances,
-            'retirementDataRents' => $retirementDataRents
+            // 'retirementDataRents' => $retirementDataRents
         ]);
     }
 
@@ -4383,19 +4409,27 @@ class TransactionsController extends Controller
     
     // replace monthly rental income in retirementdata table
     public function saveRents(Request $request) {
-        // get input data
+
+    // get input data
         $results = DB::table('retirementdata')
             ->where('description', 'like', 'RentalIncome%')
             ->delete();
 
         // build insert query
         $monthlyRentals = [];
+        $annualRentals = [];
+        $thisYear = intval(date("y"));
+        $annualRentals[$thisYear] = 0;
+        $annualRentals[$thisYear+1] = 0;
+        $annualRentals[$thisYear+2] = 0;
 
         foreach([0, 1] as $tenant) {
             foreach([0, 1, 2] as $yearIdx) {
-                $year = intval(date("y")) + $yearIdx;
+                $year = $thisYear + $yearIdx;
                 for($monIdx = 0; $monIdx < 12; $monIdx++) {
                     $rent = $request->input("t" . $tenant . "y" . $yearIdx . "m" . $monIdx);
+                    $annualRentals[$year] += $rent;
+
                     // only save non-0 values
                     if($rent != 0) {
                         $description = 'RentalIncome' . $year . str_pad( strval($monIdx+1), 2, "0", STR_PAD_LEFT) . "-" . $tenant;
@@ -4410,6 +4444,23 @@ class TransactionsController extends Controller
         $results = DB::table("retirementdata")
             ->insert($monthlyRentals);
 
+        // insert annual totals
+        $annualRecords = [];
+        foreach($annualRentals as $year=>$annualRent) {
+            $annualRecord = [
+                'description'=>'RentalIncome' . $year,
+                'type'=>"assm",
+                'order'=>5,
+                'data'=>$annualRent,
+                'UOM'=>"$",
+                'copied'=>"needupt"
+            ];
+            $annualRecords[] = $annualRecord;
+        }
+        
+        $results = DB::table("retirementdata")
+            ->insert($annualRecords);
+        
         // return to retirement data page (hides rental income details)
         return redirect()->route('retirementInput');
     }   // end function saveRents
@@ -4442,15 +4493,6 @@ class TransactionsController extends Controller
 
             error_log("Table: " . $table);
             $newMsg = '';
-
-            // for retirementData, delete local input records first
-            if($table == 'retirementdata') {
-                $response = DB::connection('mysqllocal')
-                    ->table('retirementdata')
-                    ->where('type', 'inpt')
-                    ->delete();
-                error_log("Deleted from LOCAL retirementdata table: " . json_encode($response));
-            }
 
             // Get NEW records in REMOTE table
             $newRemoteRecords = DB::table($table)
@@ -4952,11 +4994,17 @@ class TransactionsController extends Controller
             $LTCAccts = ['WF-Inherited', 'LTC-Disc'];
 
             // get spending accounts balance from retirementdata table
-            $beginOfThisMonthSpendingBal = DB::table("retirementdata") 
+            $beginOfThisMonthSpendingDB = DB::table("retirementdata") 
                 ->whereIn("description", $spendingAccts)
-                ->where("type", "inpt")
                 ->whereNull("deleted_at")
-                ->sum("data");
+                ->get()->toArray();
+
+            // if modified exists, use that #; otherwise use data
+            $beginOfThisMonthSpendingBal = 0;
+            foreach($beginOfThisMonthSpendingDB as $spendingRcd) {
+                if($spendingRcd->modified !== null) $beginOfThisMonthSpendingBal += $spendingRcd->modified;
+                else $beginOfThisMonthSpendingBal += $spendingRcd->data;
+            }
 
             // get credit card debt balance
             $ccdebtBal = DB::table("transactions") 
@@ -4967,24 +5015,33 @@ class TransactionsController extends Controller
                 ->sum("amount");
 
             // get investement accounts balance from retirementdata table
-            $invAcctsBal = DB::table("retirementdata") 
+            $invAcctsDB = DB::table("retirementdata") 
                 ->whereIn("description", $invAccts)
-                ->where("type", "inpt")
                 ->whereNull("deleted_at")
-                ->sum("data");
+                ->get()->toArray();
+            // if modified exists, use that #; otherwise use data
+            $invAcctsBal = 0;
+            foreach($invAcctsDB as $invAcctRcd) {
+                if($invAcctRcd->modified !== null) $invAcctsBal += $invAcctRcd->modified;
+                else $invAcctsBal += $invAcctRcd->data;
+            }
 
             // get balance of taxable retirement accts
-            $retTaxAcctsBal = DB::table("retirementdata") 
+            $retTaxAcctsDB = DB::table("retirementdata") 
                 ->whereIn("description", $retTaxAccts)
-                ->where("type", "inpt")
                 ->whereNull("deleted_at")
-                ->sum("data");
+                ->get()->toArray();
+            // if modified exists, use that #; otherwise use data
+            $retTaxAcctsBal = 0;
+            foreach($retTaxAcctsDB as $retTaxAcctsRcd) {
+                if($retTaxAcctsRcd->modified !== null) $retTaxAcctsBal += $retTaxAcctsRcd->modified;
+                else $retTaxAcctsBal += $retTaxAcctsRcd->data;
+            }
 
             // get LTC balance
             // data to get LTC in WF Trad (taxable) IRAs
             $ltcDataDB = DB::table('retirementdata') 
                 ->select('description', 'data', 'type')
-                ->whereIn('type', ['inpt', 'con', 'assm']) 
                 ->whereNull('deleted_at') 
                 ->where(function ($q) { 
                     $q->where('description', 'like', 'LTCinWF%') 
@@ -4992,11 +5049,16 @@ class TransactionsController extends Controller
                 }) 
                 ->get()->toArray();
             // LTC balances
-            $ltcAcctSum = DB::table('retirementdata')
+            $ltcAcctDB = DB::table('retirementdata')
                 ->whereIn("description", $LTCAccts)
-                ->where("type", "inpt")
                 ->whereNull("deleted_at")
-                ->sum("data");
+                ->get()->toArray();
+            // if modified exists, use that #; otherwise use data
+            $ltcAcctSum = 0;
+            foreach($ltcAcctDB as $ltcAcctRcd) {
+                if($ltcAcctRcd->modified !== null) $ltcAcctSum += $ltcAcctRcd->modified;
+                else $ltcAcctSum += $ltcAcctRcd->data;
+            }
 
             $LTCinWF = [];
             $LTCinWFdate = [];
@@ -5054,11 +5116,16 @@ class TransactionsController extends Controller
             $initLTCBal += $totInterest;
 
             // get balance of non-taxable (Roth) accts
-            $retNonTaxAcctsBal = DB::table("retirementdata") 
+            $retNonTaxAcctsDB = DB::table("retirementdata") 
                 ->whereIn("description", $retNonTaxAccts)
-                ->where("type", "inpt")
                 ->whereNull("deleted_at")
-                ->sum("data");
+                ->get()->toArray();
+            // if modified exists, use that #; otherwise use data
+            $retNonTaxAcctsBal = 0;
+            foreach($retNonTaxAcctsDB as $retNonTaxAcctsRcd) {
+                if($retNonTaxAcctsRcd->modified !== null) $retNonTaxAcctsBal += $retNonTaxAcctsRcd->modified;
+                else $retNonTaxAcctsBal += $retNonTaxAcctsRcd->data;
+            }
 
             $spendingAccts = implode(", ", $spendingAccts);
             $ccAccts = implode(", ", $ccAccts);
@@ -5073,34 +5140,27 @@ class TransactionsController extends Controller
         function thisYearIncome($firstOfThisMonth, $twoDigitYear) {
 
             $remainingIncomeThisYear = [];
-            $inputIncomes = ["NH Retirement", "MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
-            $inputIncomesDescriptions = ["NHRetirement", "MauraIBM", "MauraSS65", "MauraSS67", "RentalIncome".$twoDigitYear];
+            $inputIncomes = ["MMS-IBM-Retirement", "SSMaura", "RentalIncome".$twoDigitYear];
+            $inputIncomesDescriptions = ["MauraIBM", "MauraSS65", "MauraSS67", "RentalIncome".$twoDigitYear, "RentalIncome".$twoDigitYear+1, "RentalIncome".$twoDigitYear+2];
             $otherRetirementDataNeeded = ["GBLimoForExpenses", "EndGBJob", "EndTownJob", "EndRentalJob", "MauraIBMStart", "MauraSSStart" ];
-            $dataBaseIncomesLine = ["Town of Durham", "GB Limo", "Mike IBM", "Mike SS", "Tax Retire", "Non-Tax Retire", "Investment Growth"];
-            $dataBaseIncomestoFrom = ["Town of Durham", "Great Bay Limo", "MTS-IBM-Retirement", "SSMike"];
+            $dataBaseIncomesLine = ["Town of Durham", "GB Limo", "Mike IBM", "Mike SS", "Tax Retire", "Non-Tax Retire", "Investment Growth", "NH Retirement"];
+            $dataBaseIncomestoFrom = ["Town of Durham", "Great Bay Limo", "MTS-IBM-Retirement", "SSMike", "NHRetirement"];
 
             $queryDescriptions = array_merge($inputIncomesDescriptions, $otherRetirementDataNeeded);
             $retirementDataInfoDB = DB::table('retirementdata')
-                ->select("data", "description", "type")
+                ->select("data", "description", "modified")
                 ->whereIn("description", $queryDescriptions)
                 ->whereNull("deleted_at")
                 ->get()->toArray();
 
             $retirementDataInfo = [];
-            $retirementDataHaveInputValue = []; // if element is true, have the input value; if exists, have other value; if undefined, don't have a value
+            // use "modified" value if it exists
             foreach($retirementDataInfoDB as $idx=>$retirementDatum) {
 
-                // if no data for this description found yet, note if it's "inpt" type and save the value
-                if(!isset($retirementDataHaveInputValue[$retirementDatum->description])) {
-                    $retirementDataHaveInputValue[$idx] = ($retirementDatum->type == 'inpt') ? true : false;
-                    $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
-
-                // if there is a data value for this description, only change it if the new value is type 'inpt'
+                if($retirementDatum->modified !== null) {
+                    $retirementDataInfo[$retirementDatum->description] = $retirementDatum->modified;
                 } else {
-                    if($retirementDatum->type == 'inpt') {
-                        $retirementDataHaveInputValue[$idx] = true;
-                        $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
-                    }
+                    $retirementDataInfo[$retirementDatum->description] = $retirementDatum->data;
                 }
             }
 
@@ -5136,7 +5196,7 @@ class TransactionsController extends Controller
             // get data from database
             $townData = DB::table('retirementdata')
                 ->select('description', 'data')
-                ->where('type', 'inpt')
+                ->whereIn('type', ['assm', 'con'])
                 ->whereIn('description', ['EndTownJob', 'TownOfDurhamHourly', 'TownOfDurhamHrsPerWeek', 'SSCOLA'])
                 ->whereNull('deleted_at')
                 ->orderBy('description')
@@ -5202,22 +5262,19 @@ class TransactionsController extends Controller
 
             // get EndGBJob (when GB Limo job ends) from retirementdata table
             $gbDataDB = DB::table('retirementdata')
-                ->select('description', 'data', 'type')
+                ->select('description', 'data', 'modified')
                 ->where('description', 'EndGBJob')
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get()->toArray();
             
-            // keep 'inpt' type if it exists
+            // use "modified" if it exists
             $gbData = [];
             foreach($gbDataDB as $idx=>$datum) {
 
-                // keep if no value yet, keep it
-                if(!isset($gbData[$datum->description])) {
-                    $gbData[$datum->description] = $datum->data;
-
-                // change value if type is 'inpt'
-                } else if($datum->type == 'inpt') {
+                if($datum->modified !== null) {
+                    $gbData[$datum->description] = $datum->modified;
+                } else {
                     $gbData[$datum->description] = $datum->data;
                 }
             }
@@ -5278,7 +5335,7 @@ class TransactionsController extends Controller
             // get rental incomes from retirementdata
             $rentalData = DB::table('retirementdata')
                 ->select('description', 'data')
-                ->where('type', 'inpt')
+                ->where('type', 'assm')
                 ->where('description', 'like', '%rental%')
                 ->whereNull('deleted_at')
                 ->orderBy('description')
@@ -5337,13 +5394,31 @@ class TransactionsController extends Controller
             // get rental incomes from retirementdata
             $fixedIncomeDB = DB::table('retirementdata')
                 ->select('description', 'data')
-                ->where('type', 'inpt')
                 ->whereIn('description', [$incomeType, $incomeType . 'Start'])
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get();
-            $fixedIncome = $fixedIncomeDB->pluck('data');
-            $fixedIncome = $fixedIncome[0];
+
+            // if no data, look for last transactions record
+            if(count($fixedIncomeDB) == 0) {
+                $fixedIncomeTransactionDB = DB::table('transactions')
+                    ->select('toFrom', 'amount', 'total_amt')
+                    ->whereIn('toFrom', [$incomeType, $incomeType . 'Start'])
+                    ->whereNull('deleted_at')
+                    ->orderBy('trans_Date', 'desc')
+                    ->limit(1)
+                    ->get()->toArray();
+
+                $fixedIncomeTransactionDB = $fixedIncomeTransactionDB[0];
+                if($fixedIncomeTransactionDB->total_amt != null) {
+                    $fixedIncome = $fixedIncomeTransactionDB->total_amt;
+                } else {
+                    $fixedIncome = $fixedIncomeTransactionDB->amount;
+                }
+            } else {
+                $fixedIncome = $fixedIncomeDB->pluck('data');
+                $fixedIncome = $fixedIncome[0];
+            }
 
             if(count($fixedIncomeDB) == 2) {
                 $startDate = $fixedIncomeDB[1]->data;   // date to begin receiving income
@@ -5395,18 +5470,35 @@ class TransactionsController extends Controller
             // holds SS income estimate for each year 
             $SSIncomes = [];
 
-            // get SS income date from retirementdata
+            // get SS income date from transactions table
             if($who == 'Mike') $ssDataWhereIn = ['SSMike'];
             else if ($who == 'Maura') $ssDataWhereIn = ['MauraSSStart', 'MauraSS65', 'MauraSS67', 'SSMaura'];
             else $ssDataWhereIn = [];
 
+            if($who == 'Maura') {
             $SSData = DB::table('retirementdata')
                 ->select('description', 'data')
-                ->where('type', 'inpt')
                 ->whereIn('description', $ssDataWhereIn)
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get()->toArray();
+            } else {
+            // who = Mike
+                $SSData = (object)[];
+                $SSTransData = DB::table('transactions')
+                    ->select('toFrom', 'amount', 'total_amt')
+                    ->whereIn('toFrom', $ssDataWhereIn)
+                    ->whereNull('deleted_at')
+                    ->orderBy('toFrom', 'desc')
+                    ->limit(1)
+                    ->get()->toArray();
+                $SSData->description = 'SSMike';
+                if($SSTransData[0]->total_amt != null) {
+                    $SSData->data = $SSTransData[0]->total_amt;
+                } else {
+                    $SSData->data = $SSTransData[0]->amount;
+                }
+            }
 
             $today = date('Y-m-d');     // today in yyyy-mm-dd format
             $thisYear = date('Y');      // this year - yyyy
@@ -5415,7 +5507,7 @@ class TransactionsController extends Controller
                 // only SSMike returned
                 $start = '2024-01-01'; // old date - already started
                 $startYear = '2024';    // old - already started
-                $initIncome = $SSData[0]->data * 12;    // full year benefits
+                $initIncome = $SSData->data * 12;    // full year benefits
             } else if($who == 'Maura') {
                 // MauraSS65, MauraSS67, MauraSSStart, SSMaura (current amt if it's already started) returned in ABC order
                 $start = $SSData[2]->data;  // get start date
@@ -5437,7 +5529,7 @@ class TransactionsController extends Controller
                     error_log("ERROR:  Shouldn't have a start date for Maura SS that is not 2027 or 2029, or in the past");
                     $initIncome = 0;
                 }
-            }
+            }   // end of if Maura
 
             // start when SS starts for that person & increase pay by COLA for subsequent years
             // have benefits started yet?
@@ -5554,8 +5646,7 @@ class TransactionsController extends Controller
 
             // get the parameters from the retirementdata table
             $retirementParametersDB = DB::table('retirementdata')
-                ->select('description', 'data', 'type')
-                ->whereIn('type', ['inpt', 'assm', 'val'])
+                ->select('description', 'data', 'modified')
                 ->whereNull('deleted_at')
                 ->where(function($q) use ($retirementParametersFields) { 
                    $taxableRetIncomes[] = 0;
@@ -5567,15 +5658,13 @@ class TransactionsController extends Controller
                 ->get()->toArray();
 
             //  Reformat into associative array
-            //  When more than one 'description', use the type 'inpt' value
+            //  If "modified" exists, use that number
             $retirementParameters = [];
             foreach($retirementParametersDB as $retDatum) {
-                if(!isset($retirementParameters[$retDatum->description])) {
-                    $retirementParameters[$retDatum->description] = $retDatum->data;
+                if($retDatum->modified !== null) {
+                    $retirementParameters[$retDatum->description] = $retDatum->modified;
                 } else {
-                    if($retDatum->type == 'inpt') {
-                        $retirementParameters[$retDatum->description] = $retDatum->data;
-                    }
+                    $retirementParameters[$retDatum->description] = $retDatum->data;
                 }
             }
 
@@ -5757,7 +5846,6 @@ class TransactionsController extends Controller
         $defaultInflationFactor = DB::table('retirementdata')
             ->where('description', 'Inflation')
             ->whereNull('deleted_at')
-            ->orderByDesc('type')       // so inpt - input (rather than assm - assumed) is first
             ->value('data');
 
         // init each summaryCategory total to 0

@@ -8,17 +8,26 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  (create new one) ***</h2>
+  <h2>WORKING BRANCH:  ***  2026=04-06 ***    (NOTE =!!)</h2>
     <p>Last push: 4/5/26
     <br>NEW CHANGES:
-    <br>***
-    <br>***
+    <br>*** Fixed when GBMaxForExpenses changed
+    <br>*** Disallow changing WF #'s directly (use "Split IRAs" button)
+    <br>*** Disallow changing balances
+    <br>*** Stopped using "inpt" type in retirementdata. Use "modified" column instead.
+    <br>*** Calc annual rental income when rental income changed and save in retirementdata table. Don't calc every time forecast done.
+    <br>*** Ensure "modified" is null when value is default ("data" column in retirementdata).
     </p>
-    <p>To Do:<p>
+    <p>Working on</p>
+      <ul>
+        <li>RetirementForecast
+          <br>Some Assumptions & Balances 'disabled' so I can't changed them, and should be able to.
+        </li>
+      </ul>
+    <p>To Do:</p>
     <ul>
       <li>RetirementForecast
         <ul>
-          <li>BUG: When saving WF #'s, new record gets inserted w/out type, rather than updating the existing record, putting value in "modified" column.</li>
           <li>Check beginning balances for first column/year for (OK if retirementData table is correct).  These have been checked:
             <br>*** left off here mms mms - handle investment distributions when "spending" falls below $0.
             <br>****** adjust income taxes when this happens
@@ -83,7 +92,6 @@ forecastYears: 2026, 2027, ... 2062
     <ul>
       <li>Autofill "Car" during TOLLS upload; prompt for trip?</li>
       <li>Is changing Monthlies working??</li>
-      <li>Add charges en route to trips table - alert if 0 (may not be getting charges)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
