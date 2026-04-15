@@ -31,7 +31,6 @@
         <div hidden id="defaultInflationFactor">{{ $defaultInflationFactor }}</div>
         <div hidden id="incomeValues">{{ json_encode($incomeValues) }}</div>
         <div hidden id="retirementParameters">{{ json_encode($retirementParameters) }}</div>
-        <div hidden id="lastYearRetirementIncome">{{ json_encode($lastYearRetirementIncome) }}</div>
         @php 
             $currentYear = date("Y");
             $forecastLength = 2062 - $currentYear;
@@ -950,7 +949,7 @@
                             }
 
                         });
-                    }
+                    }   // end processInflationFactors
 
                     // calc expenses sub-total
                     function calcExpensesSubTot(year, expenseCategoriesWithSummaryCats) {
@@ -1609,7 +1608,7 @@
 
                         // put on page
                         $('#endSpending' + year).text(Math.round(endingSpending).toLocaleString());
-                    }
+                    }   // end calcEndingSpending
 
                     function calcSubTotals(year, type) {
 
@@ -1750,186 +1749,7 @@
                     });
 
                 }   // end calcYearByYear
-
-                // calc values dependent on previous year:
-                //      beginning balances after first forecast year, 
-                //      retirement income (tax and non-tax)
-                //      income taxes,
-                //      incomeOtherWH,
-                //      ending balances
-                function calcIncomeYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, firstOfThisMonth) {
-
-                    // declare needed vars
-                    var lastYearNonTaxableRetIncome, lastYearTaxableRetIncome;
-
-                    // get data from page, retirementParameters
-                    const balanceCategories = JSON.parse($("#balanceCategories").text());
-                    const InvGrowth = Number(retirementParameters['InvGrowth'])/100;
-
-                    // add this year to beginning of forecastYears array to calc this year's numbers, too
-                    const today = new Date();
-                    const currentYear = today.getFullYear();
-                    forecastYears.unshift(currentYear);
-
-                    // calculate income for each year
-                    forecastYears.forEach( (year, yrIdx) => {
-                        lastYear = year - 1;
-                        // copy last year's ending balances to this year's beginning balances
-                        // no need to do it for current year
-                        if(yrIdx != 0) {
-                            balanceCategories.forEach(category => {
-                                $('#' + category + year).text( $('#end' + category + (year-1)).text().toLocaleString() );
-                            });
-                        }
-
-                        // figure this year's retirement income
-                        if(yrIdx == 0 && year > 2025) {
-                            // Retirement income last year...
-                            //  if year > 2025
-                            //      and category = "IncomeRetirement"
-                            //      and amount > 0
-                            //      and toFrom in 'WF', 'WF-IRA', 'TIAA', 'DiscRet'
-                            //      notes should indicate if income is non-taxable (from Roth)
-                            //  I may not remember, so throw a message so I'll check
-                            // var retirementIncomeMsg = 'If this is not correct, FIX IT!!  Retirement income for ' + (year - 1) + "\n";
-                            lastYearNonTaxableRetIncome = 0;
-                            lastYearTaxableRetIncome = 0;
-                            // lastYearRetirementIncome.forEach( retIncome => {
-                            //     // retirementIncomeMsg += " - " + JSON.stringify(retIncome) + "\n";
-                            //     if(retIncome['notes'].includes('nontaxable') || retIncome['notes'].includes('non-taxable')) {
-                            //         lastYearNonTaxableRetIncome += Number(retIncome['amount']);
-                            //     } else {
-                            //         lastYearTaxableRetIncome += Number(retIncome['amount']);
-                            //     }
-                            // });
-
-                            // retirementIncomeMsg += "Non Taxable total: " + lastYearNonTaxableRetIncome + "\n" +
-                                // "Taxable total: " + lastYearTaxableRetIncome;
-                            // alert(retirementIncomeMsg);
-
-                        }
-                        [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome] = getRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome);
-
-                        // figure this year's investment growth based on average balances
-                        // some interest already earned in first year
-                        const growthSelectorPrefixes = ['#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
-                        const spendingSelectorPrefixes = ['#Spending', '#Investment', '#TaxableRetirement', '#TaxFreeRetirement'];
-
-                        // Income sub-totals need to be updated for these investment growths
-                        // Start with existing sub-total on page
-                        incomeSubtotal = 0;
-
-                        // will need LTC investment growth to project LTC values
-                        LTCInvGrowth = retirementParameters['LTCInvGrowth'];
-
-                        // first year calc'd differently
-                        if(yrIdx == 0) {
-                            // assume growth happened so far at expected rate, and add growth till end of year
-                            const month = Number(firstOfThisMonth.substring(5, 7));
-                            // number of months interest already earned
-                            const numMonthsToDate = month - 1;
-                            // number of months left to earn interest
-                            const numMonthsLeft = 12 - numMonthsToDate;
-                            // beginning_balance = balance_w_growth / ((interest_rate * months_interest_already_earned) + 1)
-                            //      derived from:  balance_w_growth = ((beginning_balance * interest_rate) * months_interest_already_earned) + beginning_balance
-                            //    where:
-                            //          origEst = beginning_balance
-                            //          $('#Investment' + year).text()  =  balance_w_growth
-                            //          InvGrowth   =   interest_rate
-                            //          numMonthsToDate = months_interest_already_earned
-
-                            //      for investments, tax retire, non tax retire
-                            growthSelectorPrefixes.forEach (selectorPrefix => {
-                                // const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
-                                const origEst = Number($(selectorPrefix + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
-
-                                // apply growth to original balance for number of months left
-                                const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
-                                $(selectorPrefix + 'Growth' + year).text(growthLeft.toLocaleString());
-
-                                // add growth to subtotal
-                                incomeSubtotal += growthLeft;
-
-                            });
-
-                        // other than first year
-                        } else {
-                            // for investments, tax retire, non tax retire; increase by invGrowth
-                            growthSelectorPrefixes.forEach (selectorPrefix => { 
-                                const beginBalance = $(selectorPrefix + year).text();
-                                const growth = Math.round(beginBalance * InvGrowth);
-                                $(selectorPrefix + 'Growth' + year).text(growth.toLocaleString());
-                                // add growth to subtotal
-                                incomeSubtotal += growth;
-                            });
-
-                            // -----------------------------
-                            // sum beginning balances
-                            var beginBal = 0;
-                            spendingSelectorPrefixes.forEach(prefix => {
-                                beginBal += Number($(prefix + year).text().replaceAll(",",""))
-                            });
-
-                            // put on the page
-                            $("#begSubTot" + year).text(beginBal.toLocaleString());
-                            // -----------------------------
-
-
-                            // -----------------------------
-                            // calc LTC contributions...
-                            var LTCgoal, OldLTCbalance, NewLTCbalance, contrib;
-
-                            // get LTC goal and LTC balance
-                            LTCgoal = Number($('#LTCgoal'+year).text().replaceAll(",",""));
-                            OldLTCbalance = Number($('#LTCBal'+lastYear).text().replaceAll(",",""));
-                            NewLTCbalance = Math.round(OldLTCbalance * (1+LTCInvGrowth/100));
-
-                            // if balance is more than goal, contrib is 0
-                            if(NewLTCbalance >= LTCgoal) {
-                                // put 0 LTC contribution on the page
-                                contrib = 0;    // needed later on
-                                $("#LTC"+year).text(contrib.toLocaleString());
-
-                            // else contribution is difference, up to $7500
-                            } else {
-                                // needs to be displayed as a negative (expense) number
-                                contrib = -Math.round(Math.min(7500, LTCgoal - NewLTCbalance));
-                                // put LTC contribution on the page as an expense
-                                $("#LTC"+year).text(contrib.toLocaleString());
-                            }
-                            // -----------------------------
-
-                            // -----------------------------
-                            // Update LTC balances...
-                            var LTCInvGrowth, LTCgrowth;
-
-                            // handle as a positive number here
-                            contrib = -contrib;
-                            
-                            // estimate growth expected
-                            LTCgrowth = Math.round((OldLTCbalance + contrib)*LTCInvGrowth/100);
-                            
-                            // estimate new LTC balance
-                            NewLTCbalance = OldLTCbalance + contrib + LTCgrowth;
-
-                            // put new LTC balance on the page
-                            $("#LTCBal"+year).text(NewLTCbalance.toLocaleString());
-                            // -----------------------------                           
-                            
-                        } // end else yrIdx = 0 (not 0 clause)
-
-                        // put updated income subtotal on page
-                        $('#income' + year).text(incomeSubtotal.toLocaleString());
-
-                        updateIncomeSubTotal(year);
-                        updateEndingBalances(year);
-                        
-                    });
-
-                    return;
-
-                }   // end function calcIncomeYearByYear
-                            
+                          
                 // calc estimated house values
                 function getHouseValues(forecastYears, retirementParameters) {
                     // get current year, initial house value & expected house growth
@@ -1987,72 +1807,6 @@
 
                 calcYearByYear(forecastYears, thisYear, expenseCategoriesWithSummaryCats, retirementParameters, budgetedExpensesForThisFullYearByCategory);
                 
-                // // get lastYearRetirementIncome
-                // var lastYearRetirementIncome = $("#lastYearRetirementIncome").text();
-                // lastYearRetirementIncome = JSON.parse(lastYearRetirementIncome);
-                
-                // // get summary Categories With detail Cats (same data as expenseCategoriesWithSummaryCats above structured differently)
-                // const sumCategoriesWithDetailCategories = JSON.parse($("#sumCategoriesWithDetailCategories").text());
-                
-                // // get default inflation factor
-                // const defaultInflationFactor = $("#defaultInflationFactor").text();
-
-                // // get incomeValues
-                // const incomeValues = JSON.parse($("#incomeValues").text());
-
-                // // get total expected expenses for rest of current year
-                // // get the expense categories
-                // const expenseKeys = Object.keys(budgetedExpensesForThisFullYearByCategory);
-
-                // // calc values dependent on previous year:
-                // //      beginning balances after first forecast year, 
-                // //      retirement income (tax and non-tax)
-                // //      income taxes,
-                // //      incomeOtherWH,
-                // //      ending balances
-                // // calcIncomeYearByYear(forecastYears, retirementParameters, lastYearRetirementIncome, firstOfThisMonth);
-
-                // // init total expenses
-                // thisYearRemainingExpenses = 0;
-                // // sum remaining expenses for this year
-                // expenseKeys.forEach(expense => {
-                //     thisYearRemainingExpenses += Number($('#'+expense+thisYear).text().replaceAll(",", ""));
-                // });
-                // // put sum on page
-                // $("#expenses" + thisYear).text(thisYearRemainingExpenses.toLocaleString());
-
-                // // need current year expenses by category and summary category
-                // [futureExpenses, futureExpensesSummary, futureExpensesYearlyTotal, summaryCategories] = calcFutureExpenses(forecastYears, expenseCategoriesWithSummaryCats, sumCategoriesWithDetailCategories, budgetedExpensesForThisFullYearByCategory, inflationFactors, defaultInflationFactor, incomeValues, retirementParameters);
-
-                // // calc LTC goal per year & put on page
-                // // assume contrib $7500 per year beginning in 2021 at LTCInvGrowth interest (from retirement parameters)
-                // // get ltc growth
-                // const LTCInvGrowth = retirementParameters['LTCInvGrowth'];
-                // // calcLTCGoals(7500, LTCInvGrowth/100, 2021, forecastYears);
-
-                // // calc IncomeTaxes, and write to page
-                // //  forecastYears.forEach( year => {
-                // //     if(year != thisYear) {
-                // //         futureExpenses[year]['IncomeTaxes'] = getIncomeTaxesExpense(year, retirementParameters);
-                // //         futureExpensesSummary[year]['Taxes'] += futureExpenses[year]['IncomeTaxes'];
-                // //         futureExpensesYearlyTotal[year] += futureExpenses[year]['IncomeTaxes'];
-                // //         $('#IncomeTaxes' + year).text(futureExpenses[year]['IncomeTaxes']);
-                // //     }
-                // // });
-
-                // // write each year's expenses to page
-                // summaryCategories = Object.keys(sumCategoriesWithDetailCategories);
-                // forecastYears.forEach( year => {
-                //     if(year != thisYear) {
-                //         summaryCategories.forEach( sumCategory => {
-                //             $("#" + sumCategory + year + "SUM").text(futureExpensesSummary[year][sumCategory].toLocaleString());
-                //         });
-                //         $("#expenses" + year).text(futureExpensesYearlyTotal[year]);
-                //     }
-                // });
-
-                // // calc estimated house value
-                // getHouseValues(forecastYears, retirementParameters);
             });  // end of document ready
 
 

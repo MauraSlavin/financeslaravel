@@ -28,11 +28,8 @@
           <li>Check beginning balances for first column/year for (OK if retirementData table is correct).  These have been checked:
             <br>*** left off here mms mms - handle investment distributions when "spending" falls below $0.
             <br>****** adjust income taxes when this happens
-            <br>*** Delete redundant code after calcYearByYear
             <br>***
-            <br>*** Delete lastYearRetirementIncome from TransactionsController and retirementForecast ??
-            <br>***
-            <br>*** Is this fixes?? Non-urgent fix: in calcRetirementIncome, when running the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
+            <br>*** Is this fixed?? Non-urgent fix: in calcRetirementIncome, when running the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
             <br>.
           </li>
           <li>clean up code</li>
@@ -87,7 +84,6 @@ forecastYears: 2026, 2027, ... 2062
     
 <h2>To do:</h2>
     <ul>
-      <li>Autofill "Car" during TOLLS upload; prompt for trip?</li>
       <li>Is changing Monthlies working??</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>

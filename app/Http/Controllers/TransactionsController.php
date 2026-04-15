@@ -5957,17 +5957,8 @@ class TransactionsController extends Controller
 
         // get retirement income from last year (NOT SS, IBM, NH)
         $retirementAccts = ['WF-IRA', 'TIAA', 'DiscRet'];
-        $lastYearRetirementIncome = DB::table('transactions')
-            ->select('amount', 'toFrom', 'notes')
-            ->whereBetween('trans_date', [$firstOfLastYear, $lastOfLastYear])  // last year
-            ->where('category', 'IncomeRetirement')
-            ->whereIn('toFrom', $retirementAccts)
-            ->where('amount', '<', 0)                                           // only withdrawals from retirement accts
-            ->whereNull('deleted_at')
-            // ->where ('trans_date', '>', '2025-12-31')                           // nothing before 2026
-            ->get()->toArray();
 
-        return view('retirementForecast', compact('firstOfThisMonth', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'restOfYearBudgetByCategory', 'restOfYearBudgetBySUMMARYCategory', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'budgetedExpensesForThisFullYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
+        return view('retirementForecast', compact('firstOfThisMonth', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'restOfYearBudgetByCategory', 'restOfYearBudgetBySUMMARYCategory', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'budgetedExpensesForThisFullYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal'));
     }
 
     // insert a new toFromAlias record
