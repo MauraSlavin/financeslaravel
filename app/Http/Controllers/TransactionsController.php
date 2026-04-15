@@ -249,15 +249,48 @@ class TransactionsController extends Controller
                 }
             }
         }
+        
+        // no data in tolls csv file.  Build empty rcd to avoid error.
+        if($rowNumber == 0) {
+            $rcdsExist = false;
+        } else {
+            $rcdsExist = true;
+        }
 
+        
         // close the csv file
         fclose($handle);
-
-        // eliminate dups in csv file
-        $tollData = removeDupCSVTolls($tollData);
         
-        // eliminate tolls from tollData that are already in tolls table
-        $tollData = removeDupTableTolls($tollData);
+        if($rcdsExist) {
+            // eliminate dups in csv file
+            $tollData = removeDupCSVTolls($tollData);
+            
+            // eliminate tolls from tollData that are already in tolls table
+            $tollData = removeDupTableTolls($tollData);
+
+            // get car data (Bolt, CRZ, etc.)
+            // retrieve suffixes for each car
+            $EZPassSuffixDB = DB::table('carcostdetails')
+                ->select('car', 'value')
+                ->where('key', 'EZPassSuffix')
+                ->get()->toArray();
+            $carSuffixes = array_column($EZPassSuffixDB, 'value');
+
+            // add car data
+            foreach($tollData as $dataIdx=>$dataRcd) {
+                // find which suffix matches the current record to determine which car it is
+                $found = false;
+                foreach($carSuffixes as $carIdx=>$carSuffix) {
+                    if(strpos( $dataRcd["Transponder/Plate"], $carSuffix) !== false) {
+                        $found = true;
+                    }
+                    if($found) break;
+                }
+                // put car in record
+                $tollData[$dataIdx]['car'] = $EZPassSuffixDB[$carIdx]->car;
+
+            }
+        }
 
         return $tollData;
     }   // end function readTollCSV
@@ -1341,21 +1374,33 @@ class TransactionsController extends Controller
     }   // end of function upload
 
 
-    // reads the csv file, massages, and writes to tolls table
-    // tolls to upload should be in public/uploadFiles/tolls
+    // READ toll records from csv file (only keeping what is needed); autofills car
     public function uploadtolls() {
 
-        // READ toll records from csv file (only keeping what is needed)
         $tollRcds = $this->readTollCsv();
 
-        // Write toll records to tolls table
-        $result = DB::table('tolls')
+        // Write toll records to tolls table if any exist
+        if(count($tollRcds) != 0) {
+            $result = DB::table('tolls')
                 ->insert($tollRcds);
+            $numberRcdsWritten = count($tollRcds);
+        } else {
+            $result = true;
+            $numberRcdsWritten = 0;
+        }
+
+        // Get tolls missing a trip field
+        $missingTrips = DB::table('tolls')
+            ->whereNull('trip')
+            ->where('Outgoing', '!=', 0)
+            ->get()->toArray();
 
         if($result) {
             return response()->json([
-                'message' => 'Tolls successfully written to tolls table. ' . $result,
-                'status' => 'success'
+                'message' => $numberRcdsWritten . ' records successfully written to Tolls written to tolls table. ' . $result,
+                'status' => 'success',
+                'missingTrips' => json_encode($missingTrips),
+                'rcdsWritten' => $numberRcdsWritten
             ]);
         } else {
             return response()->json([
@@ -5924,5 +5969,54 @@ class TransactionsController extends Controller
 
         return view('retirementForecast', compact('firstOfThisMonth', 'spending', 'ccdebt', 'investments', 'retirementTaxable', 'retirementNonTaxable', 'retirementParameters', 'beginBalances', 'incomeValues', 'restOfYearBudgetByCategory', 'restOfYearBudgetBySUMMARYCategory', 'expenseCategoriesWithSummaryCats', 'sumCategoriesWithDetailCategories', 'budgetedExpensesForThisFullYearByCategory', 'defaultInflationFactor', 'inflationFactors', 'spendingAccts', 'ccAccts', 'invAccts', 'retTaxAccts', 'retNonTaxAccts', 'initLTCBal', 'lastYearRetirementIncome'));
     }
+
+    // insert a new toFromAlias record
+    public function updateTripDescs($tripDates, $tripTimes, $tripCars, $tripDescs) 
+    {
+
+        $tripDates = urldecode($tripDates);
+        $tripDates = explode(",", $tripDates);
+    
+        $tripTimes = urldecode($tripTimes);
+        $tripTimes = explode(",", $tripTimes);
+        
+        $tripCars = urldecode($tripCars);
+        $tripCars = explode(",", $tripCars);
+        
+        $tripDescs = urldecode($tripDescs);
+        $tripDescs = explode(",", $tripDescs);
+
+        try {
+            foreach($tripDescs as $tripIdx=>$tripDesc) {
+                $response = DB::table('tolls')
+                    ->where('Transaction Date', $tripDates[$tripIdx])
+                    ->where('Transaction Time', $tripTimes[$tripIdx])
+                    ->where('Car', $tripCars[$tripIdx])
+                    ->update([
+                        'Trip' => $tripDesc,
+                        'copied' => 'needupt'
+                    ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip fields in Tolls table updated successfully',
+            ], 200);
+        } catch(\Exception $e) {
+            error_log("\nProblem updating Trip column in Tolls table.");
+            error_log(json_encode(['exception' => $e]));
+            \Log::error('Problem updating Trip column in Tolls table.' . $e->getMessage());
+            return response()->json([
+                'error' => 'An unexpected error occurred',
+                'details' => $e->getMessage(),
+                'code' => $e->getCode()
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Trip columns in Tolls table updated successfully',
+            'status' => 'success'
+        ]);
+    }    
 
 }
