@@ -157,6 +157,68 @@
                 }
                 var areAllTrue = Object.values(processTripArray).every(value => value === true);
 
+                // prompt for a brief trip description where missing in tolls table
+                function promptForTrip(missingTrips) {
+                    var tripDates, tripTimes, tripCars, tripDescs, tripDesc, tripMsg, confirmed;
+                    tripDates = [];
+                    tripTimes = [];
+                    tripCars = [];
+                    tripDescs = [];
+                    var missingTrips = JSON.parse(missingTrips);
+                    missingTrips.forEach( missingTrip => {
+                        confirmed = false;
+                        while(!confirmed) {
+                            tripMsg = "Trip for this record should be: \n"
+                                + "Date: " + missingTrip["Transaction Date"] + "\n"
+                                + "Time: " + missingTrip["Transaction Time"] + "\n"
+                                + "Agency: " + missingTrip["Agency"] + "\n"
+                                + "Entry - Exit - Lane: " + missingTrip["Entry Plaza"] + " - " + missingTrip["Exit Plaza"] + " - " + missingTrip["Exit Lane"] + "\n"
+                                + "Toll: " + missingTrip["Outgoing"] + "\n"
+                                + "CAR: " + missingTrip["Car"];
+                            tripDesc = prompt(tripMsg + "\n\n"
+                                + "(for spending, use this format: <desc> mm-dd-yy)"
+                            );
+                            confirmed = confirm("You said: " + tripDesc + ". Is that correct?");
+                        }
+                        if(tripDesc != '') {
+                            tripDescs.push(tripDesc);
+                            tripDates.push(missingTrip["Transaction Date"]);
+                            tripTimes.push(missingTrip["Transaction Time"]);
+                            tripCars.push(missingTrip["Car"]);
+                        }
+                    });
+
+                    // only update tripDescs (Trip column) in tolls table if there are some
+                    if(tripDescs.length != 0) {
+                        tripDates = encodeURIComponent(tripDates);
+                        tripTimes = encodeURIComponent(tripTimes);
+                        tripCars  = encodeURIComponent(tripCars);
+                        tripDescs = encodeURIComponent(tripDescs);
+
+                        var url = '/accounts/trip/updateTripDescs/' + tripDates + '/' + tripTimes + '/' + tripCars + '/' + tripDescs;
+
+                        // send ids and trips all at once - just one ajax call
+                        $.ajax({
+                            url: url,
+                            type: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}"
+                            },
+                            dataType: 'json',
+
+                            success: function(response) {
+                                // no need to do anything
+                                console.log("Trip column in tolls table updated successfully.");
+                            },
+
+                            error: function(xhr, status, error) {
+                                var errorMsg = "Error updating 'Trip' in tolls table.";
+                                console.error(errorMsg, xhr.responseJSON ? xhr.responseJSON.error : error);
+                                alert(errorMsg + ": " + (xhr.responseJSON ? xhr.responseJSON.details : error));
+                            }
+                        });
+                    } // end of if no tripDescs
+                }
                 
                 // note that name was entered (to determine if Process Trip button should be enabled)
                 $('#tripName').on('blur', function(e) {
@@ -357,7 +419,10 @@
                         },
                         success: function(response) {
                             console.log("response: ", response);
-                            alert("Tolls successfully written to tolls table.\n\n*** IMPT NOTE: Edit tolls table to include Car and Trip in table.\n\nselect * from tolls where updated_at >= <today>;\n\nSee tolls MySQL script.");
+                            var rcdsWritten = response['rcdsWritten'];
+                            alert(rcdsWritten + " Tolls successfully written to tolls table.");
+                            var missingTrips = response['missingTrips'];
+                            promptForTrip(missingTrips);
                         },
                         error: function(xhr, status, error) {
                             var errorMsg = "Error writing tolls to tolls table";

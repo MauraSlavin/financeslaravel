@@ -48,6 +48,8 @@ Route::get('/accounts/spending/maura', 'App\Http\Controllers\TransactionsControl
 Route::get('/accounts/monthly', 'App\Http\Controllers\TransactionsController@monthly')->name('monthly');
 // Retirement analysis
 Route::get('/accounts/retirementInput', 'App\Http\Controllers\TransactionsController@retirementInput')->name('retirementInput');
+// update "Trip" column of tolls table with short description of the trip
+Route::post('/accounts/trip/updateTripDescs/{tripDates}/{tripTimes}/{tripCars}/{tripDescs}', 'App\Http\Controllers\TransactionsController@updateTripDescs');
 // calc cost for a trip
 Route::get('/accounts/trips', 'App\Http\Controllers\TransactionsController@trips')->name('trips');
 // sum tolls for a specific trip, using records in tolls table
