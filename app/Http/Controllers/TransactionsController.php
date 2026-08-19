@@ -374,7 +374,7 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->where('transToFrom', 'IGNORE')
             ->pluck('origToFrom');
-                    
+   
         // get mapping information (which csv fields map to which trans fields, including formulas)
         $mapping = DB::table("accounts")
             ->leftJoin("uploadmatch", "accounts.id", '=', "uploadmatch.account_id")
@@ -383,7 +383,7 @@ class TransactionsController extends Controller
             ->whereNull('uploadmatch.deleted_at')
             ->where("accountName", $accountName)
             ->get()->toArray();
-        
+
         $current_split_idx = 0;
 
         // build transaction record from csv file record and write to the transactions table
@@ -429,6 +429,12 @@ class TransactionsController extends Controller
                     }
 
                     // evaluate the formula to get the data needed
+                    // make sure blanks are 0's
+                    if(isset($transaction['Credit']) && !is_numeric($transaction['Credit'])) 
+                        $transaction['Credit'] = 0;
+                    if(isset($transaction['Debit']) && !is_numeric($transaction['Debit'])) 
+                        $transaction['Debit'] = 0;
+
                     $newRecord->{$map->transField} = eval( "return $formula;");
 
                     // field is done, remove from fieldsLeft
@@ -436,9 +442,11 @@ class TransactionsController extends Controller
                 }
                 
                 // the trans_date and clear_date need to be reformatted (mm/dd/yyyy to yyyy-mm-dd)
-                if(strpos($map->transField, "_date") !== false) {
-                     $newRecord->{$map->transField} = reformatDate( $newRecord->{$map->transField});
-                }
+                // Capital One has correct date format; Discover needed to be converted.
+                // Next 3 lines may need to be uncommented if other accts still need it.
+                // if(strpos($map->transField, "_date") !== false) {
+                //      $newRecord->{$map->transField} = reformatDate( $newRecord->{$map->transField});
+                // }
             }
 
             // guess at statement date.  
@@ -1553,7 +1561,7 @@ class TransactionsController extends Controller
     }
 
 
-    // update a investment account balances
+    // update investment account balances
     public function updateInvBalances(Request $request)
     {
         // reformats $date as yy-Mon (where Mon is a 3 char month abbrev)
@@ -2299,6 +2307,7 @@ class TransactionsController extends Controller
             $transaction['category'] = 'Transfer';
             $transaction['stmtDate'] = $request->input('gbstmtdate');
             $transaction['notes'] = "2026 GB Limo Tax";
+            $transaction['method'] = 'Zelle';
            
             DB::table("transactions")
                 ->insert($transaction);
@@ -4734,7 +4743,7 @@ class TransactionsController extends Controller
                         // set msg to what is being updated in REMOTE
 
                         // get REMOTE record with that id
-                        $remoteRcd = table($table)
+                        $remoteRcd = DB::table($table)
                             ->where('id', $localRcd->id)
                             ->first();
                         
@@ -5830,6 +5839,8 @@ class TransactionsController extends Controller
             json_encode($mauraIBMIncomes),
             // Maura SS
             json_encode($mauraSSIncomes),
+            // Distribution from investment placeholders
+            json_encode($taxableRetIncomes),  // don't need a separate variable since it's just placeholders
             // Taxable retirement placeholders
             json_encode($taxableRetIncomes),
             // non-taxable retirement placeholders

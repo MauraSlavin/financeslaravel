@@ -263,7 +263,7 @@ h5, h6 {
 .blinking {
     animation: opacity 2s ease-in-out infinite;
     opacity: 1;
-    color: red !important;
+    color: orange !important;
 }
 
 @keyframes opacity {
@@ -271,7 +271,15 @@ h5, h6 {
     opacity: 1;
   }
 
+  25% {
+    opacity: 0
+  }
+
   50% {
+    opacity: 1
+  }
+
+  75% {
     opacity: 0
   }
 
