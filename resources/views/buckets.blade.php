@@ -141,13 +141,9 @@
 
                 // if there is a goal amount, add to goal totals
                 if(rowData.find(".goalAmt").text() != '') {
-                    var goalAmt = parseFloat(rowData.find(".goalAmt").text())
+                    var goalAmt = parseFloat(rowData.find(".goalAmt").text());
                     goalTotal += goalAmt;
-
-                    // only increment the goal balance if there is a non-zero goal amt
-                    if(goalAmt > 0) {
-                        goalBalance += parseFloat(rowData.find(".balance").text());
-                    }
+                    goalBalance += parseFloat(rowData.find(".balance").text());
                 }
             });
 
