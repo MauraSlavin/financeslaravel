@@ -11,9 +11,25 @@
   <h2>WORKING BRANCH:  ***  2026-04-15 ***</h2>
     <p>Last push: 4/15/26
     <br>NEW CHANGES:
-    <br>*** 
+    <br>Search "mms negative"
+    <br>*** Handle if Spending goes negative (I <u>THINK</u> this is done).
+    <br>*** Handle if Investments goes negative (I <u>THINK</u> this is done). - needs testing
+    <br>*** In 2056, "Tax Retire" Income goes negative.  This shouldn't happen.
     </p>
-    <p>
+    <p>NOTE: retirementData and DiscSavings out of sync after sync'g</p>
+    <p>Working on...
+    <br> - when Investment fall below 0
+    <br> -- have line for money taken from investments, need to update it when money is taken
+    <br> -- LEFT OFF HERE...
+    <br> --- updated dist from investments - check to make sure totals are still correct (update Google sheet)
+    <br> -- "BigItems" vs. "BigExpenses"
+    <br> ---- Right now, "BigItems" is a bucket category & separate Disc acct ("Irreg Big Items")
+    <br> ---- ...and "BigExpenses" only used 2025 for my dental work.
+    <br> -- SHOULD have BigItems (or BigExpenses) as a category when it gets transferred to IrregBig acct
+    <br> - "mms negative"
+    <br> - does income taxes need to be adjusted?
+    <br> - does investment income need to be adjusted?
+    <br> - to totals and/or subtotals need to be adjusted?
     </p>
     <p>Working on (paused)</p>
       <ul>
@@ -78,8 +94,8 @@ forecastYears: 2026, 2027, ... 2062
   
 <h2>BUGS</h2>
   <ul>
+    <li>Total on Buckets page isn't including new Medical bucket</li>
     <li>Total_amt on transactions page isn't ignoring deleted records</li>
-    <li>On BUCKETS page, Goal Totals missing RetSavings amt</li>
   </ul>
     
 <h2>To do:</h2>

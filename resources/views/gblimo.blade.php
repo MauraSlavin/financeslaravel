@@ -91,7 +91,7 @@
             
             <!-- Paycheck date -->
             <div class="form-row">
-                <label class="gbpaycheckdatelabel" for="gbpaycheckdate">Paycheck date (from checking): </label><br>
+                <label class="gbpaycheckdatelabel" for="gbpaycheckdate">Paycheck date (from checking or date on check): </label><br>
                 <input class="form-control gbpaycheckdateinput" type="date" id="gbpaycheckdate" name="gbpaycheckdate" value="{{ $gbpaycheckdate }}" required>
             </div>
 

@@ -168,7 +168,7 @@
 
                     <!-- Income --> 
                     @php 
-                        $accountNames = ["Town of Durham", "GB Limo", "Rental", "NH Retirement", "Mike IBM", "Mike SS", "Maura IBM", "Maura SS", "Tax Retire", "Non Tax Retire", "Investment Growth", "Taxable Retirement Growth", "Tax Free Retirement Growth"];
+                        $accountNames = ["Town of Durham", "GB Limo", "Rental", "NH Retirement", "Mike IBM", "Mike SS", "Maura IBM", "Maura SS", "Dist from Investmts", "Tax Retire", "Non Tax Retire", "Investment Growth", "Taxable Retirement Growth", "Tax Free Retirement Growth"];
                         // NO inherited IRA - income from that goes to LTC
                     @endphp
                     <tr id="incomeForecast">
@@ -734,7 +734,7 @@
                 // calculate future retirement income
                 function getRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome) {
                     // when to start taking retirement funds
-                    const twoDigitYearStart = retirementParameters['RetDistribBegin'].substring(4, 6);
+                    const twoDigitYearStart = Number(retirementParameters['RetDistribBegin'].substring(4, 6));
                     const twoDigitIteratedYear = year-2000;
 
                     // if not getting retirement yet, change the retirement income values to 0 for the year
@@ -825,103 +825,6 @@
 
                 }   // end function updateIncomeSubTotal
 
-
-                // end spending = beginning spending + income (except retirement growth and inv growth) - expenses
-                // end investments = begining investments + inv growth - needed for spending (if end spending is negative)
-                // end tax ret = beginning tax ret + tax ret inv growth - tax retirement income
-                // end non-tax ret = beginning non-tax ret + non-tax ret inv growth - non-tax retirement income
-                function updateEndingBalances(year) {
-
-                    endingSubTotal = 0;    // for Sub-total
-
-                    summaryCategories = ['Spending', 'CreditCardDebt', 'Investment', 'TaxableRetirement', 'TaxFreeRetirement'];
-
-                    // adjustments are needed to make sure balances don't fall below 0.
-                    // set all to 0 to start
-                    var adjustments = [];
-                    summaryCategories.forEach(category => {
-                        adjustments[category] = 0;
-                    });
-
-                    selectorPrefixesToAdd = [];
-                    selectorPrefixesToSubtract = [];
-                    
-                    // spending
-                    // left off here -- expenses aren't calc'd yet!!
-                    selectorPrefixesToAdd['Spending'] = ['income', 'CreditCardDebt', 'expenses'];     // cc debt & expenses "added" because it's a negative number on the page
-                    // selectorPrefixesToAdd['Spending'] = ['income', 'expenses'];     // expenses "added" because it's a negative number on the page
-                    selectorPrefixesToSubtract['Spending'] = ['InvestmentGrowth', 'TaxableRetirementGrowth', 'TaxFreeRetirementGrowth'];
-
-                    // investments
-                    selectorPrefixesToAdd['Investment'] = ['InvestmentGrowth'];
-                    selectorPrefixesToSubtract['Investment'] = [];
-                    
-                    // taxable retirement
-                    selectorPrefixesToAdd['TaxableRetirement'] = ['TaxableRetirementGrowth'];
-                    selectorPrefixesToSubtract['TaxableRetirement'] = ['TaxRetire'];
-
-                    // investments
-                    selectorPrefixesToAdd['TaxFreeRetirement'] = ['TaxFreeRetirementGrowth'];
-                    selectorPrefixesToSubtract['TaxFreeRetirement'] = ['NonTaxRetire'];
-
-                    // calc each ending balance
-                    summaryCategories.forEach( summaryCategory => {
-                        // start with beginning balance for the year
-                        // get value from page
-                        var endingBalance = $('#' + summaryCategory + year).text();
-
-                        // strip commas and make it a number
-                        endingBalance = Number(endingBalance.replaceAll(',', ''));
-                        
-                        // add incomes for this summary category
-                        selectorPrefixesToAdd[summaryCategory].forEach( addPrefix => {
-                            // get value from page
-                            var income = $('#' + addPrefix + year).text();
-
-                            // strip commas and make it a number
-                            income = Number(income.replaceAll(',', ''));
-
-                            // add to balance
-                            endingBalance += income;
-
-                        });
-
-                        // subtract expenses for this summary category
-                        selectorPrefixesToSubtract[summaryCategory].forEach( subPrefix => {
-                            // get value from page
-                            var expense = $('#' + subPrefix + year).text();
-
-                            // strip commas and make it a number
-                            expense = Number(expense.replaceAll(',', ''));
-
-                            // subtract from balance
-                            endingBalance -= expense;
-                        });
-
-                        // if balance is below 0, need to adjust; or highlight in red where it goes negative
-                        if(endingBalance < 0 && summaryCategory == 'Spending') {
-                            const adj = -endingBalance + 2000;  // Random $2000 buffer
-                            adjustments['Spending'] += adj;
-                            adjustments['Investment'] += -adj;
-                        }
-                        
-                        // Adjust endingBalance as needed; highlight if below 0
-                        endingBalance += adjustments[summaryCategory];
-                        if(endingBalance < 0) $('#end' + summaryCategory + year).css('background-color', 'red');
-
-                        // put result on page
-                        $('#end' + summaryCategory + year).text(endingBalance.toLocaleString());
-
-                        // add to subTotal
-                        endingSubTotal += endingBalance;                        
-
-                    });
-
-                    // put subtotal on page
-                    $('#ending' + year).text(endingSubTotal.toLocaleString());
-
-                    return;
-                }   // end function updateEndingBalances
 
                 // calc values dependent on previous year
                 function calcYearByYear(forecastYears, thisYear, expenseCategoriesWithSummaryCats, retirementParameters, budgetedExpensesForThisFullYearByCategory) {
@@ -1027,6 +930,13 @@
                         var categoriesToAdd = [];
                         var categoriesToSubtract = [];
                         
+                        // adjustments are needed to make sure balances don't fall below 0.
+                        // set all to 0 to start
+                        var adjustments = [];
+                        balanceCategories.forEach(category => {
+                            adjustments[category] = 0;
+                        });
+
                         // set items to add or subtract for each balance category
                         // NOTE:  cc debt will always assume to be 0 since it's paid off monthly
 
@@ -1066,8 +976,29 @@
                                 endingBalance -= amount;
                             });
 
+                            // if account goes below 0, handle
+                            // mms negative
+                            if(endingBalance < 0 && balanceCategory == 'Spending') {
+                                const adj = -endingBalance + 2000;  // Random $2000 buffer
+                                adjustments['Spending'] += adj;
+                                adjustments['Investment'] -= adj;
+
+                                // turn Spending and investment red
+                                $('#endSpending' + year).css('background-color', 'red');
+                                $('#endInvestment' + year).css('background-color', 'red');
+
+                                // update distribution from investments
+                                $('#DistfromInvestmts' + year).text(adj.toLocaleString());
+                            }
+
+                            // Adjust endingBalance as needed; highlight if below 0
+                            endingBalance += adjustments[balanceCategory];
+
                             // put on page
                             $('#end' + balanceCategory + year).text(endingBalance.toLocaleString());
+
+                            // if ending balance is still <0 make it "blink"
+                            if(endingBalance < 0 ) $('#end' + balanceCategory + year).addClass('blinking');
                             endingBalanceSubTot += endingBalance;
                         });
 
@@ -1350,7 +1281,7 @@
                         const currentYear = Number($('#currentYear').text());
                         const lastYear = year-1;
                         const currMonth = Number($('#firstOfThisMonth').text().substr(5, 2));
-                        const twoDigitYearStart = retirementParameters['RetDistribBegin'].substring(4, 6);
+                        const twoDigitYearStart = Number(retirementParameters['RetDistribBegin'].substring(4, 6));
                         const twoDigitIteratedYear = year-2000;
                         const growth = Number(retirementParameters['InvGrowth'])/100;
                         const fractionOfYearInvested = (currMonth * 30)/365;    // assume 30 day months; for rolling back growth
@@ -1598,16 +1529,64 @@
                         const creditCard = Number($('#CreditCardDebt' + year).text().replaceAll(",", ""));
                         const income = Number($('#income' + year).text().replaceAll(",", ""));
                         const expenses = Number($('#expenses' + year).text().replaceAll(",", ""));
-                        // don't include investment or tetirment account growth; they're accounted for separately
+                        // don't include investment or retirment account growth; they're accounted for separately
                         const investmentGrowth = Number($('#InvestmentGrowth' + year).text().replaceAll(",", ""));
                         const taxRetGrowth = Number($('#TaxableRetirementGrowth' + year).text().replaceAll(",", ""));
                         const taxFreeRetGrowth = Number($('#TaxFreeRetirementGrowth' + year).text().replaceAll(",", ""));
 
                         // sum everything up (expenses is a negative number, so add it)
-                        const endingSpending = beginSpending + creditCard + income + expenses - (investmentGrowth + taxRetGrowth + taxFreeRetGrowth);
+                        var endingSpending = beginSpending + creditCard + income + expenses - (investmentGrowth + taxRetGrowth + taxFreeRetGrowth);
+
+                        // mms negative
+                        // if balance goes below 0
+                        if(endingSpending < 0)  {
+                            const adj = -endingSpending + 2000;  // Random $2000 buffer
+                            endingSpending += adj;
+
+                            // adjust investment amt; growth isn't adjusted (yet) ... might be ok   mms
+                            var investment = Number($('#endInvestment' + year).text().replaceAll(",", ""));
+                            investment -= adj;
+                            $('#endInvestment' + year).text(investment);
+
+                            // turn Spending and investment red
+                            $('#endSpending' + year).css('background-color', 'red');
+                            $('#endInvestment' + year).css('background-color', 'red');
+
+                            // update distribution from investments
+                            $('#DistfromInvestmts' + year).text(adj.toLocaleString());
+
+                            // if ending balance is still <0 make it "blink"
+                            if(endingSpending < 0) $('#endSpending' + year).addClass('blinking');  // spending
+                            // left off here...  if investment < 0, adjust balances
+                            if(investment < 0) {
+                                $('#endInvestment' + year).addClass('blinking');  // investment
+
+                                // bring investment balance back up to 0
+                                $('#endInvestment' + year).text("0");
+                                // adjust income line to match
+                                const origTaxRetireIncome = Number($('#DistfromInvestmts' + year).text().replaceAll(",", ""));
+                                $('#DistfromInvestmts' + year).text(Math.round(origTaxRetireIncome + investment).toLocaleString());
+
+                                // take 1/2 from taxable retirement and 1/2 from non-tax retirement
+                                const origEndTaxRetirement = Number($('#endTaxableRetirement' + year).text().replaceAll(",", ""));
+                                const origEndTaxFreeRet = Number($('#endTaxFreeRetirement' + year).text().replaceAll(",", ""));
+                                $('#endTaxableRetirement' + year).text(Math.round(origEndTaxRetirement + .5 * investment).toLocaleString());
+                                $('#endTaxFreeRetirement' + year).text(Math.round(origEndTaxFreeRet + .5 * investment).toLocaleString());
+
+                                // adjust income lines
+                                const origTaxRetirementIncome = Number($('#TaxRetire' + year).text().replaceAll(",", ""));
+                                const origTaxFreeIncome = Number($('#NonTaxRetire' + year).text().replaceAll(",", ""));
+                                $('#TaxRetire' + year).text(Math.round(origTaxRetirementIncome + .5 * investment).toLocaleString());
+                                $('#NonTaxRetire' + year).text(Math.round(origTaxFreeIncome + .5 * investment).toLocaleString());
+
+                            }
+                            
+                        }
 
                         // put on page
                         $('#endSpending' + year).text(Math.round(endingSpending).toLocaleString());
+
+
                     }   // end calcEndingSpending
 
                     function calcSubTotals(year, type) {
@@ -1721,13 +1700,13 @@
 
                             // calc income tax
                             calcIncomeTaxExpense(year, retirementParameters);
-                            
+
                             // calc summary totals and sub totals
                             // handle when spending accounts go below 0 (take from investments)
                             calcSummarySubTotals(year);
 
-                            // calc begin subtotals
-                            calcSubTotals(year, 'begin');
+                            // NOTE: begin subtotals already done
+
                             // calc income subtotals
                             calcSubTotals(year, 'income');
 
@@ -1737,13 +1716,6 @@
 
                             // calc ending balances
                             calcSubTotals(year, 'end');
-
-                            // left off here mms mms
-                            //      handle when spending falls below 0 (take from investment acct)
-                            //          adjust income taxes if money taken from investements
-                            //
-                            // figure sub-totals
-
 
                         }
                     });
