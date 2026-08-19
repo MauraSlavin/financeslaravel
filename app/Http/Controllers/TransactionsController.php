@@ -3640,7 +3640,7 @@ class TransactionsController extends Controller
             $transactionsBucketBalance = DB::table('transactions')
                 ->where("account", "DiscSavings")
                 ->whereIn("bucket", [
-                    'BigItems', 'College', 'CC', 'Holiday', 'Insurance', 'LTC', 'Misc', 'PropertyTax', 'RetSavings', 'Vacation', 'Water'
+                    'BigItems', 'College', 'CC', 'Holiday', 'Insurance', 'LTC', 'Medical', 'Misc', 'PropertyTax', 'RetSavings', 'Vacation', 'Water'
                 ])
                 ->whereNull('deleted_at')
                 ->select(
