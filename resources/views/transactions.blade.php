@@ -1146,12 +1146,38 @@
                             '\n\n"' + origToFrom.substr(0, numberOfAliasCharsToMatch) + '..." \n     to\n"' + newValue + '"';
                         var saveAlias = confirm(question);
                         
+                        // save alias if that was requested
                         if(saveAlias) {
+                            // prep variables to send to controller to update db
                             origToFrom = origToFrom.substr(0, numberOfAliasCharsToMatch);
                             origToFrom = encodeURIComponent(origToFrom);
                             newValue = encodeURIComponent(newValue);
-                            
-                            var url = '/transactions/insertAlias/' + origToFrom + '/' + newValue;
+
+                            var category = 'nocategory';    // assume no default category
+                            var splits = 'nosplits';        // assume no default splits
+                            var categories = prompt("What should the default categories be (comma separated)? (optional)");
+
+                            if(categories != '') {
+                                // remove blanks
+                                categories = categories.replaceAll(/\s/g, '');
+                                // separate categories into an array
+                                categories = categories.split(",");
+
+                                // split off first category; categories (splits) has remaining elements
+                                category = categories.shift();
+                                if(categories.length == 0) splits = 'nosplits';  // nosplits is filler for url if needed
+                                else splits = JSON.stringify(categories);
+                            }
+
+                            var notes = prompt("What should the default notes be? (optional)");
+                            var tracking = prompt("What should the default tracking be? (optional)");
+
+                            // need fillers for url
+                            if(category == '') category = 'nocategory';
+                            if(notes == '') notes = 'nonotes';
+                            if(tracking == '') tracking = 'notracking';
+
+                            var url = '/transactions/insertAlias/' + origToFrom + '/' + newValue + '/' + accountId + '/' + category + '/' + notes + '/' + tracking + '/' + splits;
                            
                             $.ajax({
                                 url: url,
