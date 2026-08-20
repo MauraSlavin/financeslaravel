@@ -1635,18 +1635,65 @@ class TransactionsController extends Controller
 
 
     // insert a new toFromAlias record
-    public function insertAlias($origToFrom, $newValue) 
+    public function insertAlias($origToFrom, $newValue, $accountId, $category, $notes, $tracking, $splits) 
     {
 
+        // remove fillers for url
+        if($category == 'nocategory') $category = '';
+        if($notes == 'nonotes') $notes = '';
+        if($tracking == 'notracking') $tracking = '';
+
+        // splits might have special characters; need urldecode to use
+        $splits = urldecode($splits);
+        if($splits == 'nosplits') {
+            $splits = '';
+        } else {
+            $splits = json_decode($splits);
+        }
+
         $origToFrom = urldecode($origToFrom);
+        // all lower case, and only first 11 chars
+        $origToFrom = substr($origToFrom, 0, 11);
+        $origToFrom = strtolower($origToFrom);
+
         $newValue = urldecode($newValue);
+
+        // format each parameter for aliases table
+        if($notes != '') {
+            $notesPart = '"notes":"' . $notes . '"';
+        }
+        
+        if($tracking != '') {
+            $trackingPart = '"tracking":"' . $tracking . '"';
+        }
+            
+        if($splits != '') {
+            $splitsPart = '"splits":' . json_encode($splits);
+        }
+
+        if(!isset($notesPart) && !isset($trackingPart) && !isset($splits)) {
+            unset($extraDefaults);
+        } else {
+            $extraDefaults = [];
+            if(isset($notesPart)) $extraDefaults[] = $notesPart;
+            if(isset($trackingPart)) $extraDefaults[] = $trackingPart;
+            if(isset($splitsPart)) $extraDefaults[] = $splitsPart;
+            
+            // format extradefaults into a string
+            $extraDefaults = '{' . implode(',', $extraDefaults) . '}';
+            
+        }
 
         try {
             
             $response = DB::table('tofromaliases')
                 ->insert([
+                    'account_id' => $accountId,
                     'origToFrom' => $origToFrom,
                     'transToFrom' => $newValue,
+                    'category' => $category,
+                    'extraDefaults' => $extraDefaults,
+                    // 'copied' => 'new'   // happens by default
                 ]);
 
             return response()->json([
@@ -1665,10 +1712,6 @@ class TransactionsController extends Controller
             ], 500);
         }
 
-        // return response()->json([
-        //     'message' => 'Record inserted successfully',
-        //     'status' => 'success'
-        // ]);
     }
 
 

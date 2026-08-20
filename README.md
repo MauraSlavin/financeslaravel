@@ -8,8 +8,10 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-08-18 ***</h2>
-    <p>Last push: 8/18/26
+  <h2>WORKING BRANCH:  ***  2026-08-19 ***</h2>
+    <p>add prompt for default category, notes, tracking when saving new aliases</p>
+    <p></p>
+    <p>Last push on: 8/19/26; branch 2026-08-18
     <br>"Recent" CHANGES:
     <br>Search "mms negative"
     <br>*** Handle if Spending goes negative (I <u>THINK</u> this is done).
@@ -94,7 +96,6 @@ forecastYears: 2026, 2027, ... 2062
   
 <h2>BUGS</h2>
   <ul>
-    <li>Total on Buckets page isn't including new Medical bucket</li>
     <li>Total_amt on transactions page isn't ignoring deleted records</li>
   </ul>
     
@@ -105,8 +106,6 @@ forecastYears: 2026, 2027, ... 2062
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
-      <li>fix saving new aliases</li>
-      <li><b>Manually</b> add some common aliases. (DiscCC, Checking, done; VISA partly done)</li>
       <li>button to go to Accounts from any page</li>
       <li>button to switch Mike/Maura on Spending page</li>
       <li>button to write M/M spending to a CSV, Google sheets, etc. so I can send Mike a copy (this is not urgent - easy to cut/paste to a google sheet)</li>
