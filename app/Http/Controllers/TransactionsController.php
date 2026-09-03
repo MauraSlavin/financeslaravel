@@ -1905,7 +1905,6 @@ class TransactionsController extends Controller
     // insert monthly transactions to transactions table for current month
     public function writeMonthlyTransactions(Request $request) {
         
-        // note transactions done
         $transRecorded = [];
 
         // get inputs needed
@@ -1919,6 +1918,15 @@ class TransactionsController extends Controller
         $buckets = $request->input('bucket');
         $noteses = $request->input('notes');
         $doTrans = $request->input('dotrans');
+        $totalAmts = [];
+        $totalKeys = [];
+
+        // keep track of transactions related to the chosen one
+        $related_trans_ids = [];
+        foreach($names as $idx=>$name) {
+            $related_trans_ids[$idx] = [$idx];    // trans is always related to itself
+            $totalKeys[$idx] = null;            // init total_key
+        }
 
         // used to redisplay monthlies with updated info
         $monthlies = $request->input('monthlies');
@@ -1926,61 +1934,125 @@ class TransactionsController extends Controller
 
         // process each transaction, if chosen
         foreach($chosens as $idx=>$chosen) {
-
             if($chosen == 'true') {
-                $transaction = [];
-                $transaction['trans_date'] = $transDates[$idx];
-                $transaction['account'] = $accounts[$idx];
-                $transaction['toFrom'] = $toFroms[$idx];
-                $transaction['amount'] = $amounts[$idx];
-                $transaction['category'] = $categorys[$idx];
-                $transaction['notes'] = $noteses[$idx];
 
-                // set amtMike and amtMaura
-                if($categorys[$idx] == 'MikeSpending' || $accounts[$idx] == 'Mike') {
-                    $transaction['amtMike'] = $amounts[$idx];
-                    $transaction['amtMaura'] = 0;
-                } else if($categorys[$idx] == 'MauraSpending' || substr( $accounts[$idx], 0, 5) == 'Maura') {
-                    $transaction['amtMaura'] = $amounts[$idx];
-                    $transaction['amtMike'] = 0;
+                // amount must not be $0
+                if($amounts[$idx] == 0) {
+                    $transRecorded[] = [
+                        'name' => $names[$idx],
+                        'account' => $accounts[$idx],
+                        'to_from' => $toFroms[$idx],
+                        'amount' => $amounts[$idx],
+                        'category' => '*** ERROR: NOT DONE. Amount can\'t be $0.00',
+                        'dotrans' => $doTrans[$idx]
+                    ];
+                    $related_trans_ids[$idx][] = $idx;  // only this transaction related to itself (n/a since it's not being written - avoids error)
                 } else {
+                    // start building transaction to be written
+                    $transaction = [];
+                    $transaction['trans_date'] = $transDates[$idx];
+                    $transaction['account'] = $accounts[$idx];
+                    $transaction['toFrom'] = $toFroms[$idx];
+                    $transaction['amount'] = $amounts[$idx];
+                    $transaction['category'] = $categorys[$idx];
+                    $transaction['notes'] = $noteses[$idx];
+
+                    // set amtMike and amtMaura
+                    if($categorys[$idx] == 'MikeSpending' || $accounts[$idx] == 'Mike') {
+                        $transaction['amtMike'] = $amounts[$idx];
+                        $transaction['amtMaura'] = 0;
+                    } else if($categorys[$idx] == 'MauraSpending' || substr( $accounts[$idx], 0, 5) == 'Maura') {
+                        $transaction['amtMaura'] = $amounts[$idx];
+                        $transaction['amtMike'] = 0;
+                    } else {
                         $transaction['amtMaura'] = $amounts[$idx] / 2;
                         $transaction['amtMike'] = $amounts[$idx] / 2;
+                    }
+
+                    // set stmtDate
+                    $year = substr($transDates[$idx], 2, 2);
+                    $monthNumber = (int)substr($transDates[$idx], 5, 2 ) - 1;
+                    if($transaction['account'] == 'VISA') $monthNumber--;
+                    if($monthNumber < 0) $monthNumber += 12;
+                    $monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    $month = $monthAbbrs[$monthNumber];
+                    $transaction['stmtDate'] = $year . '-' . $month;
+
+                    // for Disc Savings, set bucket
+                    if($accounts[$idx] == 'DiscSavings') {
+                        $transaction['bucket'] = $buckets[$idx];
+                    }
+
+                    // set total_amt and total_key if more than one part
+                    $total_amt = 0;
+                    $total_needed = false;
+
+                    // for groups of related transactions
+                    // - add amounts to get total_amt
+                    // - note that total_amt and total_key (total_needed to true)
+                    // related if name and account are the same
+                    foreach($names as $nameIdx=>$name) {
+                        if($idx != $nameIdx) {      // don't check against itself
+                            if($name == $names[$idx] && $accounts[$nameIdx] == $accounts[$idx]) {
+                                $total_amt += $amounts[$nameIdx];
+                                $total_needed = true;
+                                $related_trans_ids[$idx][] = $nameIdx;
+                            }
+                        }
+                    }
+
+                    // if multiple related transaction, set the total_key.
+                    // - add amount for "chosen" if total_amt needed (hasn't been included, yet, since trxn not checked against itself)
+                    // --- and include in transaction
+                    // - set the total_key if we have it
+                    // --- and include in transaction
+                    if($total_needed) {
+                        $total_amt += $amounts[$idx];
+                        $transaction['total_amt'] = $total_amt;
+                        if($totalKeys[$idx] != null) {
+                            $transaction['total_key'] = $totalKeys[$idx];
+                        }
+                    };
+
+                    // insert the transaction
+                    $total_key_id = DB::table('transactions')
+                        ->insertGetId($transaction);
+
+                    // if total_key was null and there are other related transactions,
+                    //  set it for this and remember for all related transactions
+                    if($totalKeys[$idx] == null && count($related_trans_ids[$idx])>1) {
+                        // update the total_key
+                        DB::table('transactions')
+                            ->where('id', $total_key_id)
+                            ->update(['total_key' => $total_key_id]);
+                        // remember the total_key for other related transactions
+                        foreach($totalKeys as $keyIdx=>$thisKey) {
+                            if(in_array($keyIdx, $related_trans_ids[$idx]) ) {
+                                $totalKeys[$keyIdx] = $total_key_id;
+                            }
+                        }
+                    }
+                    
+                    // update monthlies so it's reflected on the page
+                    $monthlies[$idx]->trans_date = $transaction['trans_date'];
+                    $monthlies[$idx]->status = 'Pending';
+
+                    // turn chosen off (so it's not processed again next time)
+                    $monthlies[$idx]->chosen = false;
+
+                    // add this to transactions recorded
+                    $transRecorded[] = [
+                        'name' => $names[$idx],
+                        'account' => $accounts[$idx],
+                        'to_from' => $toFroms[$idx],
+                        'amount' => $amounts[$idx],
+                        'category' => $categorys[$idx],
+                        'dotrans' => $doTrans[$idx]     // not used at the moment - for transactions recorded that need to be manually done in banking app
+                    ];
                 }
-
-                // set stmtDate
-                $year = substr($transDates[$idx], 2, 2);
-                $monthNumber = (int)substr($transDates[$idx], 5, 2 );
-                $monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                $month = $monthAbbrs[$monthNumber];
-                $transaction['stmtDate'] = $year . '-' . $month;
-
-                // for Disc Savings, set bucket
-                if($accounts[$idx] == 'DiscSavings') {
-                    $transaction['bucket'] = $buckets[$idx];
-                }
-
-                // insert the transaction
-                $result = DB::table('transactions')
-                    ->insert($transaction);
-         
-                // update monthlies so it's reflected on the page
-                $monthlies[$idx]->trans_date = $transaction['trans_date'];
-                $monthlies[$idx]->status = 'Pending';
-
-                // add this to transactions recorded
-                //  (with reminder to DO the transaction, if needed)
-
-                $transRecorded[] = [
-                    'name' => $names[$idx],
-                    'account' => $accounts[$idx],
-                    'to_from' => $toFroms[$idx],
-                    'amount' => $amounts[$idx],
-                    'category' => $categorys[$idx],
-                    'dotrans' => $doTrans[$idx]
-                ];
             }
         }
+
 
         // reload the page with the new monthlies
         return view('monthlies', ['monthlies' => $monthlies, 'transRecorded' => $transRecorded]);
@@ -3198,39 +3270,52 @@ class TransactionsController extends Controller
 
 
     // Set up & do monthly transactions
-    public function monthly() {
+    public function monthly($transRecorded = null) {
 
         // get monthly transactions set up
         $monthlies = DB::table('monthlies')
             ->whereNull('deleted_at')
             ->get()->toArray();
 
+        // look back 2 months
+        $beginDate = new DateTime("now");
+        $beginDate->modify("-2 months");
+        $beginDate = $beginDate->format('Y-m-d');
+
         // get last cleared_date (or last trans_date if cleared is null) for each monthly transaction
         // if cleared_date is null, transaction is Pending, else it is Completed.
         foreach($monthlies as $monIdx=>$month) {
+
             // basic query to get most recent monthly transactions
-            $dates = DB::table('transactions')
+            $datesQuery = DB::table('transactions')
                 ->where('toFrom', $month->toFrom)
                 ->where('account', $month->account)
-                ->where('notes', 'LIKE', $month->notes . '%')
-                ->whereNull('deleted_at')
+                ->where('trans_date', '>', $beginDate)
+                ->whereNull('deleted_at');
+            if (!empty($month->amount)) {
+                $datesQuery->where('amount', $month->amount);
+                }
+            if(!empty($month->notes)) {
+                $datesQuery->where('notes', 'LIKE', $month->notes . '%');
+            }
                 // ->where('amount', $month->amount)        -- only do this (below) when amount is consistent
                 // ->where('category', $month->category)    -- only do this (below) if category is consistent
-                ->select(
-                    DB::raw("CASE 
-                        WHEN clear_date IS NOT NULL THEN clear_date 
-                        ELSE trans_date 
-                    END as date"),
-                    DB::raw("CASE 
-                        WHEN clear_date IS NOT NULL THEN 'Completed'
-                        ELSE 'Pending'
-                    END as status")
-                )
-                ->orderByRaw("CASE 
-                    WHEN clear_date IS NOT NULL THEN clear_date
-                    ELSE trans_date
-                END DESC") // puts the most recent first
-                ->get();
+            $datesQuery->select(
+                DB::raw("CASE 
+                    WHEN clear_date IS NOT NULL THEN clear_date 
+                    ELSE trans_date 
+                END as date"),
+                DB::raw("CASE 
+                    WHEN clear_date IS NOT NULL THEN 'Cleared'
+                    ELSE 'Pending'
+                END as status")
+            )
+            ->orderByRaw("CASE 
+                WHEN clear_date IS NOT NULL THEN clear_date
+                ELSE trans_date
+            END DESC"); // puts the most recent first
+
+            $dates = $datesQuery->get();
 
             // if amount is set, filter by that
             if(!is_null($month->amount)) {
@@ -3257,12 +3342,12 @@ class TransactionsController extends Controller
 
         }
 
-        // Sort by status and regular date to display in an orderly fashion
+        // Sort by last done date to display in an orderly fashion
         usort($monthlies, function($a, $b) {
-            if ($a->status === $b->status) {
+            if ($a->trans_date === $b->trans_date) {
                 return (int) $a->dateOfMonth > (int) $b->dateOfMonth;
             }
-            return strcmp($a->status, $b->status);
+            return strcmp($a->trans_date, $b->trans_date);
         });
         
         // no recorded transactions to show here

@@ -95,7 +95,7 @@ Route::get('/transactions/getBalances/{account}', 'App\Http\Controllers\Transact
 Route::get('/transactions/getDefaults/{account}/{toFrom}', 'App\Http\Controllers\TransactionsController@getDefaults');
 Route::get('/transactions/add', 'App\Http\Controllers\TransactionsController@addTransaction')->name("addTransaction");
 Route::post('/transactions/insert', 'App\Http\Controllers\TransactionsController@writeTransaction')->name("writeTransaction");
-Route::get('/transactions/monthlies', 'App\Http\Controllers\TransactionsController@writeMonthlyTransactions')->name('writeMonthlyTransactions');
+Route::post('/transactions/monthlies', 'App\Http\Controllers\TransactionsController@writeMonthlyTransactions')->name('writeMonthlyTransactions');
 // just one value to save
 Route::post('/transactions/writeRetirementDatum', 'App\Http\Controllers\TransactionsController@writeRetirementDatum')->name('writeRetirementDatum');
 // write all data being used for the forecast

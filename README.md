@@ -8,11 +8,15 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-08-19 ***</h2>
-    <p>add prompt for default category, notes, tracking when saving new aliases</p>
-    <p></p>
-    <p>Last push on: 8/19/26; branch 2026-08-18
+  <h2>WORKING BRANCH:  ***  2026-09-02 ***</h2>
+    <p>Last push on: 9/2/26; branch 2026-08-20
     <br>"Recent" CHANGES:
+    <br>
+    <br>WORKING ON...
+    <br>
+    <br>
+    <br> ----------------
+    <br>
     <br>Search "mms negative"
     <br>*** Handle if Spending goes negative (I <u>THINK</u> this is done).
     <br>*** Handle if Investments goes negative (I <u>THINK</u> this is done). - needs testing
@@ -96,12 +100,14 @@ forecastYears: 2026, 2027, ... 2062
   
 <h2>BUGS</h2>
   <ul>
-    <li>Total_amt on transactions page isn't ignoring deleted records</li>
+    <li>Budget vs. Actual: actual income total is WRONG!!</li>
+    <li>Sync databases when only local changed isn't working right</li>
   </ul>
     
 <h2>To do:</h2>
     <ul>
-      <li>Is changing Monthlies working??</li>
+      <li>Monthlies - include method (ACH, etc.)</li>
+      <li>Monthlies = Make sure SAVE button is working to change the default(s)</li>
       <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
