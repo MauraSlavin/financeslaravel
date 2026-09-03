@@ -37,13 +37,18 @@
             @endforeach
         </div>
 
-        <!-- <form id="monthliesForm" action="" method="GET"> -->
-            <!-- @csrf -->
+        <form id="monthliesForm" action="/transactions/monthlies" method="POST">
+            @csrf
             
             <!-- button w/ explanation -->
-            <span style="margin-left: 10px;">Click <b>RECORD</b> to record the <b>checked</b> transactions in the transactions table.</span><br>
-            <!-- <button id="recordMonthlies" class="btn btn-success" type="submit" data-action="doublecurly route('writeMonthlyTransactions') doublecurly" style="margin-left: 10px; margin-bottom: 10px;">Record</button> -->
-            <button id="recordMonthlies" class="btn btn-success" type="submit" style="margin-left: 10px; margin-bottom: 10px;">Record</button>
+            <span style="margin-left: 10px;">Click <b>RECORD</b> to record the <b>checked</b> transactions in the transactions table.</span>
+            <br><span style="margin-left: 10px;">Notes: <b><u>Checkboxes</u></b> only for groups of transactions that are <b>not</b> PENDING.</span>
+            <br><span style="margin-left: 10px;">Refreshing the page will create duplicate entries.  Use <b><u>Refresh Monthlies</u></b> button to refresh the page.</span>
+            <br>
+            <button id="recordMonthlies" class="btn btn-success" type="submit" style="margin-left: 10px; margin-bottom: 20px; margin-top: 20px;" disabled>Record</button>
+
+            <!-- refresh the page --> 
+            <button id="refreshMonthlies" class="btn btn-success" type="button" style="margin-left: 10px; margin-bottom: 20px; margin-top: 20px;" onclick="location.href='/accounts/monthly';">Refresh Monthlies</button>
 
             <!-- monthlies data -->
             <input type="hidden" id="monthlies-data" name="monthlies" value="{{ json_encode($monthlies) }}">
@@ -58,8 +63,8 @@
                         <th>Save changes to defaults</th>
                         <th style="width: 130px; word-break: break-word;">NAME</th>
                         <th style="width: 40px; word-break: break-word;">Reg Date</th>
-                        <th style="width: 90px; word-break: break-word;">Date Sched or Done</th>
-                        <th style="width: 90px; word-break: break-word;">Status</th>
+                        <th style="width: 90px; word-break: break-word;">Last Done in Register</th>
+                        <th style="width: 90px; word-break: break-word;">Last Done cleared?</th>
                         <th style="width: 100px; word-break: break-word;">Account</th>
                         <th style="width: 100px; word-break: break-word;">To/From</th>
                         <th style="width: 75px; word-break: break-word;">Normal amount</th>
@@ -73,61 +78,84 @@
                 <tbody>
                     <!-- transactions saved in monthlies table -->
                     @foreach($monthlies as $sequence=>$monthly)
-                        <!-- <form id="changeMonthly" action="" method="GET"> -->
-                            <tr data-id={{ $monthly->id }}>
-                                <td style="text-align: center;">
-                                    <input type="checkbox" name="checkbox[]" class="check" style="width: 10px;">
-                                    <input hidden class="chosen" name="chosen[]" value=false>
-                                    <input hidden class="dotrans" name="dotrans[]" value="{{ $monthly->doTrans ? true : false }}">
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary save-button" data-item-id="{{ $monthly->id }}">Save</button>
-                                </td>
-                                <td>
-                                    <input type="text" name="name" class="name" data-field="name" style="width: 130px;" value="{{ $monthly->name ?? NULL  }}">
-                                    <hidden class="origName" value="{{ $monthly->name ?? NULL  }}"></hidden>
-                                    <hidden class="recentName" value="{{ $monthly->name ?? NULL  }}"></hidden>
-                                    <hidden class="sequence" style="display: none;">{{ $sequence }}</hidden>
-                                </td>
-                                <td>
-                                    <input type="text" name="dateOfMonth" class="date" data-field="dateOfMonth" style="text-align: center; width: 40px;" value="{{ $monthly->dateOfMonth ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="transDate" class="transDate" data-field="transDate" style="width: 90px;" value="{{ $monthly->trans_date ?? NULL }}">
-                                    <input hidden class="completedDate" value="{{ $monthly->trans_date ?? NULL }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="status" class="status" data-field="status" style="width: 90px;" value="{{ $monthly->status ?? NULL }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="account" class="account" data-field="account" style="width: 100px;" value="{{ $monthly->account ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="toFrom" class="toFrom" data-field="toFrom" style="width: 100px;" value="{{ $monthly->toFrom ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="amount" class="amount" data-field="amount" style="text-align: right; width: 75px;" value="{{ number_format(round($monthly->amount,2), 2, '.', '') ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="category" class="category" data-field="category" style="width: 110px;" value="{{ $monthly->category ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="bucket" class="bucket" data-field="bucket" style="width: 100px;" value="{{ $monthly->bucket ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="notes" class="notes" data-field="notes" style="width: 160px;" value="{{ $monthly->notes ?? NULL  }}">
-                                </td>
-                                <td>
-                                    <input type="text" name="comments" class="comments" data-field="comments" style="width: 300px;" value="{{ $monthly->comments ?? NULL  }}">
-                                </td>
-                            </tr>
-                        <!-- </form> -->
+                        <tr data-id={{ $monthly->id }}>
+                            <!-- Run checkbox -->
+                            <td style="text-align: center;">
+                                <input type="checkbox" name="checkbox[]" class="check" style="width: 10px;">
+                                <input hidden class="chosen" name="chosen[]" value=false>
+                                <input hidden class="dotrans" name="dotrans[]" value="{{ $monthly->doTrans ? true : false }}">
+                            </td>
+
+                            <!-- Save defaults buttons -->
+                            <td>
+                                <button class="btn btn-sm btn-primary save-button" data-item-id="{{ $monthly->id }}">Save</button>
+                            </td>
+
+                            <!-- Name -->
+                            <td>
+                                <input type="text" name="name[]" class="name" data-field="name" style="width: 130px;" value="{{ $monthly->name ?? NULL  }}">
+                                <hidden class="origName" value="{{ $monthly->name ?? NULL  }}"></hidden>
+                                <hidden class="recentName" value="{{ $monthly->name ?? NULL  }}"></hidden>
+                                <hidden class="sequence" style="display: none;">{{ $sequence }}</hidden>
+                            </td>
+
+                            <!-- Date of month -->
+                            <td>
+                                <input type="text" name="dateOfMonth[]" class="date" data-field="dateOfMonth" style="text-align: center; width: 40px;" value="{{ $monthly->dateOfMonth ?? NULL  }}">
+                            </td>
+
+                            <!-- last done date -->
+                            <td>
+                                <input type="text" name="transDate[]" class="transDate" data-field="transDate" style="width: 90px;" value="{{ $monthly->trans_date ?? NULL }}">
+                                <input hidden class="completedDate" value="{{ $monthly->trans_date ?? NULL }}">
+                            </td>
+
+                            <!-- cleared? -->
+                            <td>
+                                <input type="text" name="status[]" class="status" data-field="status" style="width: 90px;" value="{{ $monthly->status ?? NULL }}">
+                            </td>
+
+                            <!-- account -->
+                            <td>
+                                <input type="text" name="account[]" class="account" data-field="account" style="width: 100px;" value="{{ $monthly->account ?? NULL  }}">
+                            </td>
+
+                            <!-- to/from -->
+                            <td>
+                                <input type="text" name="toFrom[]" class="toFrom" data-field="toFrom" style="width: 100px;" value="{{ $monthly->toFrom ?? NULL  }}">
+                            </td>
+
+                            <!-- amount -->
+                            <td>
+                                <input type="text" name="amount[]" class="amount" data-field="amount" style="text-align: right; width: 75px;" value="{{ number_format(round($monthly->amount,2), 2, '.', '') ?? NULL  }}">
+                            </td>
+
+                            <!-- category -->
+                            <td>
+                                <input type="text" name="category[]" class="category" data-field="category" style="width: 110px;" value="{{ $monthly->category ?? NULL  }}">
+                            </td>
+
+                            <!-- bucket (Disc Svgs only) -->
+                            <td>
+                                <input type="text" name="bucket[]" class="bucket" data-field="bucket" style="width: 100px;" value="{{ $monthly->bucket ?? NULL  }}">
+                            </td>
+
+                            <!-- notes -->
+                            <td>
+                                <input type="text" name="notes[]" class="notes" data-field="notes" style="width: 160px;" value="{{ $monthly->notes ?? NULL  }}">
+                            </td>
+
+                            <!-- comments -->
+                            <td>
+                                <input type="text" name="comments[]" class="comments" data-field="comments" style="width: 300px;" value="{{ $monthly->comments ?? NULL  }}">
+                            </td>
+                        </tr>
                     @endforeach
 
                 </tbody>
             </table>
 
-        <!-- </form> -->
+        </form>
         
         <script>
             
@@ -180,7 +208,7 @@
 
                     // update chosen, so Controller know which is checked
                     var chosen;
-                    if(newStatus == 'Completed') chosen = false;
+                    if(newStatus == 'Cleared') chosen = false;
                     else chosen = true;
                     nextRow.find('.chosen').val(chosen);
 
@@ -221,7 +249,7 @@
                 // set background colors of grouped transactions the same; 
                 //  highlight $0
                 //  highlight missing Buckets
-                //  color-code Pending/Completed statuses
+                //  color-code Pending/Cleared statuses
                 var colorId = -1;
                 $('tbody tr').each(function(index, element) {
                     var row = $(this);
@@ -255,9 +283,9 @@
                     // if the account is NOT DiscSavings, and the bucket has a value, highlight and clear the bucket
                     if(account != 'DiscSavings' && bucket != '') row.find('.bucket').css('background-color', 'pink').val('');
 
-                    // color Completed/Pending
+                    // color Cleared/Pending
                     var status = row.find('.status').val();
-                    if(status == 'Completed') {
+                    if(status == 'Cleared') {
                         row.find('.status').css('background-color', 'lightgreen')
                             .parent().css('background-color', 'lightgreen');
                     } else if(status == 'Pending') {
@@ -266,6 +294,11 @@
                         // hide the checkbox if transaction is Pending
                         row.find('.check').css('display', 'none');
                     }
+
+                    // checkboxes and chosen's all start out unchecked/unchosen
+                    var thisCheck = row.find('.check').prop("checked", false);
+                    var thisChosen = row.find('.chosen').val(false);
+
                 });
 
                 $('.check').on('click', function(e) {
@@ -299,8 +332,8 @@
                         // get background color to change it back to
                         var dateColor = row.find('.name').css('background-color');
 
-                        // change status back to Completed with lightgreen background
-                        statusElt.val('Completed').css('background-color', completedColor);
+                        // change status back to Cleared with lightgreen background
+                        statusElt.val('Cleared').css('background-color', completedColor);
                         // change date to previous month
                         var completedDate = row.find('.completedDate').val();
                         curDateElt.val(completedDate).css('background-color', dateColor);
@@ -309,10 +342,26 @@
                         row.find('.chosen').val(false);
 
                         // update related records
-                        updateRelatedRcds(row, 'Completed', completedColor, dateColor, completedDate);
+                        updateRelatedRcds(row, 'Cleared', completedColor, dateColor, completedDate);
                         
                     }
 
+                    // Enable "Record" button if any checkboxes checked; disable otherwise
+                    
+                    var areAnyChecked = false;
+                    $( ".check" ).each(function (index) {
+                        if($(this).is(":checked")) {
+                            areAnyChecked = true;
+                        }
+                    });
+
+                    if(areAnyChecked) {
+                        // allow "Record" button if any elements are checked
+                        $('#recordMonthlies').prop("disabled", false);
+                    } else {
+                        // DIS-allow "Record" button if no elements are checked
+                        $('#recordMonthlies').prop("disabled", true);
+                    }
                 });
 
                 $('input').on('change', function(e) {
@@ -322,42 +371,67 @@
                     var field = field.replaceAll('[', '').replaceAll(']', '');
                     var newValue = $(this).val();
 
-                    // alert("Changed: " + newValue + ";\n"
-                    //     + "sequence text: " + sequence + ";\n"
-                    //     + "field changed: " + field + ";\n"
-                    //     + "old value: " + monthlies[sequence][field]
-                    // );
-
                     // update in monthlies variable
                     monthlies[sequence][field] = newValue;
 
                 });
 
+                // Warning if amount is 0 for chosen transaction when form submitted
+                document.getElementById('monthliesForm').addEventListener('submit', function(event) {
+                    event.preventDefault();
 
+                    // first clear out info messages
+                    $("h6").remove();
+                    
+                    // remember if warning found
+                    var warningFound = false;
+                    var msg;
 
-                $('#recordButton').on('click', function(e) {
-                    const formData = new FormData();
-                    
-                    $('input[type="checkbox"]:checked').each(function() {
-                        formData.append(`checked_items[${$(this).data('item-id')}]`, $(this).prop('checked'));
-                    });
-                    
-                    $.ajax({
-                        url: '{{ route('writeMonthlyTransactions') }}',
-                        method: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function(response) {
-                            console.log(response);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error:', error);
+                    // get amounts and chosen inputs
+                    var amountInputs = $('.amount').map(function() {
+                        return $(this).val();
+                    }).get();
+                    // const chosenInputs = document.querySelectorAll('.chosen').value;
+                    var chosenInputs = $('.chosen').map(function() {
+                        return $(this).val();
+                    }).get();
+                    // const nameInputs = document.querySelectorAll('.chosen').value;
+                    var nameInputs = $('.name').map(function() {
+                        return $(this).val();
+                    }).get();
+                    // const accountInputs = document.querySelectorAll('.chosen').value;
+                    var accountInputs = $('.account').map(function() {
+                        return $(this).val();
+                    }).get();
+
+                    amountInputs.forEach((amountInput, amountIdx) => {
+                        // has 0 value been changed for chosen transaction?
+                        if(chosenInputs[amountIdx] == 'true' && amountInput == 0 && !warningFound) {
+                            warningFound = true;
+                            msg = "WARNING:  Value for a chosen transaction is 0.  Do you want to continue?";
+                        }
+
+                        // for VISA payment, $ comes OUT of checking and INTO VISA.
+                        if(nameInputs[amountIdx] == 'VISA pymt') {
+                            if(accountInputs[amountIdx] == 'Checking' && amountInputs[amountIdx] > 0) {
+                                warningFound = true;
+                                msg = "WARNING:  amount should be negative for VISA pymt from Checking.  Do you want to continue?";
+                            } else if(accountInputs[amountIdx] == 'VISA' && amountInputs[amountIdx] < 0) {
+                                warningFound = true;
+                                msg = "WARNING:  amount should be postive for VISA pymt to VISA.  Do you want to continue?";
+                            }
                         }
                     });
+
+                    // display warning msg and ask if user wants to continue
+                    if(warningFound) {
+                        var doContinue = confirm(msg);
+                        if(doContinue) {
+                            this.submit();
+                        }
+                    } else {    // user wants to continue anyway
+                        this.submit();
+                    }
                 });
 
                 // Handle individual row saves
@@ -390,31 +464,6 @@
                         }
                     });
                 });
-
-
-
-
-
-
-
-
-
-
-
-                // $('#monthliesForm').on('submit', function(e) {
-                //     // e.preventDefault(e); // Prevent immediate submission
-
-                //     const data = JSON.stringify(monthlies);
-                //     $('.monthlies-data').val( JSON.stringify(monthlies) );
-
-                //     // this.submit;
-                // });
-
-                // // shouldn't be needed
-                // $('#changeMonthly').on('submit', function(e) {
-                //     alert("Submitting change to one monthly");
-                //     this.submit;
-                // })
 
             });
 
