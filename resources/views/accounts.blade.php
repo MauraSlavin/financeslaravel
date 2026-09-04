@@ -57,6 +57,11 @@
         <a href="{{ route('investmentsindex') }}" class="image-button-href">
             <img src="{{ asset('images/buttons/Investments.png') }}" alt="Clickable Investments Image" class="image-button">
         </a>
+
+        <!-- interest button -->
+        <a href="{{ route('interestindex') }}" class="image-button-href">
+            <img src="{{ asset('images/buttons/Interest.png') }}" alt="Clickable Interest Image" class="image-button">
+        </a>
         
         <!-- budget button -->
         <a href="{{ route('budget') }}" class="image-button-href">
@@ -121,77 +126,6 @@
                 } else {
                     $(".uploadnote").hide();
                 }
-                // Assets button
-                // $('#assets').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/assets';
-                //     window.location.href = url;
-                // });
-
-                // GB Limo button
-                // $('#gblimo').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/gblimo';
-                //     window.location.href = url;
-                // });
-
-                // Update Investments button
-                // $('#investmentsindex').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/investmentsindex';
-                //     window.location.href = url;
-                // });
-
-                // See Buckets and balances, etc.
-                // $('#buckets').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/buckets';
-                //     window.location.href = url;
-                // });
-
-                // Budget page
-                // $('#budget').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/budget';
-                //     window.location.href = url;
-                // });
-
-                // Mike Spending
-                // $('#mikeSpending').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/spending/mike';
-                //     window.location.href = url;
-                // });
-
-                // Maura Spending
-                // $('#mauraSpending').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/spending/maura';
-                //     window.location.href = url;
-                // });
-
-                // Trips
-                // $('#trips').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/trips';
-                //     window.location.href = url;
-                // });
-
-                // Monthly transactions page
-                // $('#monthly').on('click', function(e) {
-                //     e.preventDefault();
-
-                //     const url = '/accounts/monthly';
-                //     window.location.href = url;
-                // });
 
             });
 

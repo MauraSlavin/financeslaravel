@@ -1634,6 +1634,94 @@ class TransactionsController extends Controller
     }   // end of function updateInvBalances
 
 
+    // insert interest transactions
+    public function insertInterestTransactions(Request $request)
+    {
+        // reformats $date as yy-Mon (where Mon is a 3 char month abbrev)
+        function formatStmtDate($date) {
+            $dateTime = new \DateTime($date);
+            $year = $dateTime->format('y');
+
+            $fullMonthName = $dateTime->format('F');
+            $abbrevMon = substr($fullMonthName, 0, 3);
+
+            return "$year-$abbrevMon";
+        }
+
+        try {
+            // get account info to update from payload
+            $data = json_decode($request->getContent(), true);
+            $newInterestTransactions = $data['newInterestTransactions'];
+
+            // get today's date for the note in the database
+            date_default_timezone_set('America/New_York');
+
+            // set fields to be inserted that are the same for each record
+            $newInterestRcd = [];
+
+            // init records that will be inserted
+            $recordsToInsert = [];
+
+            // change data to be inserted for each element in newBalanceInfo
+            foreach($newInterestTransactions as $idx=>$newInterestInfo) {
+
+                // build the record for the interest posted.
+                $newInterestRcd['account'] = $newInterestInfo['account'];
+                $newInterestRcd['trans_date'] = $newInterestInfo['trans_date'];
+                $newInterestRcd['clear_date'] = $newInterestInfo['trans_date'];
+                $newInterestRcd['toFrom'] = 'Interest';
+                $newInterestRcd['amount'] = $newInterestInfo['amount'];
+                if(substr($newInterestInfo['account'], 0, 5) == 'Maura') {
+                    $newInterestRcd['amtMike'] = 0;
+                    $newInterestRcd['amtMaura'] = $newInterestInfo['amount'];
+                    $newInterestRcd['category'] = null;
+                } else if(substr($newInterestInfo['account'], 0, 4) == 'Mike') {
+                    $newInterestRcd['amtMaura'] = 0;
+                    $newInterestRcd['amtMike'] = $newInterestInfo['amount'];
+                    $newInterestRcd['category'] = null;
+                } else {
+                    $newInterestRcd['amtMike'] = $newInterestInfo['amount'] / 2;
+                    $newInterestRcd['amtMaura'] = $newInterestInfo['amount'] / 2;
+                    $newInterestRcd['category'] = 'IncomeInterest';
+                }
+
+                // set stmt date
+                $stmtDate = formatStmtDate( $newInterestInfo['trans_date']);
+                $newInterestRcd['stmtDate'] = $stmtDate;
+
+                // set bucket if one passed in 
+                if($newInterestInfo['bucket'] != false) {
+                    $newInterestRcd['bucket'] = $newInterestInfo['bucket'];
+                } else {
+                    $newInterestRcd['bucket'] = null;
+                }
+
+                // build array of records to be inserted
+                $recordsToInsert[] = $newInterestRcd;
+            }
+
+            // insert the records
+            $response = DB::table("transactions")
+                ->insert($recordsToInsert);
+
+            return response()->json([
+                'message' => "Interest transactions inserted successfully"
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Log the error
+            logger()->error("Error inserting interest transaction records: " . $e->getMessage());
+            error_log("Error inserting interest transaction records: " . $e->getMessage());
+            
+            // Re-throw the exception
+            return response()->json([
+                'error' => 'Failed to insert interest transactions.'
+            ], 500);
+        }
+            
+    }   // end of function insertInterestTransactions
+
+
     // insert a new toFromAlias record
     public function insertAlias($origToFrom, $newValue, $accountId, $category, $notes, $tracking, $splits) 
     {
@@ -3638,6 +3726,71 @@ class TransactionsController extends Controller
         return view('investmentsindex', ['investments' => $investments]);
 
     }   // end of function investmentsindex
+
+
+    // Prompt for new earned interest for interest-bearing accounts
+    public function interestindex() {
+
+        function getTwoMonthsAgo() {
+            // Get current date/time
+            $currentDateTime = new \DateTime();
+
+            // Calculate two months ago
+            $twoMonthsAgo = clone $currentDateTime;
+            $twoMonthsAgo->modify('-2 months');
+
+            // Set to New York timezone
+            $nyTimezone = new \DateTimeZone('America/New_York');
+            $twoMonthsAgo->setTimezone($nyTimezone);
+
+            // Format and display the result
+            return $twoMonthsAgo->format('Y-m-d');
+        }
+
+        // get investment accounts and relavent information
+        $twoMonthsAgo = getTwoMonthsAgo();
+
+        // data to be passed on to the blade
+        $recentInterestCredited = [];
+
+        // retrieve interest-bearing accounts
+        $interestAccts = DB::table('accounts')
+            ->where('int_bearing', 1)
+            ->pluck('accountName');
+
+        // get the last interest posted for each account
+        $lastPostedInterest = DB::table('transactions')
+            ->whereIn('account', $interestAccts)
+            ->where('trans_date', '>=', $twoMonthsAgo)
+            ->where('toFrom', 'Interest')
+            ->whereNull('deleted_at')
+            ->orderBy('account', 'asc')
+            ->orderBy('trans_date', 'desc')        // only keep the most recent record for each account
+            ->select('trans_date', 'account', 'amount', 'bucket')
+            ->get()->toArray();
+
+        // only keep data for first record for each account (most recent)
+        // this keeps track of which ones we have data for
+        $accountsDone = [];  
+
+        foreach($lastPostedInterest as $interestTrans) {
+            if(!in_array($interestTrans->account, $accountsDone)) {
+
+                // Balance only needs to go to 2 decimal places
+                $interestTrans->amount = substr($interestTrans->amount, 0, -2);
+
+                // add data to array to be displayed on page
+                $recentInterestCredited[] = $interestTrans;
+    
+                // remember that we have info for this account
+                // NOTE: data was sorted by most recent first, so the most recent data is saved.
+                $accountsDone[] = $interestTrans->account;
+            }
+        }
+
+        return view('interestindex', ['recentInterestCredited' => $recentInterestCredited]);
+
+    }   // end of function interestindex
 
 
     // See how much in each bucket and relevant info
