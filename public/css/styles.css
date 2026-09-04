@@ -135,11 +135,11 @@ h5, h6 {
     width: 300px;
 }
 
-#gblimo, #investmentsindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura, #mauraSpending, #mikeSpending, #trips, #monthly {
+#gblimo, #investmentsindex, #interestindex, #assets, #buckets, #moveBuckets, #actuals, #budget, #budgetactuals, #spendingMike, #spendingMaura, #mauraSpending, #mikeSpending, #trips, #monthly {
     margin: 10px;
 }
 
-#saveNewBalances {
+#saveNewBalances, #insertNewInterestTrans {
     margin: 10px;
 }
 

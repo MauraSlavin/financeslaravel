@@ -29,6 +29,8 @@ Route::get('/accounts/assets', 'App\Http\Controllers\TransactionsController@asse
 Route::get('/accounts/gblimo', 'App\Http\Controllers\TransactionsController@gblimo')->name('gblimo');
 // update investments balances
 Route::get('/accounts/investmentsindex', 'App\Http\Controllers\TransactionsController@investmentsindex')->name('investmentsindex');
+// add new interest income
+Route::get('/accounts/interestindex', 'App\Http\Controllers\TransactionsController@interestindex')->name('interestindex');
 // see buckets (in Dsc Svg )
 Route::get('/accounts/buckets', 'App\Http\Controllers\TransactionsController@buckets')->name('buckets');
 // see budget
@@ -88,6 +90,7 @@ Route::get('/', 'App\Http\Controllers\TransactionsController@index')->name('acco
 Route::post('/transactions/delete/{id}', 'App\Http\Controllers\TransactionsController@delete');
 Route::put('/transactions/update', 'App\Http\Controllers\TransactionsController@update');
 Route::put('/transactions/updateInvBalances', 'App\Http\Controllers\TransactionsController@updateInvBalances');
+Route::put('/transactions/insertInterestTransactions', 'App\Http\Controllers\TransactionsController@insertInterestTransactions');
 Route::post('/transactions/insertTrans', 'App\Http\Controllers\TransactionsController@insert');
 Route::post('/transactions/insertAlias/{origToFrom}/{newValue}/{accountId}/{category}/{notes}/{tracking}/{splits}', 'App\Http\Controllers\TransactionsController@insertAlias');
 Route::get('/transactions/totalKey/{total_key}', 'App\Http\Controllers\TransactionsController@totalKey');
