@@ -25,6 +25,7 @@
                 <th style="width: 140px;">New Interest Earned</th>
                 <th style="width: 160px;">Date Interest Posted</th>
                 <th hidden></th>        <!-- bucket - for DiscSavings -->
+                <th hidden></th>        <!-- method - keep same method -->
             </tr>
         </thead>
         <tbody>
@@ -40,6 +41,7 @@
                         <input class="intDate" type="date" required />
                     </td>
                     <td hidden class="bucket">{{ $interestCredited->bucket }}</td>
+                    <td hidden class="method">{{ $interestCredited->method }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -94,12 +96,14 @@
                         const intDate = $(this).find(".intDate").val();
                         const newInterest = $(this).find(".newInterest").val();
                         const bucket = $(this).find(".bucket").html();
+                        const method = $(this).find(".method").html();
                         
                         var newInterestInfo = {
                             "trans_date" : $(this).find(".intDate").val(),
                             "account"    : intAcct,
                             "amount"     : newInterest,
-                            "bucket"     : bucket
+                            "bucket"     : bucket,
+                            "method"     : method
                         }
 
                         // add new data to array
