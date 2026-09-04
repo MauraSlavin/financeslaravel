@@ -1696,6 +1696,13 @@ class TransactionsController extends Controller
                     $newInterestRcd['bucket'] = null;
                 }
 
+                // set method if one passed in 
+                if($newInterestInfo['method'] != false) {
+                    $newInterestRcd['method'] = $newInterestInfo['method'];
+                } else {
+                    $newInterestRcd['method'] = null;
+                }
+
                 // build array of records to be inserted
                 $recordsToInsert[] = $newInterestRcd;
             }
@@ -3766,7 +3773,7 @@ class TransactionsController extends Controller
             ->whereNull('deleted_at')
             ->orderBy('account', 'asc')
             ->orderBy('trans_date', 'desc')        // only keep the most recent record for each account
-            ->select('trans_date', 'account', 'amount', 'bucket')
+            ->select('trans_date', 'account', 'amount', 'bucket', 'method')
             ->get()->toArray();
 
         // only keep data for first record for each account (most recent)
