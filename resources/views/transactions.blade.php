@@ -463,7 +463,7 @@
                 
                 // highlight split_totals where they != total_amt for the key (total_key)
                 var rows = $("#editTransactionsTable tbody tr");
-                var missingSplitValues = [];     // remeber if some splits don't equal the total
+                var missingSplitValues = [];     // remember if some splits don't equal the total
                 rows.each(function(index, row) {
                     var rowData = $(row);
 
@@ -505,12 +505,10 @@
 
                 var toFroms = $("#toFroms").val();
                 toFroms = toFroms.replaceAll("%20", " ");
-                // console.log("toFroms: ", toFroms);
                 toFroms = JSON.parse(toFroms);
                 
                 var tofromaliases = $("#tofromaliases").val();
                 tofromaliases = tofromaliases.replaceAll("%20", " ");
-                // console.log("tofromaliases: ", tofromaliases);
                 tofromaliases = JSON.parse(tofromaliases);
 
                 var categories = $("#categories").val();
@@ -526,6 +524,14 @@
                 buckets = JSON.parse(buckets);
 
                 var origToFrom = '';    // want it scoped here
+
+                // if no clear_date, change background color to lightyellow
+                $('.clearDate').each(function(index, element) {
+                    if( $(this).html() == null || $(this).html() == '') {
+                        console.log($(this).html());
+                        $(this).css('background-color', 'lightyellow');
+                    }
+                });
 
                 // is the month a valid month? Returns "invalid" if not, the month if it is valid
                 function checkMonth(month) {
@@ -1519,6 +1525,13 @@
                                 $input.css("background-color", "yellow").val(origClearDate);
                             } else {
                                 $input.css("background-color", "white").val(isGood);
+                                // set whole cell's background to lightyellow if no clearDate value
+                                if(newValue == '' || newValue == null) {
+                                    $input.parent().css("background-color", "lightyellow");
+                                } else {
+                                    var background_color = $input.parent().next().css('background-color');
+                                    $input.parent().css("background-color", background_color);
+                                }
                                 $("#errorMsg").text("");
                             }
                         }
@@ -2366,6 +2379,10 @@
                     // $newTransaction.find('.originalClearDate', $newTransaction.find('.originalClearDate').text());
                     $newTransaction.find('.originalClearDate').text('');
 
+                    // set clear_date background color same as rest of row (in case it'd been highlighted lightyellow);
+                    var background_color = $newTransaction.find('.transDate').css('background-color');
+                    $newTransaction.find('.clearDate').css('background-color', background_color); // to unset 
+
                     // clear out info for new transaction
                     $newTransaction.attr('data-id', 'null');
                     $newTransaction.find('td').each(function(index, td) {
@@ -2602,6 +2619,11 @@
                         $record.find('.originalAmt').text(amount);
                         $record.find('.originalClearDate').text(clearDate);
 
+                        // if clear_date is empty, set background color to lightyellow    
+                        if(clearDate == '' || clearDate == null) {
+                            $record.find('.clearDate').css('background-color','lightyellow');
+                        }
+
                     } catch (error) {
                         console.error("Error checking record: ", error);
                     }                  
@@ -2620,7 +2642,7 @@
                     // click "Save" button to save each transaction
 
                     // needed to link the two new transactions
-                    var total_key, total_this_split, total_all_splits, useEdit;
+                    var total_key, total_this_split, total_all_splits, useEdit, category;
 
                     total_this_split = $(this).parent().parent().find(".amount").text();
                     useEdit = false;
@@ -2654,13 +2676,13 @@
 
                     // set total_key and total_amt if not set, init in original transaction
                     if(total_key == 'xxx') {
-                        if(useEdit) {
+                        // if(useEdit) {
                             $origTransaction.find(".total_keyEdit").val(total_key);
                             $origTransaction.find(".total_amtEdit").val(total_all_splits);
-                        } else {
+                        // } else {
                             $origTransaction.find(".total_key").text(total_key);
                             $origTransaction.find(".total_amt").text(total_all_splits);
-                        }
+                        // }
                     }
 
                     // amount, amtMike, amtMaura - all of these are div by 2, and need to be updated on page
@@ -2668,28 +2690,46 @@
                     $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
                     if(useEdit) {
                         $origTransaction.find(".amountEdit").val(newAmount);  // change amount in original transaction
+                        category = $origTransaction.find(".categoryEdit").val();
                     } else {
                         $origTransaction.find(".amount").text(newAmount);  // change amount in original transaction
+                        category = $origTransaction.find(".category").text();
                     }
 
                     newAmt = total_this_split / 4;
-                    if(useEdit) {
-                        $origTransaction.find(".amtMikeEdit").val(newAmt);                 // change amtMike in original transaction
-                        $origTransaction.find(".amtMauraEdit").val(newAmt);               // change amtMaura in original transaction
-                    } else {
-                        $origTransaction.find(".amtMike").text(newAmt);                 // change amtMike in original transaction
-                        $origTransaction.find(".amtMaura").text(newAmt);               // change amtMaura in original transaction
-                    }
+                    // if(useEdit) {
+                        if(category == 'MikeSpending') {
+                            $origTransaction.find(".amtMikeEdit").val(newAmount); // 2x newAmount - all Mike for this trans
+                            $origTransaction.find(".amtMauraEdit").val(0); // none Maura's
+                        } else if(category == 'MauraSpending') {
+                            $origTransaction.find(".amtMikeEdit").val(0); // none Mike's
+                            $origTransaction.find(".amtMauraEdit").val(newAmount); // 2x newAmount - all Maura for this trans
+                        } else {
+                            $origTransaction.find(".amtMikeEdit").val(newAmt);                 // change amtMike in original transaction
+                            $origTransaction.find(".amtMauraEdit").val(newAmt);               // change amtMaura in original transaction
+                        }
+                    // } else {
+                        if(category == 'MikeSpending') {
+                            $origTransaction.find(".amtMike").text(newAmount); // 2x newAmount - all Mike for this trans
+                            $origTransaction.find(".amtMaura").text(0); // none Maura's
+                        } else if(category == 'MauraSpending') {
+                            $origTransaction.find(".amtMike").text(0); // none Mike's
+                            $origTransaction.find(".amtMaura").text(newAmount); // 2x newAmount - all Maura for this trans
+                        } else {
+                            $origTransaction.find(".amtMike").text(newAmt);                 // change amtMike in original transaction
+                            $origTransaction.find(".amtMaura").text(newAmt);               // change amtMaura in original transaction
+                        }
+                    // }
 
                     // if total_amt is not null, 
                     //   set total_amt & total_key in original transaction, so update on page
-                    if(useEdit) {
+                    // if(useEdit) {
                         $origTransaction.find(".total_amtEdit").val(total_all_splits);
                         $origTransaction.find(".total_keyEdit").val(total_key);
-                    } else {
+                    // } else {
                         $origTransaction.find(".total_amt").text(total_all_splits);
                         $origTransaction.find(".total_key").text(total_key);
-                    }
+                    // }
 
                     var origTransDate,
                         origClearDate,
@@ -2734,6 +2774,18 @@
                     $clonedTransaction.find(".splitTransaction").attr("data-id", "null");
                     $clonedTransaction.find(".deleteTransaction").attr("data-id", "null");
                     $clonedTransaction.find(".copyTransaction").attr("data-id", "null");
+                    
+                    // if category is MikeSpending or MauraSpending - make split the opposit
+                    category = $clonedTransaction.find(".categoryEdit").val();
+                    if(category == 'MikeSpending') {
+                        $clonedTransaction.find(".categoryEdit").val("MauraSpending");
+                        $clonedTransaction.find(".amtMauraEdit").val( $clonedTransaction.find(".amtMikeEdit").val() );
+                        $clonedTransaction.find(".amtMikeEdit").val(0);
+                    } else if (category == 'MauraSpending') {
+                        $clonedTransaction.find(".categoryEdit").val("MikeSpending");
+                        $clonedTransaction.find(".amtMikeEdit").val( $clonedTransaction.find(".amtMauraEdit").val() );
+                        $clonedTransaction.find(".amtMauraEdit").val(0);
+                    }
 
                     // add to page  --  gets saved when "Save" clicked on page.
                     $origTransaction.after($clonedTransaction);
