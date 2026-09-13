@@ -8,13 +8,15 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-09-02 ***</h2>
-    <p>Last push on: 9/2/26; branch 2026-08-20
+  <h2>WORKING BRANCH:  ***  2026-09-03 ***</h2>
+    <p>Last push on: 9/4/26; branch 2026-09-03
     <br>"Recent" CHANGES:
+    <br>
+    <br> - highlight outstanding transactions (no clear date)
+    <br> - fixed amtMaura/amtMike when splitting
     <br>
     <br>WORKING ON...
     <br>
-    <br>Work on this?? Monthlies - include method (ACH, etc.)
     <br>
     <br> ----------------
     <br>
@@ -108,7 +110,6 @@ forecastYears: 2026, 2027, ... 2062
 <h2>To do:</h2>
     <ul>
       <li>Monthlies = Make sure SAVE button is working to change the default(s)</li>
-      <li>splitting Spending transaction may still not be working correctly</li>
       <li>Repeat Income totals in Bud vs. Acts page at bottom</li>
       <li>highlight outstanding transactions (no clear date)</li>
       <li>group "add transaction" page for recurring monthly transactions (multiple accounts)</li>
