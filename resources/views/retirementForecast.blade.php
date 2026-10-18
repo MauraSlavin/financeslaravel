@@ -543,7 +543,7 @@
                         //  minus SS and Medicare withheld
                         //  minus fed taxes
                         //  minus $ for trips to N Hampton
-                        //  minus toward household
+                        //  minus toward household -- not doing anymore
                         // rest is ExtraSpending
 
                         // get GBLimo income to start
@@ -563,8 +563,9 @@
                         // trips to N Hampton (based on 2025)
                         const trips = 1000;
 
-                        // towards household
-                        const household = GBLimoIncome * GBLimoForExpenses/100;
+                        // towards household -- no longer doing
+                        // const household = GBLimoIncome * GBLimoForExpenses/100;
+                        const household = 0;
 
                         // extra spending is what's left after everything else subtracted
                         const extraSpending = Math.round(GBLimoIncome - (withheld + taxes + trips + household));
@@ -588,10 +589,11 @@
                         const MikeSSIncome = Number($('#MikeSS' + year).text().replaceAll(",", ""));
                         const MauraIBMIncome = Number($('#MauraIBM' + year).text().replaceAll(",", ""));
                         const MauraSSIncome = Number($('#MauraSS' + year).text().replaceAll(",", ""));
+                        const InvestDistIncome = Number($('#DistfromInvestmts' + year).text().replaceAll(",", ""));  // In reality, only capital gains taxes, but use this for easier estimate
                         const TaxRetireIncome = Number($('#TaxRetire' + year).text().replaceAll(",", ""));
 
                         // total taxable income
-                        const totalTaxableIncome = DurhamIncome + GBLimoIncome + rentalIncome + NHRetIncome + MikeIBMIncome + MikeSSIncome + MauraIBMIncome + MauraSSIncome + TaxRetireIncome;
+                        const totalTaxableIncome = DurhamIncome + GBLimoIncome + rentalIncome + NHRetIncome + MikeIBMIncome + MikeSSIncome + MauraIBMIncome + MauraSSIncome + InvestDistIncome + TaxRetireIncome;
 
                         // get estimated tax rate (on taxable income)
                         const taxRate = Number(retirementParameters['EstTaxRateOnTotalTaxInc']);
@@ -731,100 +733,6 @@
                     return interest;
                 }
 
-                // calculate future retirement income
-                function getRetirementIncome(year, retirementParameters, lastYearTaxableRetIncome, lastYearNonTaxableRetIncome) {
-                    // when to start taking retirement funds
-                    const twoDigitYearStart = Number(retirementParameters['RetDistribBegin'].substring(4, 6));
-                    const twoDigitIteratedYear = year-2000;
-
-                    // if not getting retirement yet, change the retirement income values to 0 for the year
-                    if(twoDigitYearStart > twoDigitIteratedYear) {
-                        $('#TaxRetire' + year).text('0'.toLocaleString());
-                        $('#NonTaxRetire' + year).text('0'.toLocaleString());
-
-                        // set ret income to use in future
-                        lastYearTaxableRetIncome = 0;
-                        lastYearNonTaxableRetIncome = 0;
-                    
-                    // else if beginning distributions this year
-                    } else if(twoDigitYearStart == twoDigitIteratedYear) {
-                        // Get current retirement account values (LTC funds should already be reported under LTC balance at bottom of page, not here)
-                        // get from retirementforecast page (this one) under Beginning Balances for this year
-                        WFIRATaxableTrad = Number($("#TaxableRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
-                        nonTaxableRothBal = Number($("#TaxFreeRetirement20" + twoDigitIteratedYear).text().replaceAll(",", ""));
-
-                        // Distributions from Trad and Roth are proportional to initial balances
-                        // Determine proportions (TradProportion, RothProportion)
-                        var tradProportion = WFIRATaxableTrad/(WFIRATaxableTrad + nonTaxableRothBal);
-                        var rothProportion = nonTaxableRothBal/(WFIRATaxableTrad + nonTaxableRothBal);
-
-                        // totalDistribution = InvWD/100 * (WFIRATaxableTrad + WF-IRA-non-taxable-Roth)
-                        const totalDistribution = retirementParameters['InvWD']/100 * (WFIRATaxableTrad + nonTaxableRothBal);
-                        const taxableDist = Math.round(totalDistribution * tradProportion);
-                        const nonTaxableDist = Math.round(totalDistribution *  rothProportion);
-                        // adjustments needed if taxableDist or nonTaxableDist is negative  left off here mms maura
-
-                        // put distribution values on the page 
-                        $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist.toLocaleString());                      
-                        $('#NonTaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist.toLocaleString());                      
-
-                        // set ret income to use in future
-                        lastYearTaxableRetIncome = taxableDist;
-                        lastYearNonTaxableRetIncome = nonTaxableDist;
-
-                    } else {
-                    // ELSE  ... just bump up last year's values by defaultInflationFactor
-                    //  and put on page
-                        taxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearTaxableRetIncome);
-                        nonTaxableDist = Math.round((1 + Number(retirementParameters['InvGrowth'])/100) * lastYearNonTaxableRetIncome);
-
-                        // make sure distribution is not greater than the balance of the retirement accounts
-                        //  taxable & tax free    mms maura
-                        if(taxableDist > $('#endTaxableRetirement'+ (year-1)).text()) {
-                            taxableDist = Number($('#endTaxableRetirement'+ (year-1)).text().replaceAll(",", ""));
-                        }
-                        if(nonTaxableDist > $('#endTaxFreeRetirement'+ (year-1)).text()) {
-                            nonTaxableDist = Number($('#endTaxFreeRetirement'+ (year-1)).text().replaceAll(",", ""));
-                        }
-                        $('#TaxRetire' + year).text(taxableDist.toLocaleString());
-                        $('#NonTaxRetire' + year).text(nonTaxableDist.toLocaleString());
-
-                        // set ret income to use in future
-                        lastYearTaxableRetIncome = taxableDist;
-                        lastYearNonTaxableRetIncome = nonTaxableDist;
-                    }
-
-                    return [lastYearTaxableRetIncome, lastYearNonTaxableRetIncome];
-
-                }   // end function getRetirementIncome
-
-
-                // calc income sub-totals for the year
-                function updateIncomeSubTotal(year) {
-
-                    const incomeSelectorPrefixes = ['#TownofDurham', '#GBLimo', '#Rental', '#NHRetirement', '#MikeIBM', '#MikeSS', '#MauraIBM', '#MauraSS', '#TaxRetire', '#NonTaxRetire', '#InvestmentGrowth', '#TaxableRetirementGrowth', '#TaxFreeRetirementGrowth'];
-                    var currValue;  // to hold current income being added
-
-                    incomeSubTotal = 0;    // for Sub-total
-
-                    // calc income subtotal
-                    incomeSelectorPrefixes.forEach( selectorPrefix => {
-
-                        // get value for this prefix
-                        currValue = Number($(selectorPrefix + year).text().replaceAll(",", ""));
-
-                        // add to subtotal
-                        incomeSubTotal += currValue;
-
-                    });
-
-                    // put subtotal on page
-                    $('#income' + year).text(incomeSubTotal.toLocaleString());
-
-                    return;
-
-                }   // end function updateIncomeSubTotal
-
 
                 // calc values dependent on previous year
                 function calcYearByYear(forecastYears, thisYear, expenseCategoriesWithSummaryCats, retirementParameters, budgetedExpensesForThisFullYearByCategory) {
@@ -886,11 +794,13 @@
 
                             //      for investments, tax retire, non tax retire
                             growthSelectorPrefixes.forEach (selectorPrefix => {
-                                // const origEst = Number($('#Investment' + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
-                                const origEst = Number($('#' + selectorPrefix + year).text().replaceAll(',', '')) / ((InvGrowth * numMonthsToDate) + 1);
+
+                                // basis is what growth is based on
+                                const basis = Number($('#' + selectorPrefix + year).text().replaceAll(',', ''));
                                 
                                 // apply growth to original balance for number of months left
-                                const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
+                                // const growthLeft = Math.round((origEst/12 * numMonthsLeft) * InvGrowth);
+                                const growthLeft = Math.round(basis * InvGrowth * numMonthsLeft/12);
 
                                 // put on page
                                 $('#' + selectorPrefix + 'Growth' + year).text(growthLeft.toLocaleString());
@@ -924,8 +834,8 @@
                     }   // end calcInitIncomeSubtot
                     
                     // calc ending balances on page
-                    function calcEndingBalances(year, balanceCategories) {
-                        
+                    function calcEndingBalances(year, balanceCategories, spendingBuffer) {
+
                         // categories to add/subtract for each balance category
                         var categoriesToAdd = [];
                         var categoriesToSubtract = [];
@@ -977,9 +887,8 @@
                             });
 
                             // if account goes below 0, handle
-                            // mms negative
                             if(endingBalance < 0 && balanceCategory == 'Spending') {
-                                const adj = -endingBalance + 2000;  // Random $2000 buffer
+                                const adj = -endingBalance + spendingBuffer;  // Random buffer
                                 adjustments['Spending'] += adj;
                                 adjustments['Investment'] -= adj;
 
@@ -989,6 +898,11 @@
 
                                 // update distribution from investments
                                 $('#DistfromInvestmts' + year).text(adj.toLocaleString());
+
+                                // update income subtotal
+                                const newIncomeSubtot = Number($('#income' + year).text().replaceAll(",", "")) + adj;
+                                $('#income' + year).text(newIncomeSubtot.toLocaleString());
+
                             }
 
                             // Adjust endingBalance as needed; highlight if below 0
@@ -1162,7 +1076,7 @@
                         //  minus SS and Medicare withheld
                         //  minus fed taxes
                         //  minus $ for trips to N Hampton
-                        //  minus toward household
+                        //  minus toward household - not doing anymore
                         // rest is ExtraSpending
 
                         var extraSpending;
@@ -1179,15 +1093,16 @@
                             const withheld = Math.round(GBLimoIncome * whPercent/100);
 
                             // estimate federal income taxes.  Half of GB Limo is tips, which aren't taxable thru 2028 up to $25,000
-                            // assume 22% tax rate
-                            const taxes = (GBLimoIncome / 2) * .22;
+                            // assume 11% tax rate (in GB Limo Google Sheet "Assumptions" tab)
+                            // https://docs.google.com/spreadsheets/d/1yjOsp9AlLM8Dy9TzojLtrAXOii08u5OctVX7scVpPGY/edit?gid=1381903825#gid=1381903825
+                            const taxes = (GBLimoIncome / 2) * .11;
 
                             // trips to N Hampton (based on 2025)
                             const trips = 1000;
 
-                            // towards household
+                            // towards household -- no longer doing
                             const GBLimoForExpenses = retirementParameters['GBLimoForExpenses'];
-                            const household = GBLimoIncome * GBLimoForExpenses/100;
+                            const household = GBLimoIncome * GBLimoForExpenses/100;  // GBLimoForExpenses should be 0
 
                             // extra spending is what's left after everything else subtracted
                             extraSpending = -Math.round(GBLimoIncome - (withheld + taxes + trips + household));
@@ -1228,7 +1143,7 @@
 
                     // calc LTC contributions & new LTC balances for the year
                     function calcLTCContribsAndNewBalances(year, yearlyContrib, retirementParameters) {
-                        var LTCgoal, OldLTCbalance, NewLTCbalance, contrib;
+                        var LTCgoal, OldLTCbalance, NewLTCbalance, contrib, timeleft;
                         const lastYear = Number(year-1);
                         const LTCInvGrowth = retirementParameters['LTCInvGrowth']/100;
                         const currentYear = Number($('#currentYear').text());
@@ -1239,9 +1154,9 @@
                         OldLTCbalance = Number($('#LTCBal'+lastYear).text().replaceAll(",",""));
                         // if one year past the current year, adjust the old balance to an estimate of what it was at the beginning of the year
                         if(year == currentYear + 1) {
-                            // need to rewind the balance.  Principle = balance / (1 + rate * time).
-                            var time = (currMonth * 30)/365;    // assume 30 day months
-                            OldLTCbalance = OldLTCbalance / (1 + LTCInvGrowth*time);
+                            // need to project the balance at the end of the year.  EOY balance = balance + balance * (1 + rate) * timeleft).
+                            const timeleft = 1-(currMonth - 1)/12;    // percent of year left
+                            OldLTCbalance = OldLTCbalance+(OldLTCbalance * timeleft * LTCInvGrowth);  // projected balance at end of year
                         }
                         NewLTCbalance = Math.round(OldLTCbalance * (1+LTCInvGrowth));
 
@@ -1266,7 +1181,8 @@
                         contrib = -contrib;
                         
                         // estimate growth expected
-                        LTCgrowth = (OldLTCbalance + contrib)*LTCInvGrowth;
+                        // interest on 1/2 the contrib, assuming contributions made periodically throughout the year
+                        LTCgrowth = (OldLTCbalance + contrib/2)*LTCInvGrowth;
                         
                         // estimate new LTC balance
                         NewLTCbalance = Math.round(OldLTCbalance + contrib + LTCgrowth);
@@ -1388,7 +1304,7 @@
                             }
 
                             // put distribution values on the page 
-                            $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist.toLocaleString());                      
+                            $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist.toLocaleString());     
                             $('#NonTaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist.toLocaleString());                      
 
                             newTaxableRetBalance = Math.round(beginYearTaxableRetBalance + taxableGrowth);
@@ -1454,7 +1370,7 @@
                             }
 
                             // put distribution values on the page 
-                            $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist.toLocaleString());                      
+                            $('#TaxRetire20' + twoDigitIteratedYear).text(taxableDist.toLocaleString());  
                             $('#NonTaxRetire20' + twoDigitIteratedYear).text(nonTaxableDist.toLocaleString());                      
 
                             newTaxableRetBalance = Math.round(beginYearTaxableRetBalance + taxableGrowth);
@@ -1482,7 +1398,6 @@
                         const MauraIBMIncome = Number($('#MauraIBM' + year).text().replaceAll(",", ""));
                         const MauraSSIncome = Number($('#MauraSS' + year).text().replaceAll(",", ""));
                         const TaxRetireIncome = Number($('#TaxRetire' + year).text().replaceAll(",", ""));
-                        // left off here mms mms -- include investment distributions (non-retirement)
 
                         // total taxable income
                         const totalTaxableIncome = DurhamIncome + GBLimoIncome + rentalIncome + NHRetIncome + MikeIBMIncome + MikeSSIncome + MauraIBMIncome + MauraSSIncome + TaxRetireIncome;
@@ -1527,67 +1442,108 @@
 
                         const beginSpending = Number($('#Spending' + year).text().replaceAll(",", ""));
                         const creditCard = Number($('#CreditCardDebt' + year).text().replaceAll(",", ""));
-                        const income = Number($('#income' + year).text().replaceAll(",", ""));
+                        const totIncome = Number($('#income' + year).text().replaceAll(",", ""));  // with investment & ret growth
                         const expenses = Number($('#expenses' + year).text().replaceAll(",", ""));
+                        const beginInvestmentBal = Number($('#Investment' + year).text().replaceAll(",", ""));
+                        const beginTaxRetBal = Number($('#TaxableRetirement' + year).text().replaceAll(",", ""));
+                        const beginTaxFreeRetBal = Number($('#TaxFreeRetirement' + year).text().replaceAll(",", ""));
+
                         // don't include investment or retirment account growth; they're accounted for separately
                         const investmentGrowth = Number($('#InvestmentGrowth' + year).text().replaceAll(",", ""));
                         const taxRetGrowth = Number($('#TaxableRetirementGrowth' + year).text().replaceAll(",", ""));
                         const taxFreeRetGrowth = Number($('#TaxFreeRetirementGrowth' + year).text().replaceAll(",", ""));
+                        const totalGrowth = investmentGrowth + taxRetGrowth + taxFreeRetGrowth;
+                        const netIncome = totIncome - totalGrowth;  // income without growth
 
                         // sum everything up (expenses is a negative number, so add it)
-                        var endingSpending = beginSpending + creditCard + income + expenses - (investmentGrowth + taxRetGrowth + taxFreeRetGrowth);
+                        var endingSpending = beginSpending + creditCard + netIncome + expenses;
 
-                        // mms negative
                         // if balance goes below 0
                         if(endingSpending < 0)  {
-                            const adj = -endingSpending + 2000;  // Random $2000 buffer
-                            endingSpending += adj;
 
-                            // adjust investment amt; growth isn't adjusted (yet) ... might be ok   mms
-                            var investment = Number($('#endInvestment' + year).text().replaceAll(",", ""));
-                            investment -= adj;
-                            $('#endInvestment' + year).text(investment);
+                            // how much additional to take from investments or retirement accounts to cover expenses
+                            const adj = -endingSpending + spendingBuffer;  // Random buffer - should be enough to cover additional income taxes
+                            // endingSpending += adj;
 
-                            // turn Spending and investment red
-                            $('#endSpending' + year).css('background-color', 'red');
-                            $('#endInvestment' + year).css('background-color', 'red');
+                            // how much to take from each fund (invest, tax ret, tax free ret)
+                            const percentInvestments = investmentGrowth / totalGrowth;
+                            const percentTaxRet = taxRetGrowth / totalGrowth;
+                            const percentTaxFreeRet = taxFreeRetGrowth / totalGrowth;
 
-                            // update distribution from investments
-                            $('#DistfromInvestmts' + year).text(adj.toLocaleString());
+                            const availableInvestments = beginInvestmentBal + investmentGrowth;
+                            const availableTaxRet = beginTaxRetBal + taxRetGrowth;
+                            const availableTaxFreeRet = beginTaxFreeRetBal + taxFreeRetGrowth;
 
-                            // if ending balance is still <0 make it "blink"
-                            if(endingSpending < 0) $('#endSpending' + year).addClass('blinking');  // spending
-                            // left off here...  if investment < 0, adjust balances
-                            if(investment < 0) {
-                                $('#endInvestment' + year).addClass('blinking');  // investment
+                            // don't take more than the balance + interest
+                            var portionInvestments = Math.round(percentInvestments * adj);
+                            // if not enough in investments to take that share, 
+                            //      attempt to take missing share from taxable retirement
+                            var missingShare;
+                            if(portionInvestments > availableInvestments) {
+                                missingShare = portionInvestments - availableInvestments;
+                                portionInvestments = availableInvestments;
+                            } else {
+                                missingShare = 0;
+                            }
 
-                                // bring investment balance back up to 0
-                                $('#endInvestment' + year).text("0");
-                                // adjust income line to match
-                                const origTaxRetireIncome = Number($('#DistfromInvestmts' + year).text().replaceAll(",", ""));
-                                $('#DistfromInvestmts' + year).text(Math.round(origTaxRetireIncome + investment).toLocaleString());
-
-                                // take 1/2 from taxable retirement and 1/2 from non-tax retirement
-                                const origEndTaxRetirement = Number($('#endTaxableRetirement' + year).text().replaceAll(",", ""));
-                                const origEndTaxFreeRet = Number($('#endTaxFreeRetirement' + year).text().replaceAll(",", ""));
-                                $('#endTaxableRetirement' + year).text(Math.round(origEndTaxRetirement + .5 * investment).toLocaleString());
-                                $('#endTaxFreeRetirement' + year).text(Math.round(origEndTaxFreeRet + .5 * investment).toLocaleString());
-
-                                // adjust income lines
-                                const origTaxRetirementIncome = Number($('#TaxRetire' + year).text().replaceAll(",", ""));
-                                const origTaxFreeIncome = Number($('#NonTaxRetire' + year).text().replaceAll(",", ""));
-                                $('#TaxRetire' + year).text(Math.round(origTaxRetirementIncome + .5 * investment).toLocaleString());
-                                $('#NonTaxRetire' + year).text(Math.round(origTaxFreeIncome + .5 * investment).toLocaleString());
-
+                            // if not enough in tax ret to take that share, 
+                            //      attempt to take missing share from tax free retirement
+                            var portionTaxRet = Math.round(percentTaxRet * adj + missingShare);
+                            if(portionTaxRet > availableTaxRet) {
+                                missingShare = portionTaxRet - availableTaxRet;
+                                portionTaxRet = availableTaxRet;
+                            } else {
+                                missingShare = 0;
                             }
                             
+                            // if not enough in tax free ret to take that share, leave as a negative number
+                            var portionTaxFreeRet = Math.round(percentTaxFreeRet * adj + missingShare);
+                            
+                            // add additional portions to the distribution amounts, and put on the page
+                            const newInvestDist = Number($('#DistfromInvestmts' + year).text().replaceAll(",", "")) + portionInvestments;
+                            const newTaxRetDist = Number($('#TaxRetire' + year).text().replaceAll(",", "")) + portionTaxRet;
+                            const newTaxFreeRetDist = Number($('#NonTaxRetire' + year).text().replaceAll(",", "")) + portionTaxFreeRet;
+
+                            $('#DistfromInvestmts' + year).text(newInvestDist.toLocaleString());
+                            $('#TaxRetire' + year).text(newTaxRetDist.toLocaleString());
+                            $('#NonTaxRetire' + year).text(newTaxFreeRetDist.toLocaleString());
+
+                            // update the income sub-total
+                            const newIncomeSubTotal = totIncome + adj
+                            $('#income' + year).text(newIncomeSubTotal.toLocaleString());
+
+                            // subtract portions from ending values
+                            const newInvestBal = Number($('#endInvestment' + year).text().replaceAll(",", "")) - portionInvestments;
+                            const newTaxRetBal = Number($('#endTaxableRetirement' + year).text().replaceAll(",", "")) - portionTaxRet;
+                            const newTaxFreeRebBal = Number($('#endTaxFreeRetirement' + year).text().replaceAll(",", "")) - portionTaxFreeRet;
+
+                            $('#endInvestment' + year).text(newInvestBal.toLocaleString());
+                            $('#endTaxableRetirement' + year).text(newTaxRetBal.toLocaleString());
+                            $('#endTaxFreeRetirement' + year).text(newTaxFreeRebBal.toLocaleString());
+
+                            // adjust taxes - don't bump taxes for tax free ret;  and put on page
+                            const taxRate = Number(retirementParameters['EstTaxRateOnTotalTaxInc']);
+                            const oldTaxes = Number($('#IncomeTaxes' + year).text().replaceAll(",", ""));
+                            const additionalTax = -Math.round( (portionInvestments + portionTaxRet) * taxRate/100);
+                            const newTaxes = oldTaxes + additionalTax;
+                            $('#IncomeTaxes' + year).text(newTaxes.toLocaleString());
+                            // update Taxes subtotal
+                            const oldTaxesSubtotal = Number($('#Taxes' + year + 'SUM').text().replaceAll(",", ""));
+                            $('#Taxes' + year + 'SUM').text((oldTaxesSubtotal + additionalTax).toLocaleString());
+
+                            // adjust expenses for additional tax and put on page
+                            const newExpenses = expenses + additionalTax;
+                            $('#expenses' + year).text(newExpenses.toLocaleString());
+
+                            // adjust ending balances for spending (written to page after this block)
+                            endingSpending = beginSpending + netIncome + adj + newExpenses;
                         }
 
                         // put on page
                         $('#endSpending' + year).text(Math.round(endingSpending).toLocaleString());
 
-
                     }   // end calcEndingSpending
+
 
                     function calcSubTotals(year, type) {
 
@@ -1602,7 +1558,7 @@
 
                             // --- Sub total for INCOME (expenses done in calcSummarySubTotals)
                             case 'income':
-                                categories = ['TownofDurham', 'GBLimo', 'Rental', 'NHRetirement', 'MikeIBM', 'MikeSS', 'MauraIBM', 'MauraSS', 
+                                categories = ['TownofDurham', 'GBLimo', 'Rental', 'NHRetirement', 'MikeIBM', 'MikeSS', 'MauraIBM', 'MauraSS', 'DistfromInvestmts',
                                 'TaxRetire', 'NonTaxRetire', 'InvestmentGrowth', 'TaxableRetirementGrowth', 'TaxFreeRetirementGrowth'];
                                 subTotPrefix = 'income';
                                 break;
@@ -1613,6 +1569,7 @@
                                 subTotPrefix = 'ending';
                                 break;
                         }
+
                         var subtotal = 0;
                         categories.forEach( detailCategory => {
                             subtotal += Number($('#' + detailCategory + year).text().replaceAll(",", ""));
@@ -1623,6 +1580,8 @@
 
                     }   // end calcSubTotals
 
+                    // Min Spending balance (buffer)
+                    const spendingBuffer = 5000;                    
 
                     // get default inflation factor
                     const defaultInflationFactor = $("#defaultInflationFactor").text();
@@ -1658,7 +1617,7 @@
                             calcExpensesSubTot(year, expenseCategoriesWithSummaryCats);
                             calcInitInvGrowth(year, firstOfThisMonth, growthSelectorPrefixes, InvGrowth);
                             calcInitIncomeSubtot(year, growthSelectorPrefixes);
-                            calcEndingBalances(year, balanceCategories);
+                            calcEndingBalances(year, balanceCategories, spendingBuffer);
                             $('#HouseValue' + year).text(Number(retirementParameters['House'].replaceAll(",", "")).toLocaleString());
 
                         } else {
