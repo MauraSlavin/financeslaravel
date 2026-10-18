@@ -8,38 +8,18 @@
 <hr>
 <hr>
 
-  <h2>WORKING BRANCH:  ***  2026-09-03 ***</h2>
-    <p>Last push on: 9/4/26; branch 2026-09-03
+  <h2>WORKING BRANCH:  ***  2026-09-13 ***</h2>
+    <p>Last push on: 10/18/26; branch 2026-09-13
     <br>"Recent" CHANGES:
     <br>
-    <br> - highlight outstanding transactions (no clear date)
-    <br> - fixed amtMaura/amtMike when splitting
     <br>
-    <br>WORKING ON...
-    <br>
+    <br>WORKING ON... (haven't started yet)
+    <br>Automate Trips more (see "trips" tab in MySQL Workbench)
+    <br>-- still need to manually write rcd to Google sheet (unless figure out how to do that from code)
     <br>
     <br> ----------------
     <br>
-    <br>Search "mms negative"
-    <br>*** Handle if Spending goes negative (I <u>THINK</u> this is done).
-    <br>*** Handle if Investments goes negative (I <u>THINK</u> this is done). - needs testing
-    <br>*** In 2056, "Tax Retire" Income goes negative.  This shouldn't happen.
-    </p>
-    <p>NOTE: retirementData and DiscSavings out of sync after sync'g</p>
-    <p>Working on...
-    <br> - when Investment fall below 0
-    <br> -- have line for money taken from investments, need to update it when money is taken
-    <br> -- LEFT OFF HERE...
-    <br> --- updated dist from investments - check to make sure totals are still correct (update Google sheet)
-    <br> -- "BigItems" vs. "BigExpenses"
-    <br> ---- Right now, "BigItems" is a bucket category & separate Disc acct ("Irreg Big Items")
-    <br> ---- ...and "BigExpenses" only used 2025 for my dental work.
-    <br> -- SHOULD have BigItems (or BigExpenses) as a category when it gets transferred to IrregBig acct
-    <br> - "mms negative"
-    <br> - does income taxes need to be adjusted?
-    <br> - does investment income need to be adjusted?
-    <br> - to totals and/or subtotals need to be adjusted?
-    </p>
+    <p>NOTE: retirementData out of sync after sync'g</p>
     <p>Working on (paused)</p>
       <ul>
         <li>RetirementForecast
@@ -48,18 +28,6 @@
       </ul>
     <p>To Do:</p>
     <ul>
-      <li>RetirementForecast
-        <ul>
-          <li>Check beginning balances for first column/year for (OK if retirementData table is correct).  These have been checked:
-            <br>*** left off here mms mms - handle investment distributions when "spending" falls below $0.
-            <br>****** adjust income taxes when this happens
-            <br>***
-            <br>*** Is this fixed?? Non-urgent fix: in calcRetirementIncome, when running the year we begin to take distributions from retirement income, assumes the first column is the value at the beginning of the year, which is NOT true!
-            <br>.
-          </li>
-          <li>clean up code</li>
-        </ul>
-      </li>
       <hr>
       <hr>
 <p><u>Hidden fields in retirementForcast</u></p>

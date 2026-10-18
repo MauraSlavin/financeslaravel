@@ -4733,7 +4733,7 @@ class TransactionsController extends Controller
         $insertRcds = [
             ['description' =>'WF-IRA-non-taxable-Roth', 'data' => $rothTotal],
             ['description' =>'WF-IRA-Taxable-Trad', 'data' => $tradTotal],
-            ['description' =>'WF-Inherited (for LTC)',  'data' => $inhTotal],
+            ['description' =>'WF-Inherited',  'data' => $inhTotal],
             ['description' =>'WF-Inv-Bal', 'data' => $wfInv]
         ];
 
@@ -5348,9 +5348,9 @@ class TransactionsController extends Controller
             $spendingAccts = ['Savings', 'Checking'];
             $ccAccts = ['DiscCC', 'VISA'];
             $invAccts = ['WF-Inv-Bal', 'EJ'];
-            $retTaxAccts = ['WF-IRA-Taxable-Trad', 'RetirementDisc', 'TIAA'];
+            $retTaxAccts = ['WF-IRA-Taxable-Trad', 'RetirementDisc'];
             $retNonTaxAccts = ['WF-IRA-non-taxable-Roth'];
-            $LTCAccts = ['WF-Inherited', 'LTC-Disc'];
+            $LTCAccts = ['WF-Inherited', 'LTC-Disc', 'TIAA'];
 
             // get spending accounts balance from retirementdata table
             $beginOfThisMonthSpendingDB = DB::table("retirementdata") 
@@ -5370,6 +5370,7 @@ class TransactionsController extends Controller
                 ->whereIn("account", $ccAccts)
                 // only cleared transactions.  If not cleared, $ still in spending
                 ->whereNotNull("clear_date")
+                ->where("clear_date", '<', $firstOfThisMonth)
                 ->whereNull("deleted_at")
                 ->sum("amount");
 
@@ -5390,11 +5391,15 @@ class TransactionsController extends Controller
                 ->whereIn("description", $retTaxAccts)
                 ->whereNull("deleted_at")
                 ->get()->toArray();
+            
             // if modified exists, use that #; otherwise use data
             $retTaxAcctsBal = 0;
             foreach($retTaxAcctsDB as $retTaxAcctsRcd) {
-                if($retTaxAcctsRcd->modified !== null) $retTaxAcctsBal += $retTaxAcctsRcd->modified;
-                else $retTaxAcctsBal += $retTaxAcctsRcd->data;
+                if($retTaxAcctsRcd->modified !== null) {
+                    $retTaxAcctsBal += $retTaxAcctsRcd->modified;
+                } else {
+                    $retTaxAcctsBal += $retTaxAcctsRcd->data;
+                }
             }
 
             // get LTC balance
@@ -5458,21 +5463,25 @@ class TransactionsController extends Controller
             //      interest since date - get number of days elapsed
             $firstOfThisMonth = date("m/1/Y");
             $firstOfThisMonth = new DateTime($firstOfThisMonth);
-            $totInterest = 0;
+            $totLTCInterest = 0;
             $idx = 1;
             while(isset($LTCinWF[$idx])) {
                 $initDate = substr($LTCinWFdate[$idx], 0, 2) . "/" . substr($LTCinWFdate[$idx], 2, 2) . "/" . '20' . substr($LTCinWFdate[$idx], 4, 2);
                 $initDate = new DateTime($initDate);
 
                 $elapsedDays = date_diff($initDate, $firstOfThisMonth)->format('%a');
-
                 // interest
                 $interest = round($LTCinWF[$idx] * $rate * ($elapsedDays/365), 2);
-                $totInterest += $interest;
+                $totLTCInterest += $interest;
 
                 $idx++;
             }
-            $initLTCBal += $totInterest;
+            $initLTCBal += $totLTCInterest;
+ 
+            // subtract totInterest from Trad ira (taxable retirement)
+            //      it's part of the trad ira that earmarked for LTC
+            $retTaxAcctsBal -= $totLTCInterest;
+
 
             // get balance of non-taxable (Roth) accts
             $retNonTaxAcctsDB = DB::table("retirementdata") 
@@ -5552,14 +5561,17 @@ class TransactionsController extends Controller
             // init array to return
             $townOfDurhamIncomes = [];
 
-            // get data from database
+            // get data from database; use 'modified', if it's there
             $townData = DB::table('retirementdata')
-                ->select('description', 'data')
+                ->select('description', 'data', 'modified')
                 ->whereIn('type', ['assm', 'con'])
                 ->whereIn('description', ['EndTownJob', 'TownOfDurhamHourly', 'TownOfDurhamHrsPerWeek', 'SSCOLA'])
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get()->toArray();
+            foreach($townData as $idx=>$townDatum) {
+                if($townDatum->modified != null) $townData[$idx]->data = $townDatum->modified;
+            }
 
             // EndTownJob, TownOfDurhamHourly, TownOfDurhamHrsPerWeek and SSCOLA are returned in alphabetical order
             // get EndTownJob date in usable form (yyyy-mm-dd)
@@ -5588,6 +5600,7 @@ class TransactionsController extends Controller
                 
             // what's left is remaining budget
             $thisYearRemainingIncome = $thisYearAnnualIncomeTown - $ytdTownIncomeThroughFirstOfMonth;
+            if($thisYearRemainingIncome < 0) $thisYearRemainingIncome = 0; // can't be negative
             // add to empty array (making it the first element)
             $townOfDurhamIncomes[] = $thisYearRemainingIncome;
 
@@ -5626,11 +5639,10 @@ class TransactionsController extends Controller
                 ->whereNull('deleted_at')
                 ->orderBy('description')
                 ->get()->toArray();
-            
+
             // use "modified" if it exists
             $gbData = [];
             foreach($gbDataDB as $idx=>$datum) {
-
                 if($datum->modified !== null) {
                     $gbData[$datum->description] = $datum->modified;
                 } else {
@@ -5644,18 +5656,21 @@ class TransactionsController extends Controller
             $dateEndGBJob = '20' . substr($gbData['EndGBJob'], 4) . '-' . substr($gbData['EndGBJob'], 0, 2) . '-' . substr($gbData['EndGBJob'], 2, 2);
 
             // get GB income up to the first of this month for this year
-            $ytdGBIncome = DB::table('transactions')
+            $ytdGBIncomeDB = DB::table('transactions')
                 ->where('toFrom', 'Great Bay Limo')
                 ->whereIn('category', ['IncomeMisc', 'IncomeTaxFree'])
                 ->whereBetween('trans_date', [$firstOfThisYear, $firstOfThisMonth])
                 ->whereNull('deleted_at')
-                ->sum('amount');
+                ->get();
+
+            $ytdGBIncome = $ytdGBIncomeDB->sum('amount');
 
             // get the budget for IncomeMisc (should only be GBLimo) for this year
             $thisYearBudgetDB = DB::table('budget')
                 ->where('category', 'IncomeMisc')
                 ->where('year', $year)
                 ->first();      // should only be one record that matches
+
 
             // remaining budget is full year - what's been earned so far
             $thisYearRemainingBudget = $thisYearBudgetDB->total - $ytdGBIncome;
@@ -5705,6 +5720,7 @@ class TransactionsController extends Controller
             $rentalIncomeY1 = $rentalData[1]->data;
             $rentalIncomeY2 = $rentalData[2]->data;
             $rentalIncomeY3 = $rentalData[3]->data;
+            $rentalIncomeY4 = $rentalData[4]->data;
 
             // Get RentalIncomeY1 first
             $idx = 1;
@@ -5716,6 +5732,7 @@ class TransactionsController extends Controller
                     if($idx == 1) $thisYearIncome = $rentalIncomeY1;
                     else if($idx == 2) $thisYearIncome = $rentalIncomeY2;
                     else if($idx == 3) $thisYearIncome = $rentalIncomeY3;
+                    else if($idx == 4) $thisYearIncome = $rentalIncomeY4;
                     else $thisYearIncome = $prevYearIncome * $raise;
                     $prevYearIncome = $thisYearIncome;
                 } else {  // no longer renting rooms
@@ -5835,30 +5852,22 @@ class TransactionsController extends Controller
             else $ssDataWhereIn = [];
 
             if($who == 'Maura') {
-            $SSData = DB::table('retirementdata')
-                ->select('description', 'data')
-                ->whereIn('description', $ssDataWhereIn)
-                ->whereNull('deleted_at')
-                ->orderBy('description')
-                ->get()->toArray();
+                $SSData = DB::table('retirementdata')
+                    ->select('description', 'data')
+                    ->whereIn('description', $ssDataWhereIn)
+                    ->whereNull('deleted_at')
+                    ->orderBy('description')
+                    ->get()->toArray();
             } else {
             // who = Mike
-                $SSData = (object)[];
-                $SSTransData = DB::table('transactions')
-                    ->select('toFrom', 'amount', 'total_amt')
-                    ->whereIn('toFrom', $ssDataWhereIn)
+                $SSData = DB::table('retirementdata')
+                    ->select('description', 'data')
+                    ->whereIn('description', $ssDataWhereIn)
                     ->whereNull('deleted_at')
-                    ->orderBy('toFrom', 'desc')
-                    ->limit(1)
+                    ->orderBy('description')
                     ->get()->toArray();
-                $SSData->description = 'SSMike';
-                if($SSTransData[0]->total_amt != null) {
-                    $SSData->data = $SSTransData[0]->total_amt;
-                } else {
-                    $SSData->data = $SSTransData[0]->amount;
-                }
             }
-
+            
             $today = date('Y-m-d');     // today in yyyy-mm-dd format
             $thisYear = date('Y');      // this year - yyyy
 
@@ -5866,7 +5875,7 @@ class TransactionsController extends Controller
                 // only SSMike returned
                 $start = '2024-01-01'; // old date - already started
                 $startYear = '2024';    // old - already started
-                $initIncome = $SSData->data * 12;    // full year benefits
+                $initIncome = $SSData[0]->data * 12;    // full year benefits
             } else if($who == 'Maura') {
                 // MauraSS65, MauraSS67, MauraSSStart, SSMaura (current amt if it's already started) returned in ABC order
                 $start = $SSData[2]->data;  // get start date
@@ -6031,6 +6040,27 @@ class TransactionsController extends Controller
 
         }    // end function getRetParams
         
+        function handleOverBudget($category, $budgetLeft, $thisMonthIdx, $months, $thisYear) {
+            $noMoreSpendingCategories = ['College','ExtraSpending', 'Gift', 'Holiday', 'Home', 'MarinasMiles', 'MauraSpending', 'MikeSpending', 'MiscExpense', 'RetContribOut', 'Vacation', 'BegExpenses', 'LTC', 'Loan'];
+            if(in_array($category, $noMoreSpendingCategories)) {
+                $budgetLeft = 0;  // rest of year budget is 0
+            } else {
+                // rest of year budget is whatever was budgeted for the rest of the year
+                $budgetMonths = [];
+                for($mon = intval($thisMonthIdx); $mon <= 12; $mon++) {
+                    $budgetMonths[] = $months[$mon-1];
+                }
+
+                $sumPhrase = implode("+", $budgetMonths);
+                $newBudgetLeft = DB::table('budget')
+                    ->where('year', $thisYear)
+                    ->where('category', $category)
+                    ->sum(DB::raw($sumPhrase));
+                $budgetLeft = $newBudgetLeft;
+            }
+
+            return $budgetLeft;
+        }   // end function handleOverBudget
 
         // months array
         $months = [
@@ -6216,12 +6246,18 @@ class TransactionsController extends Controller
         }
 
         // sum subtotals for each sumcategory
-        foreach($restOfYearBudgetByCategory as $idx=>$categoryRcd) {
+        foreach($restOfYearBudgetByCategory as $category=>$categoryRcd) {
+
             $sumCat = collect($expenseCategoriesWithSummaryCats)
-                // ->where('name', $categoryRcd->category)
-                ->where('name', $idx)
+                ->where('name', $category)
                 ->first();
+
             if($sumCat != null) {
+                if($categoryRcd > 0 ) { 
+                    $categoryRcd = handleOverBudget($category, $categoryRcd, $thisMonthIdx, $months, $thisYear);
+                    $restOfYearBudgetByCategory[$category] = $categoryRcd;
+                }
+
                 $restOfYearBudgetBySUMMARYCategory[$sumCat->summaryCategory] += $categoryRcd;
             }
         }
