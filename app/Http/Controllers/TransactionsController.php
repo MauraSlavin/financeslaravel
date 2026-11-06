@@ -1059,6 +1059,7 @@ class TransactionsController extends Controller
             'november',
             'december'
         ];
+
         $selectedMonths = array_slice($months, 0, $thisMonth);
         
         $ytmBudgets = DB::table('budget')
@@ -2718,7 +2719,7 @@ class TransactionsController extends Controller
         $miles = [];
         $premiums = [];
         $prefixes = [];
-        $errMsg = null;
+        $msg = null;
 
         foreach($insTableData as $insDatum) {
             if(str_contains($insDatum->key, 'Begin')) {
@@ -2746,7 +2747,7 @@ class TransactionsController extends Controller
         }
 
         if(!$found) {
-            $errMsg = "No Insurance Premium for this time frame was found in the carcostdetails table.";
+            $msg = "No Insurance Premium for this time frame was found in the carcostdetails table.";
             $costPerMile = 0;
         } else {
             // $prefixIdx now has index into the relevant data for all the insurance info
@@ -2757,35 +2758,35 @@ class TransactionsController extends Controller
         // cost/mile * number of miles for this trip is the share of the maintenance cost for this trip
         $shareIns = round($costPerMile * $tripData['tripmiles'], 2);
 
-        return [$shareIns, $errMsg];
+        return [$shareIns, $msg];
         
     }   // end of function calcShareIns
 
 
     // calculate fuel cost for this trip
     function calcFuel($tripData) {
-    // NOTE:  This ASSUMES
-    //
-    //      IMPORTANT
-    //      ASSUMPTION:  
-    //          All gas/charging done is in the database
-    //              with notes like 'trips - <trip name>'
-    //              and gallons or kWhs purchased
-    //
+        // NOTE:  This ASSUMES
+        //
+        //      IMPORTANT
+        //      ASSUMPTION:  
+        //          All gas/charging done is in the database
+        //              with notes like 'trips - <trip name>'
+        //              and gallons or kWhs purchased
+        //
 
-    // Need:
-    //      miles traveled  
-    //          $tripData['tripMiles']
-    //      gas/kWh purchased en route
-    //          in transactions table where notes = "% - trips - <tripName> ..."
-    //      MPG or mile/kwh
-    //          in carcostdetails table
-    //              key = "Fuel" tells if gas or electric is used
-    //              for electric: solar kWh/mile is where key = "MPK"
-    //              for gas: mpg is where key = "MPG"
-    //      cost of fuel not bought on trip
-    //          electric: in carcostdetails table where key = "SolarKwh"
-    //          gas:    in transactions table, last where 
+        // Need:
+        //      miles traveled  
+        //          $tripData['tripMiles']
+        //      gas/kWh purchased en route
+        //          in transactions table where notes = "% - trips - <tripName> ..."
+        //      MPG or mile/kwh
+        //          in carcostdetails table
+        //              key = "Fuel" tells if gas or electric is used
+        //              for electric: solar kWh/mile is where key = "MPK"
+        //              for gas: mpg is where key = "MPG"
+        //      cost of fuel not bought on trip
+        //          electric: in carcostdetails table where key = "SolarKwh"
+        //          gas:    in transactions table, last where 
 
 
         // get data keys needed in carcostdetails
@@ -3012,6 +3013,127 @@ class TransactionsController extends Controller
     // - second to Checking with category IncomeMisc (because money never really left the ckg account)
     public function recordTrip(Request $request) {
 
+        function writeTripTransactions($newTripRcd) {
+
+            $monthsAbbr = [
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'May',
+                'Jun',
+                'Jul',
+                'Aug',
+                'Sep',
+                'Oct',
+                'Nov',
+                'Dec'
+            ];
+
+            // money not actually moved - just recategorized using categories
+            // -- comes out of MikeSpending/MauraSpending
+            // -- goes into IncomeMisc
+            $fromCheckingSpendingRcd = [];  // take $ from Spending
+            $toCheckingIncome = [];         // put in general household checking
+
+            // set dates
+            $fromCheckingSpendingRcd['trans_date'] = $newTripRcd['begin'];
+            $fromCheckingSpendingRcd['clear_date'] = $newTripRcd['begin'];
+            $toCheckingIncome['trans_date'] = $newTripRcd['begin'];
+            $toCheckingIncome['clear_date'] = $newTripRcd['begin'];
+
+            // set acct
+            $fromCheckingSpendingRcd['account'] = 'Checking';
+            $toCheckingIncome['account'] = 'Checking';
+
+            // set toFrom
+            $fromCheckingSpendingRcd['toFrom'] = 'Checking';
+            $toCheckingIncome['toFrom'] = 'Checking';
+
+            // stmtDate, temp TotalKey, total_amt, notes, copied
+            // stmtDate is begin (format mm-dd-yy) in yy-MON format
+            $stmtDate = substr($newTripRcd['begin'], 2, 2) . '-' . $monthsAbbr[intval(substr($newTripRcd['begin'], 5, 2)) - 1];
+            $fromCheckingSpendingRcd['stmtDate'] = $stmtDate;
+            $toCheckingIncome['stmtDate'] = $stmtDate;
+
+            $fromCheckingSpendingRcd['total_amt'] = 0;
+            $toCheckingIncome['total_amt'] = 0;
+
+            $fromCheckingSpendingRcd['notes'] = 'trips - ' . $newTripRcd['trip'] . ' - use of car';
+            $toCheckingIncome['notes'] = 'trips - ' . $newTripRcd['trip'] . ' - use of car';
+
+            $fromCheckingSpendingRcd['copied'] = 'new';
+            $toCheckingIncome['copied'] = 'new';
+
+            // set amount
+            $totalCost = $newTripRcd['tolls'] + $newTripRcd['sharePurchase'] + $newTripRcd['shareIns'] + $newTripRcd['shareMaint'] + $newTripRcd['gasChargingDollars'] + $newTripRcd['other'];
+
+            // amount, amtMike, amtMaura & category going TO IncomeMisc is always the same (for Mike, Maura, or both)
+            $toCheckingIncome['amount'] = $totalCost;
+            $toCheckingIncome['amtMike'] = $totalCost/2;
+            $toCheckingIncome['amtMaura'] = $totalCost/2;
+            $toCheckingIncome['category'] = "IncomeMisc";
+
+            if($newTripRcd['who'] == 'both') {
+                $fromCheckingSpendingRcd['amount'] = -$totalCost/2;
+
+                // needs a second record - copy identical fields
+                $fromCheckingSpendingRcd2 = [];
+                $fromCheckingSpendingRcd2['trans_date'] = $fromCheckingSpendingRcd['trans_date'];
+                $fromCheckingSpendingRcd2['clear_date'] = $fromCheckingSpendingRcd['clear_date'];
+                $fromCheckingSpendingRcd2['account'] = $fromCheckingSpendingRcd['account'];
+                $fromCheckingSpendingRcd2['toFrom'] = $fromCheckingSpendingRcd['toFrom'];
+                $fromCheckingSpendingRcd2['amount'] = $fromCheckingSpendingRcd['amount'];
+                $fromCheckingSpendingRcd2['stmtDate'] = $fromCheckingSpendingRcd['stmtDate'];
+                $fromCheckingSpendingRcd2['total_amt'] = $fromCheckingSpendingRcd['total_amt'];
+                $fromCheckingSpendingRcd2['notes'] = $fromCheckingSpendingRcd['notes'];
+                $fromCheckingSpendingRcd2['copied'] = $fromCheckingSpendingRcd['copied'];
+
+                // the following fields are different between the two rcds moving $ out of Spending
+                // amts & category
+                $fromCheckingSpendingRcd['amtMike'] = -$totalCost/2;
+                $fromCheckingSpendingRcd['amtMaura'] = 0;
+                $fromCheckingSpendingRcd['category'] = "MikeSpending";
+                
+                $fromCheckingSpendingRcd2['amtMike'] = 0;
+                $fromCheckingSpendingRcd2['amtMaura'] = -$totalCost/2;
+                $fromCheckingSpendingRcd2['category'] = "MauraSpending";
+
+            } else if($newTripRcd['who'] == "Mike") {
+                // set amount, amtMike, amtMaura, category
+                $fromCheckingSpendingRcd['amount'] = -$totalCost;
+                $fromCheckingSpendingRcd['amtMike'] = -$totalCost;
+                $fromCheckingSpendingRcd['amtMaura'] = 0;
+                $fromCheckingSpendingRcd['category'] = 'MikeSpending';
+            } else if($newTripRcd['who'] == "Maura") {
+                // set amount, amtMike, amtMaura, category
+                $fromCheckingSpendingRcd['amount'] = -$totalCost;
+                $fromCheckingSpendingRcd['amtMike'] = 0;
+                $fromCheckingSpendingRcd['amtMaura'] = -$totalCost;
+                $fromCheckingSpendingRcd['category'] = 'MauraSpending';
+            }
+
+            // write first (two if who is "both") transaction taking $ from Spending
+            $id = DB::table('transactions')->insertGetId($fromCheckingSpendingRcd);
+            DB::table('transactions')
+                ->where('id', $id)
+                ->update(['total_key' => $id]);
+
+            // write second record for trans $ out of spending, if needed (for "both")
+            if($newTripRcd['who'] == 'both') {
+                $fromCheckingSpendingRcd2['total_key'] = $id;
+                DB::table('transactions')
+                    ->insert($fromCheckingSpendingRcd2);
+            }
+
+            // write record to put money in IncomeMisc category
+            $toCheckingIncome['total_key'] = $id;
+            DB::table('transactions')
+                ->insert($toCheckingIncome);
+
+        }   // end of function writeTripTransactions
+
+
         // Do we have all the info?  Assume complete until find something missing
         $completeTripInfo = true;
 
@@ -3021,6 +3143,7 @@ class TransactionsController extends Controller
         // fields to retrieve (ids) from page (form)
         $fields=[
             "tripName",
+            "tripFunction",
             "tripBegin",
             "tripEnd",
             "tripWho",
@@ -3036,7 +3159,13 @@ class TransactionsController extends Controller
             else $tripData[$field] = null;
         }
 
+        // start building msg to show details on page after costs are calculated
+        $allCostMsgs = "\nBreakdown of costs:\n - $" . $tripData['tripTolls'] .  " - Tolls";
+
+        // NOTE:  have $tripData[tripFunction] = "Run", "Test" or "Modify"
+
         // write odometer reading, if it was entered
+        // Does this even for "Test" tripfunction
         if($tripData['tripOdom'] != '' && $tripData['tripOdomDate'] != '') {
             $msg = $this->writeOdom($tripData);
             // Go no further if error recording odometer reading
@@ -3049,7 +3178,8 @@ class TransactionsController extends Controller
                 $tripNames = $this->getTripNames();
 
                 $errMsg = '**** No TRIP recorded.  Need correct odometer reading! ****';
-                return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames, 'errMsg' => ($msg . "\n" . $errMsg)]);
+                $msg .= $msg . "\n" . $errMsg;
+                return view('trips', ['carInfo' => $carInfo, 'tripNames' => $tripNames, 'errMsg' => $msg]);
             }
         }
 
@@ -3102,9 +3232,12 @@ class TransactionsController extends Controller
         
         // share of purchase price
         $tripData["sharePurchase"] = $this->calcSharePurchase($tripData, $purchase, $beginMiles, $expMiles);
+        $allCostMsgs .= "\n - $" . $tripData["sharePurchase"] . " - Share of Purchase";
         
         // share of maintenance costs
         [$tripData["shareMaint"], $checkRecentMaint] = $this->calcShareMaint($tripData, $beginMiles, $recentMileage);
+        $allCostMsgs .= "\n - $" . $tripData["shareMaint"] . " - Share of Maintenance";
+
 
         // add checkRecentMaint to errMsg
         $msgIntro = "If these are NOT the most recent maint transactions, add those and re-calc the trip:";
@@ -3118,14 +3251,16 @@ class TransactionsController extends Controller
 
         // share of insurance payments
         [$tripData["shareIns"], $msg] = $this->calcShareIns($tripData, $beginMiles, $expMiles);
-        if($msg != null) $completeTripInfo = false;
+        $allCostMsgs .= "\n - $" . $tripData["shareIns"] . " - Share of Insurance";
+        if($msg != '') $completeTripInfo = false;
 
-        $errMsg .= $msg;
+        $errMsg .= "\n" . $msg;
         
         // fuel (gas or charging) for this trip
         //      handle gas/charging purchased during trip
         [$tripData["fuelCost"], $tripData['gallonsKwHused'], $msg] = $this->calcFuel($tripData);
-        if($msg != null) $completeTripInfo = false;
+        $allCostMsgs .= "\n - $" . $tripData["fuelCost"] . " - Fuel cost (fuel used: " . $tripData['gallonsKwHused'] . " KwH or gallons)";
+        if($msg != '') $completeTripInfo = false;
 
         $errMsg = $msg . $errMsg;
 
@@ -3144,23 +3279,50 @@ class TransactionsController extends Controller
         $newTripRcd['gasChargingDollars'] = $tripData['fuelCost'];
         $newTripRcd['other'] = 0;
 
-        // write record to the trips table.
-        $result = DB::table("trips")->insert($newTripRcd);
-        if($result) error_log("TRIPS record written");
-        else error_log("TRIPS record NOT written: " . json_encode($result));
+        // If write record to the trips table, if function is "Run"
+        $copyToGoogleSheetMsg = '';
+        if($tripData['tripFunction'] == 'Run')  {
+            $result = DB::table("trips")->insert($newTripRcd);
+            if($result) {
+                error_log("TRIPS record written");
+                writeTripTransactions($newTripRcd);
+                // add msg to copy line to Google Sheet
+                $copyToGoogleSheetMsg = "\n\n-------- COPY TO GOOGLE SHEET!! --------\n"
+                    . "select who, begin, end, trip, car, totalCost, tolls, mileage, sharePurchase, shareIns, shareMaint, gallonsKwHused, gasChargingDollars, other
+	from trips
+    where trip = '" . $tripData['tripName'] . "';\n\n"
+                    . 'Copy results into "Trips - frozen" tab of Google Sheet:' . "\n"
+                    . 'https://docs.google.com/spreadsheets/d/14CtgoAjNhfGdHOg7iO9itrWo0q2FiM6efpO93mPzpKc/edit?gid=888458156#gid=888458156' . "\n\n";
+            } else error_log("TRIPS record NOT written: " . json_encode($result));
 
-        if($completeTripInfo) {
-            $errMsg = "\n**** Trip recorded. Total cost was " 
-            . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0))
-            . ". ****\n" 
-            . "**** REMEMBER!!! Transfer the cost of the trip from Mike/Maura-Spending!\n\n"
-            . $errMsg;
-        } else {
-            $errMsg = "PARTIAL trip recorded.\n\n" 
-            . "May need to fix problems and re-calc trip."
-            . "\nIf not, REMEMBER to transfer the cost of the trip from Mike/Maura-Spending!\n\n"
-            . $errMsg;
+        } 
+
+        // show this for tripFunction = Run, Test, or Modify
+        switch ($tripData['tripFunction']) {
+            case 'Run':
+                if($completeTripInfo) $partialMsg = "Trip recorded.";
+                else $partialMsg = "*** PARTIAL *** trip recorded (incomplete info).";
+                break;
+            case 'Test':
+                $partialMsg = "Trip NOT recorded (just a test).";
+                break;
+            case 'Modify':
+                $partialMsg = "Trip updated.";
+                break;
+            default:
+                $partialMsg = "Trip action in question - this shouldn't happen!";
         }
+
+        $errMsg = 
+              "\n-----------------------------------------------------------------------------------------------"
+            . "\n******** " . $partialMsg . " Total cost was $"             
+            . ($tripData['tripTolls'] + $tripData['sharePurchase'] + $tripData['shareIns'] + $tripData['shareMaint'] + $tripData['fuelCost'] + ($tripData['other'] ?? 0))
+            . ". ******** "
+            . $copyToGoogleSheetMsg
+            . "\n-----------------------------------------------------------------------------------------------"
+            . $allCostMsgs
+            . "\n-----------------------------------------------------------------------------------------------\n\n"
+            . $errMsg;
 
         // load trips page with msg containing what was done, errors, warning.
         // get cars, drivers, and most recent mileage from carcostdetails table
@@ -6344,5 +6506,46 @@ class TransactionsController extends Controller
             'status' => 'success'
         ]);
     }    
+
+    // get trip data for modifying an existing trip
+    public function getTripData($tripName) {
+
+        error_log("tripName: " . $tripName);
+
+        // get trip data from trips table
+        $resultDB = DB::table('trips')
+                ->where('trip', $tripName)
+                ->select('id', 'trip', 'who', 'car', 'begin', 'end', 'tolls', 'mileage')
+                ->whereNull('deleted_at')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+        $result = (array) $resultDB;
+        error_log("result: " . json_encode($result));
+
+        //     $numberRcdsWritten = count($tollRcds);
+        // } else {
+        //     $result = true;
+        //     $numberRcdsWritten = 0;
+        // }
+
+        // // Get tolls missing a trip field
+        // $missingTrips = DB::table('tolls')
+        //     ->whereNull('trip')
+        //     ->where('Outgoing', '!=', 0)
+        //     ->get()->toArray();
+
+        // if($result) {
+            return response()->json([
+                'message' => json_encode($result),
+                'status' => 'success',
+                'tripName' => json_encode($tripName)
+            ]);
+        // } else {
+        //     return response()->json([
+        //         'message' => 'Unexpected error writing tolls to tolls table.',
+        //         'status' => 'error'
+        //     ]);
+        // }
+    }   // end of function getTripData    
 
 }

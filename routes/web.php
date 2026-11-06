@@ -109,4 +109,7 @@ Route::put('/transactions/saveMonthly/{id}', 'App\Http\Controllers\TransactionsC
 
 // upload/download transactions between local and remote databases
 Route::get('/transactions/syncdbchanges', 'App\Http\Controllers\TransactionsController@syncdbchanges')->name('syncdbchanges');
+// get trip data for modifying an existing trip
+Route::get('/transactions/getTripData/{tripName}', 'App\Http\Controllers\TransactionsController@getTripData');
+
 ?>
