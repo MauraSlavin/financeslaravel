@@ -13,9 +13,154 @@
     <br>"Recent" CHANGES:
     <br>
     <br>
-    <br>WORKING ON... (haven't started yet)
+    <br>WORKING ON...
+    <br>(done) Get "Test" working first.
+    <br>Then "Run"
+    <br>Then "Modify" - recognize when a field has been updated.
+    <br>Make sure fields are reset as needed when new function chosen.
+    <br>Make sure "Process Trip" button is enabled when needed.
+    <br>Make sure "Process Trip" is disabled when new Function selected.
     <br>Automate Trips more (see "trips" tab in MySQL Workbench)
     <br>-- still need to manually write rcd to Google sheet (unless figure out how to do that from code)
+    <br>-- See
+    <br>-- https://learncodingfree5.wordpress.com/2024/10/12/how-to-integrate-google-spreadsheet-in-laravel-11/
+    <br>-- to write to a google worksheet
+    <br>
+    <br>
+    <br> 
+    <br>(done) Get "Test" working
+    <br>Functions that would be helpful:
+    <ol>
+    <li>(done) TripNameDateExists - is there a mm-dd-yy at the end of the trip name
+    <li>(done) DefaultTripDatesFromName - if it does exist, and begin/end not entered, use this for the defaults
+    <li>(done) IsBeginBeforeEndDate (or equal)
+    <li>(done) AppendDateToTripName
+    <li>(done) DoesTripNameExist
+    </ol>
+    <br> 
+    <br>
+    <p>TESTING...
+    <br>-- Inputs required for TEST
+    <br>(done) PROCESS TRIP is being enabled/disabled as needed.
+    <br>Done - make PROCESS TRIP button spit out numbers for TEST and display.
+    <ol>
+    <li>Trip begin
+    <ol>
+    <li>fill in default trip end, ONLY if not already entered
+    <li>is end AFTER or equal beginning
+    </ol>
+    <li>Trip end
+    <ol>
+    <li>after or equal begin
+    </ol>
+    <li>car used
+    <li>miles driven
+    <li>tolls
+    <li>NOTE: If trip name entered w/mm-dd-yy, fill that in for begin and end dates
+    </ol>
+      <br>Next Step - get PROCESS TRIP for RUN working, including:
+    <ol>
+    <li>writing to trip table;
+    <li>writing transactions to take $ from appropriate spending budgets;
+    <li>Display sql query to get data to copy to Google sheet (or write to Google sheet)
+    <br>-- See
+    <br>-- https://learncodingfree5.wordpress.com/2024/10/12/how-to-integrate-google-spreadsheet-in-laravel-11/
+    <br>-- to write to a google worksheet
+    </ol>
+    <br>-- Inputs required for RUN
+    <ol>
+    <li>Trip name
+    <ol>
+    <li>Unique
+    <li>if end in mm-dd-yy, fill that in for default begin and end dates
+    <li>Append date after or equal begin entered, if not already there
+    </ol>
+    <li>Trip begin
+    <ol>
+    <li>fill in default trip end, ONLY if not already entered
+    <li>append to trip name, if not already there
+    <li>is end AFTER or equal beginning
+    <li>end of trip name should match trip begin
+    </ol>
+    <li>Trip end
+    <ol>
+    <li>after or equal begin
+    </ol>
+    <li>who
+    <li>car used
+    <li>miles driven
+    <li>tolls
+    </ol>
+    <br> *****   LEFT OFF HERE  **********  -- Inputs should be good
+    <br>-- notice when something's changed;
+    <br>-- enable/disable "Process Trip" as needed
+    <br>-- re-calc and update trip
+    <br>----- trips table
+    <br>----- transactions
+    <br>----- Note to replace record in Google Sheets
+    <br>
+    <br>-- Inputs required for MODIFY
+    <ol>
+    <li>Enable Process Trip when anything different entered
+    <li>trip name
+    <ol>
+    <li>if new, must be unique
+    <li>must end in valid date format (mm-dd-yy)
+    <li>change trip begin to this date
+    </ol>
+    <li>begin
+    <ol>
+    <li>must be before end
+    <li>trip name must end in this date - ask user if they want to change the trip name to match the date
+    </ol>
+    <li>end
+    <ol>
+    <li>after trip begin
+    </ol>
+    <li>who
+    <li>car
+    <li>miles
+    <li>tolls
+    </ol>
+    <br>
+    <br>To Do:
+    <br>Option to modify an existing trip
+    <br>-- when trip picked, fill in the fields.  Then only update tables for fields changed (and total cost).
+    <br>Reset when Modify or Test is chosen.
+    <br>
+    <br>NEED TO:
+    <br>-- add code to write transaction records for RUN (see Workbench scripts);
+    <br>-- add code to UPDATE transaction records for MODIFY
+    <br>-- Possibly write trip to Google Sheets??
+    <br>
+    <br>Working on:
+    <br>NOTE:  
+    <br>If "Test" 
+    <br>-- Just show results on the page;
+    <br>-- put tripName back in - may need for tolls;
+    <br>---- when trip name entered - msg stating if it's new or existing
+    <br>-- Allow an estimated Tolls amt to be entered (or click button to calc)
+    <br>
+    <br>If "Modify" 
+    <br>-- Fill in existing data when trip chosen.
+    <br>-- Modify results in existing records.  Instruction on what to UPDATE in the Google Worksheet.  Make sure "copied" column is set to "needupt".
+    <br>
+    <br> If "Run" 
+    <br>-- must be new trip name.  Write new records to database.  Display instructions on what to add to Google Worksheet.
+    <br>
+    <br>Done:
+    <ol>
+    <li>Have button for function desired - Run, Test, Modify (Run is default)
+    <li>In function "recordTrip" (in TransactionsController), have $tripData['tripFunction'] set to "Run", "Test" or "Modify"
+    <li>Only write to Trips table if "Run".  Write if "Run" (ok if NOT completeTripInfo - can modify later).  Displays appropriate msg.
+    <li>Modified msg to reflect if trip was recorded (incl recorded partial), modified, or not changed (for test).
+    <li>"Modify" - drop down list created to select from
+    <li>"Run" - ensure freeform input field is shown.
+    <li>"Test" - hide trip name field
+    <li>Only allow direct input to Tolls field for "Test".
+    <li>Msg displays when trip data loading for Modifying a trip.
+    <li>Re-sets when "Run" chosen.
+    </ol>
     <br>
     <br> ----------------
     <br>
